@@ -1,0 +1,14 @@
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE schema_id = SCHEMA_ID('LOSCONSUMER') AND name = 'REQUEST_PRODUCT')
+BEGIN
+    CREATE TABLE LOSCONSUMER.REQUEST_PRODUCT (
+        ID              BIGINT          NOT NULL IDENTITY(1,1) PRIMARY KEY,
+        TRACE_ID        NVARCHAR(100)   NOT NULL,
+        ENDPOINT        NVARCHAR(500)   NOT NULL,
+        HTTP_METHOD     NVARCHAR(10)    NOT NULL,
+        HEADERS         NVARCHAR(MAX)   NULL,         -- JSON string
+        QUERY_PARAMS    NVARCHAR(MAX)   NULL,         -- JSON string
+        BODY            NVARCHAR(MAX)   NULL,         -- JSON body
+        IP_ADDRESS      NVARCHAR(50)    NULL,
+        REQUESTED_AT    DATETIME        NOT NULL DEFAULT GETDATE()
+    );
+END;

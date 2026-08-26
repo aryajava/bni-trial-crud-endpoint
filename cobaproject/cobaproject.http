@@ -1,0 +1,57 @@
+@cobaproject_HostAddress = http://localhost:5251
+@ApiKey = LOS-SECRET-KEY-2026
+
+### GET semua produk dari FakeStore
+GET {{cobaproject_HostAddress}}/products/public
+X-Api-Key: {{ApiKey}}
+
+### GET produk by ID dari FakeStore
+GET {{cobaproject_HostAddress}}/products/public/1
+X-Api-Key: {{ApiKey}}
+
+### Fetch semua dari FakeStore → insert ke DB (skip duplikat)
+GET {{cobaproject_HostAddress}}/products/public/insert
+X-Api-Key: {{ApiKey}}
+
+### GET semua produk dari DB (IS_ACTIVE = 1)
+GET {{cobaproject_HostAddress}}/products
+X-Api-Key: {{ApiKey}}
+
+### GET produk by ID dari DB
+GET {{cobaproject_HostAddress}}/products/1
+X-Api-Key: {{ApiKey}}
+
+### POST create produk
+POST {{cobaproject_HostAddress}}/products
+X-Api-Key: {{ApiKey}}
+Content-Type: application/json
+
+{
+  "title": "Fjallraven Backpack",
+  "price": 109.95,
+  "description": "This is a sample product.",
+  "category": "men's clothing",
+  "image": "https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg"
+}
+
+### PUT update produk (wajib sertakan version)
+PUT {{cobaproject_HostAddress}}/products/1
+X-Api-Key: {{ApiKey}}
+Content-Type: application/json
+
+{
+  "title": "Updated Title",
+  "price": 99.99,
+  "description": "New description",
+  "category": "electronics",
+  "image": "https://example.com/img.png",
+  "version": 1
+}
+
+### DELETE soft delete (default)
+DELETE {{cobaproject_HostAddress}}/products/1?type=soft
+X-Api-Key: {{ApiKey}}
+
+### DELETE hard delete
+DELETE {{cobaproject_HostAddress}}/products/1?type=hard
+X-Api-Key: {{ApiKey}}

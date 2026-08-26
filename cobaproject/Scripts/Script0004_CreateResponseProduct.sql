@@ -1,0 +1,13 @@
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE schema_id = SCHEMA_ID('LOSCONSUMER') AND name = 'RESPONSE_PRODUCT')
+BEGIN
+    CREATE TABLE LOSCONSUMER.RESPONSE_PRODUCT (
+        ID              BIGINT          NOT NULL IDENTITY(1,1) PRIMARY KEY,
+        TRACE_ID        NVARCHAR(100)   NOT NULL,
+        STATUS_CODE     INT             NOT NULL,
+        IS_SUCCESS      BIT             NOT NULL,
+        MESSAGE         NVARCHAR(MAX)   NULL,
+        RESPONSE_BODY   NVARCHAR(MAX)   NULL,         -- JSON
+        ELAPSED_MS      BIGINT          NULL,
+        RESPONDED_AT    DATETIME        NOT NULL DEFAULT GETDATE()
+    );
+END;
