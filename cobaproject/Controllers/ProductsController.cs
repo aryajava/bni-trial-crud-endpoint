@@ -112,21 +112,22 @@ public class ProductsController : ControllerBase
     {
         try
         {
+            var product = await _productService.GetByIdAsync(id);
+            if (product is null)
+                return ResponseHelper.NotFound(HttpContext, "Produk tidak ditemukan.");
+
             if (type.Equals("hard", StringComparison.OrdinalIgnoreCase))
             {
                 var deleted = await _productService.HardDeleteAsync(id);
                 return deleted
-                    ? ResponseHelper.Success(HttpContext, (object?)null)
-                    : ResponseHelper.NotFound(HttpContext);
+                    ? ResponseHelper.Success(HttpContext, $"Produk \"{product.Title}\" berhasil dihapus.", "Success")
+                    : ResponseHelper.NotFound(HttpContext, "Produk tidak ditemukan.");
             }
 
             var softDeleted = await _productService.SoftDeleteAsync(id, Caller);
-            if (!softDeleted)
-                return ResponseHelper.NotFound(HttpContext);
-
-            var deletedProduct = await _productService.GetByIdAsync(id);
-            return ResponseHelper.Success(HttpContext,
-                deletedProduct ?? new ProductDto { Id = id, IsActive = false });
+            return softDeleted
+                ? ResponseHelper.Success(HttpContext, $"Produk \"{product.Title}\" berhasil dihapus.", "Success")
+                : ResponseHelper.NotFound(HttpContext, "Produk tidak ditemukan.");
         }
         catch (Exception ex)
         {

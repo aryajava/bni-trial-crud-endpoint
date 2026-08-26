@@ -30,3 +30,6 @@ bld/
 ## OS generated files
 .DS_Store
 Thumbs.db
+
+## graphify (derived artifacts - rebuild with `graphify update .`)
+graphify-out/
