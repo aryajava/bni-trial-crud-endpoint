@@ -37,7 +37,7 @@
                 <td>@p.Title</td>
                 <td>Rp @p.Price.ToString("N0")</td>
                 <td>@(p.Category ?? "-")</td>
-                <td>@(p.RatingRate?.ToString("0.0") ?? "-") (@(p.RatingCount?.ToString() ?? "0"))</td>
+                <td>@(p.RatingRate?.ToString("0.0") ?? "-") (@(p.RatingCount?.ToString() ?? "-"))</td>
                 <td>@p.Version</td>
                 <td>
                     <a class="btn btn-kedua" asp-page="Edit" asp-route-id="@p.Id">Edit</a>

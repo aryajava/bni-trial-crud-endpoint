@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using cobaproject.Configuration;
 using cobaproject.Helpers;
@@ -8,6 +9,15 @@ using DbUp;
 using Microsoft.Data.SqlClient;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerUI;
+
+// Kunci kultur ke InvariantCulture agar angka selalu memakai titik desimal
+// (mis. 150000.50), konsisten antara render form, validasi browser, dan binding.
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
+// Dapper: cocokkan kolom SNAKE_CASE (RATING_RATE, IS_ACTIVE, ...) ke properti
+// PascalCase (RatingRate, IsActive). Tanpa ini, kolom multi-kata ter-baca null.
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 

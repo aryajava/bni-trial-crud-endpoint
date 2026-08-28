@@ -18,7 +18,7 @@ else
         <tr><th>Judul</th><td>@Model.Product.Title</td></tr>
         <tr><th>Harga</th><td>Rp @Model.Product.Price.ToString("N0")</td></tr>
         <tr><th>Kategori</th><td>@(Model.Product.Category ?? "-")</td></tr>
-        <tr><th>Rating</th><td>@(Model.Product.RatingRate?.ToString("0.0") ?? "-") (@(Model.Product.RatingCount?.ToString() ?? "0"))</td></tr>
+        <tr><th>Rating</th><td>@(Model.Product.RatingRate?.ToString("0.0") ?? "-") (@(Model.Product.RatingCount?.ToString() ?? "-"))</td></tr>
     </table>
 
     <p>Yakin ingin menghapus produk <strong>@Model.Product.Title</strong>?</p>
