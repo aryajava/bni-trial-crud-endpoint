@@ -1,0 +1,44 @@
+@page
+@model cobaproject.Pages.Screen.Products.CreateModel
+@{
+    ViewData["Title"] = "Tambah Produk";
+}
+
+<h1>Tambah Produk</h1>
+
+<form class="kartu" method="post">
+    <div asp-validation-summary="All" class="pesan-error"></div>
+
+    <label asp-for="Request.Title"></label>
+    <input asp-for="Request.Title" />
+    <span asp-validation-for="Request.Title" class="field-error"></span>
+
+    <label asp-for="Request.Price"></label>
+    <input asp-for="Request.Price" />
+    <span asp-validation-for="Request.Price" class="field-error"></span>
+
+    <label asp-for="Request.Description"></label>
+    <textarea asp-for="Request.Description" rows="3"></textarea>
+
+    <label asp-for="Request.Category"></label>
+    <input asp-for="Request.Category" />
+    <span asp-validation-for="Request.Category" class="field-error"></span>
+
+    <label asp-for="Request.Image"></label>
+    <input asp-for="Request.Image" />
+
+    <label asp-for="Request.RatingRate"></label>
+    <input asp-for="Request.RatingRate" />
+
+    <label asp-for="Request.RatingCount"></label>
+    <input asp-for="Request.RatingCount" />
+
+    <div class="tombol">
+        <button class="btn btn-utama" type="submit">Simpan</button>
+        <a class="btn btn-kedua" asp-page="Index">Batal</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

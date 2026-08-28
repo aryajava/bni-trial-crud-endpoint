@@ -1,0 +1,49 @@
+@page
+@model cobaproject.Pages.Screen.Products.IndexModel
+@{
+    ViewData["Title"] = "Daftar Produk";
+}
+
+<h1>Daftar Produk</h1>
+
+@if (TempData["SuccessMessage"] is string pesan)
+{
+    <div class="pesan-sukses">@pesan</div>
+}
+
+<p><a class="btn btn-utama" asp-page="Create">+ Tambah Produk</a></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Judul</th>
+            <th>Harga</th>
+            <th>Kategori</th>
+            <th>Rating</th>
+            <th>Versi</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Products.Count == 0)
+        {
+            <tr><td colspan="7">Belum ada produk. Klik "Tambah Produk" untuk mulai.</td></tr>
+        }
+        @foreach (var p in Model.Products)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.Title</td>
+                <td>Rp @p.Price.ToString("N0")</td>
+                <td>@(p.Category ?? "-")</td>
+                <td>@(p.RatingRate?.ToString("0.0") ?? "-") (@(p.RatingCount?.ToString() ?? "0"))</td>
+                <td>@p.Version</td>
+                <td>
+                    <a class="btn btn-kedua" asp-page="Edit" asp-route-id="@p.Id">Edit</a>
+                    <a class="btn btn-bahaya" asp-page="Delete" asp-route-id="@p.Id">Hapus</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

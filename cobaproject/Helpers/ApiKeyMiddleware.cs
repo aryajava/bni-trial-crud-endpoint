@@ -7,7 +7,7 @@ namespace cobaproject.Helpers;
 
 public class ApiKeyMiddleware
 {
-    private static readonly string[] ExcludedPathPrefixes = ["/swagger", "/openapi", "/favicon.ico", "/_framework", "/_vs"];
+    private static readonly string[] ExcludedPathPrefixes = ["/swagger", "/openapi", "/favicon.ico", "/_framework", "/_vs", "/screen"];
 
     private readonly RequestDelegate _next;
     private readonly ApiKeyConfig _config;

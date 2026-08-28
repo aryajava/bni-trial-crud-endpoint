@@ -16,6 +16,7 @@ builder.Host.UseSerilog((context, configuration) =>
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddRazorPages();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
@@ -99,6 +100,7 @@ app.UseMiddleware<ApiKeyMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapRazorPages();
 
 if (app.Environment.IsDevelopment()
     && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_OPEN_BROWSER")))
