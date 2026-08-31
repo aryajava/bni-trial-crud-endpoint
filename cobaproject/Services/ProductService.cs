@@ -21,6 +21,24 @@ public class ProductService : IProductService
         UPDATED_AT, UPDATED_BY, VERSION
         """;
 
+    private const int MaxPageSize = 100;
+
+    private static readonly Dictionary<string, string> SortColumns = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["id"] = "ID",
+        ["title"] = "TITLE",
+        ["price"] = "PRICE",
+        ["description"] = "DESCRIPTION",
+        ["category"] = "CATEGORY",
+        ["image"] = "IMAGE",
+        ["ratingRate"] = "RATING_RATE",
+        ["ratingCount"] = "RATING_COUNT",
+        ["isActive"] = "IS_ACTIVE",
+        ["createdAt"] = "CREATED_AT",
+        ["updatedAt"] = "UPDATED_AT",
+        ["version"] = "VERSION",
+    };
+
     public ProductService(
         IOptions<DatabaseConfig> config,
         IHttpContextAccessor httpContextAccessor,
@@ -45,6 +63,104 @@ public class ProductService : IProductService
             """);
         return products.Select(ProductMapper.ToDto);
     }
+
+    public async Task<PagedResult<ProductDto>> GetPagedAsync(ProductQueryParams query)
+    {
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
+        var conditions = new List<string> { "IS_ACTIVE = 1" };
+        var parameters = new DynamicParameters();
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+            AddContainsCondition(conditions, parameters, "Search", """
+                (TITLE LIKE @Search ESCAPE '\'
+                 OR DESCRIPTION LIKE @Search ESCAPE '\'
+                 OR CATEGORY LIKE @Search ESCAPE '\'
+                 OR IMAGE LIKE @Search ESCAPE '\'
+                 OR CAST(PRICE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
+                 OR CAST(RATING_RATE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
+                 OR CAST(RATING_COUNT AS NVARCHAR(50)) LIKE @Search ESCAPE '\')
+                """, query.Search);
+
+        if (!string.IsNullOrWhiteSpace(query.Title))
+            AddContainsCondition(conditions, parameters, "Title", "TITLE LIKE @Title ESCAPE '\\'", query.Title);
+
+        if (!string.IsNullOrWhiteSpace(query.Description))
+            AddContainsCondition(conditions, parameters, "Description",
+                "DESCRIPTION LIKE @Description ESCAPE '\\'", query.Description);
+
+        if (!string.IsNullOrWhiteSpace(query.Category))
+            AddContainsCondition(conditions, parameters, "Category",
+                "CATEGORY LIKE @Category ESCAPE '\\'", query.Category);
+
+        AddRangeCondition(conditions, parameters, "Price", "PRICE", query.PriceFrom, query.PriceTo);
+        AddRangeCondition(conditions, parameters, "Created", "CREATED_AT", query.CreatedFrom, query.CreatedTo);
+        AddRangeCondition(conditions, parameters, "Updated", "UPDATED_AT", query.UpdatedFrom, query.UpdatedTo);
+
+        var whereClause = string.Join(" AND ", conditions);
+
+        using var connection = new SqlConnection(_connectionString);
+
+        var total = await connection.ExecuteScalarAsync<int>($"""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.MASTER_PRODUCT
+            WHERE {whereClause};
+            """, parameters);
+
+        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "ID";
+        var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+
+        var offset = (page - 1) * pageSize;
+        parameters.Add("Offset", offset);
+        parameters.Add("PageSize", pageSize);
+
+        var products = await connection.QueryAsync<MasterProduct>($"""
+            SELECT {SelectColumns}
+            FROM LOSCONSUMER.MASTER_PRODUCT
+            WHERE {whereClause}
+            ORDER BY {sortColumn} {sortOrder}, ID
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            """, parameters);
+
+        var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize);
+
+        return new PagedResult<ProductDto>
+        {
+            Items = products.Select(ProductMapper.ToDto).ToList(),
+            Page = page,
+            PageSize = pageSize,
+            Total = total,
+            TotalPages = totalPages
+        };
+    }
+
+    private static void AddContainsCondition(
+        List<string> conditions, DynamicParameters parameters, string name, string sql, string value)
+    {
+        conditions.Add(sql);
+        parameters.Add(name, $"%{EscapeLike(value.Trim())}%");
+    }
+
+    private static void AddRangeCondition<T>(
+        List<string> conditions, DynamicParameters parameters,
+        string name, string column, T? from, T? to)
+        where T : struct, IComparable<T>
+    {
+        if (from.HasValue)
+        {
+            conditions.Add($"{column} >= @{name}From");
+            parameters.Add($"{name}From", from.Value);
+        }
+        if (to.HasValue)
+        {
+            conditions.Add($"{column} <= @{name}To");
+            parameters.Add($"{name}To", to.Value);
+        }
+    }
+
+    private static string EscapeLike(string value) =>
+        value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     public async Task<ProductDto?> GetByIdAsync(int id)
     {

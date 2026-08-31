@@ -32,7 +32,7 @@ public class ProductsController : ControllerBase
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
-
+ 
     [HttpGet("{id:int}")]
     public async Task<IResult> GetById(int id)
     {
@@ -144,5 +144,19 @@ public class ProductsController : ControllerBase
         return ResponseHelper.Success(HttpContext, categories);
     }
 
+    [HttpGet("paged")]
+    public async Task<IResult> GetPaged([FromQuery] ProductQueryParams query)
+    {
+        try
+        {
+            var result = await _productService.GetPagedAsync(query);
+            return ResponseHelper.Success(HttpContext, result);
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+    
     #endregion Others
 }

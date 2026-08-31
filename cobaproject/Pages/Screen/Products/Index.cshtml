@@ -43,6 +43,10 @@
                 <td>Rp @p.Price.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("id-ID"))</td>
                 <td>@(p.Category ?? "-")</td>
                 <td>@(p.RatingRate?.ToString("0.0") ?? "-") (@(p.RatingCount?.ToString() ?? "-"))</td>
+                <td>@p.CreatedAt</td>
+                <td>@p.CreatedBy</td>
+                <td>@p.UpdatedAt</td>
+                <td>@p.UpdatedBy</td>
                 <td>@p.Version</td>
                 <td>
                     <a class="btn btn-kedua" asp-page="Edit" asp-route-id="@p.Id">Edit</a>

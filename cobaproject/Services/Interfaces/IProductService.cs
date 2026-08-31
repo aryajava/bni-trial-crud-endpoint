@@ -13,5 +13,6 @@ public interface IProductService
 
     #region Others
     Task<List<string>> GetCategoriesAsync();
+    Task<PagedResult<ProductDto>> GetPagedAsync(ProductQueryParams query);
     #endregion Others
 }
