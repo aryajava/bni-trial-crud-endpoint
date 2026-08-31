@@ -2,7 +2,6 @@
 @model cobaproject.Pages.Screen.Products.EditModel
 @{
     ViewData["Title"] = "Edit Produk";
-    var idId = System.Globalization.CultureInfo.GetCultureInfo("id-ID");
 }
 
 <div class="page-header">
@@ -12,8 +11,6 @@
 
 <div class="info-bar">
     <div class="item"><b>ID:</b> @Model.Id</div>
-    <div class="item"><b>Dibuat:</b> @Model.Request.CreatedAt.ToString("dd MMM yyyy HH:mm", idId)</div>
-    <div class="item"><b>Diubah:</b> @(Model.Request.UpdatedAt?.ToString("dd MMM yyyy HH:mm", idId) ?? "-")</div>
     <div class="item"><b>Versi:</b> @Model.Request.Version</div>
 </div>
 
