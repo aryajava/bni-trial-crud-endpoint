@@ -110,6 +110,7 @@ public class ProductService : IProductService
 
         var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "ID";
         var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var tieBreaker = sortColumn == "ID" ? string.Empty : ", ID";
 
         var offset = (page - 1) * pageSize;
         parameters.Add("Offset", offset);
@@ -119,7 +120,7 @@ public class ProductService : IProductService
             SELECT {SelectColumns}
             FROM LOSCONSUMER.MASTER_PRODUCT
             WHERE {whereClause}
-            ORDER BY {sortColumn} {sortOrder}, ID
+            ORDER BY {sortColumn} {sortOrder}{tieBreaker}
             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
             """, parameters);
 
