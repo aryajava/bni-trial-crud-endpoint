@@ -14,7 +14,7 @@
     <span asp-validation-for="Request.Title" class="field-error"></span>
 
     <label asp-for="Request.Price"></label>
-    <input asp-for="Request.Price" />
+    <input asp-for="Request.Price" data-rupiah />
     <span asp-validation-for="Request.Price" class="field-error"></span>
 
     <label asp-for="Request.Description"></label>
@@ -56,4 +56,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_RupiahScriptsPartial" />
 }

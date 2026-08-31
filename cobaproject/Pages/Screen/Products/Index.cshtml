@@ -35,7 +35,7 @@
             <tr>
                 <td>@p.Id</td>
                 <td>@p.Title</td>
-                <td>Rp @p.Price.ToString("N0")</td>
+                <td>Rp @p.Price.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("id-ID"))</td>
                 <td>@(p.Category ?? "-")</td>
                 <td>@(p.RatingRate?.ToString("0.0") ?? "-") (@(p.RatingCount?.ToString() ?? "-"))</td>
                 <td>@p.Version</td>

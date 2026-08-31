@@ -1,0 +1,41 @@
+<script>
+    document.querySelectorAll("input[data-rupiah]").forEach(function (input) {
+        function formatAngka(n) {
+            return "Rp " + n.toLocaleString("id-ID", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function formatKetik(teks) {
+            var digit = teks.replace(/\D/g, "");
+            if (!digit) {
+                input.value = "";
+                return;
+            }
+            var rupiah = digit.slice(0, -2) || "0";
+            var sen = digit.slice(-2) || "00";
+            input.value = "Rp " + rupiah.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + sen;
+        }
+
+        var awal = parseFloat(input.value);
+        if (input.value.trim() !== "" && !isNaN(awal)) {
+            input.value = formatAngka(awal);
+        }
+
+        input.addEventListener("input", function () {
+            formatKetik(input.value);
+        });
+
+        input.addEventListener("focus", function () {
+            if (input.value === "Rp ," || input.value === "Rp 0,00") {
+                input.value = "";
+            }
+        });
+
+        input.form.addEventListener("submit", function () {
+            var digit = input.value.replace(/\D/g, "");
+            input.value = digit ? (parseInt(digit, 10) / 100).toFixed(2) : "0";
+        }, true);
+    });
+</script>
