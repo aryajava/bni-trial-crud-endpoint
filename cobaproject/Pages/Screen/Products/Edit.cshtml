@@ -14,7 +14,8 @@
     <span asp-validation-for="Request.Title" class="field-error"></span>
 
     <label asp-for="Request.Price"></label>
-    <input asp-for="Request.Price" data-rupiah />
+    <input data-rupiah data-rupiah-target="Request.Price" inputmode="decimal" />
+    <input asp-for="Request.Price" type="hidden" />
     <span asp-validation-for="Request.Price" class="field-error"></span>
 
     <label asp-for="Request.Description"></label>

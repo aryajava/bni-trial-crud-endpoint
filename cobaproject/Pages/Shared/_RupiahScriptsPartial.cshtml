@@ -1,5 +1,14 @@
 <script>
-    document.querySelectorAll("input[data-rupiah]").forEach(function (input) {
+    (function () {
+        var display = document.querySelector("input[data-rupiah]");
+        if (!display) {
+            return;
+        }
+        var hidden = document.querySelector('input[name="' + display.getAttribute("data-rupiah-target") + '"]');
+        if (!hidden) {
+            return;
+        }
+
         function formatAngka(n) {
             return "Rp " + n.toLocaleString("id-ID", {
                 maximumFractionDigits: 2
@@ -9,30 +18,27 @@
         function formatKetik(teks) {
             var digit = teks.replace(/\D/g, "");
             if (!digit) {
-                input.value = "";
+                display.value = "";
+                hidden.value = "";
                 return;
             }
-            input.value = "Rp " + digit.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            display.value = "Rp " + digit.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            hidden.value = digit;
         }
 
-        var awal = parseFloat(input.value);
-        if (input.value.trim() !== "" && !isNaN(awal)) {
-            input.value = formatAngka(awal);
+        var awal = parseFloat(hidden.value);
+        if (hidden.value.trim() !== "" && !isNaN(awal)) {
+            display.value = formatAngka(awal);
         }
 
-        input.addEventListener("input", function () {
-            formatKetik(input.value);
+        display.addEventListener("input", function () {
+            formatKetik(display.value);
         });
 
-        input.addEventListener("focus", function () {
-            if (input.value === "Rp ") {
-                input.value = "";
+        display.addEventListener("focus", function () {
+            if (display.value === "Rp ") {
+                display.value = "";
             }
         });
-
-        input.form.addEventListener("submit", function () {
-            var digit = input.value.replace(/\D/g, "");
-            input.value = digit ? digit : "0";
-        }, true);
-    });
+    })();
 </script>
