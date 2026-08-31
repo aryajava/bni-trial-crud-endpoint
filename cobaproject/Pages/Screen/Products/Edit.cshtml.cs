@@ -9,7 +9,7 @@ public class EditModel : PageModel
 {
     private readonly IProductService _productService;
 
-    private List<string> Categories { get; set; } = [];
+    public List<string> Categories { get; set; } = [];
 
     public EditModel(IProductService productService)
     {
