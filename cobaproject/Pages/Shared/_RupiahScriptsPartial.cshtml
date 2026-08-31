@@ -2,7 +2,6 @@
     document.querySelectorAll("input[data-rupiah]").forEach(function (input) {
         function formatAngka(n) {
             return "Rp " + n.toLocaleString("id-ID", {
-                minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
         }
@@ -13,9 +12,7 @@
                 input.value = "";
                 return;
             }
-            var rupiah = digit.slice(0, -2) || "0";
-            var sen = digit.slice(-2) || "00";
-            input.value = "Rp " + rupiah.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + sen;
+            input.value = "Rp " + digit.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
         var awal = parseFloat(input.value);
@@ -28,14 +25,14 @@
         });
 
         input.addEventListener("focus", function () {
-            if (input.value === "Rp ," || input.value === "Rp 0,00") {
+            if (input.value === "Rp ") {
                 input.value = "";
             }
         });
 
         input.form.addEventListener("submit", function () {
             var digit = input.value.replace(/\D/g, "");
-            input.value = digit ? (parseInt(digit, 10) / 100).toFixed(2) : "0";
+            input.value = digit ? digit : "0";
         }, true);
     });
 </script>

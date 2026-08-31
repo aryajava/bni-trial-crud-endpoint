@@ -22,7 +22,7 @@
 
     <label asp-for="Request.Category"></label>
     <select asp-for="Request.Category" class="form-control">
-        <option value="" readonly>Pilih Kategori</option>
+        <option value="" selected disabled>Pilih Kategori</option>
         @foreach (var category in Model.Categories)
         {
             <option value="@category">@category</option>
