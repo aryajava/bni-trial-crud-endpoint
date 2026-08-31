@@ -128,7 +128,7 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th><button class="th-sort active" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="title">Judul<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="price">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="category">Kategori<span class="material-icons sort-ic">swap_vert</span></button></th>
@@ -168,7 +168,7 @@
         const state = {
             page: 1,
             pageSize: 20,
-            sortBy: 'id',
+            sortBy: '',
             sortOrder: 'asc',
             search: '',
             category: '',
@@ -204,8 +204,10 @@
             const q = new URLSearchParams();
             q.set('page', state.page);
             q.set('pageSize', state.pageSize);
-            q.set('sortBy', state.sortBy);
-            q.set('sortOrder', state.sortOrder);
+            if (state.sortBy) {
+                q.set('sortBy', state.sortBy);
+                q.set('sortOrder', state.sortOrder);
+            }
             if (state.search.trim()) q.set('search', state.search.trim());
             if (state.category) q.set('category', state.category);
             if (state.priceMin !== '') q.set('priceFrom', state.priceMin);
@@ -383,8 +385,13 @@
             $('resetFilter').addEventListener('click', resetFilter);
             document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
                 const col = btn.dataset.sort;
-                if (state.sortBy === col) state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
-                else { state.sortBy = col; state.sortOrder = 'asc'; }
+                if (state.sortBy === col) {
+                    if (state.sortOrder === 'asc') state.sortOrder = 'desc';
+                    else { state.sortBy = ''; state.sortOrder = 'asc'; }
+                } else {
+                    state.sortBy = col;
+                    state.sortOrder = 'asc';
+                }
                 state.page = 1;
                 loadData();
             }));
