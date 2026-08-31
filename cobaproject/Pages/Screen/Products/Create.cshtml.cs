@@ -8,6 +8,7 @@ namespace cobaproject.Pages.Screen.Products;
 public class CreateModel : PageModel
 {
     private readonly IProductService _productService;
+    public List<string> Categories { get; set; } = [];
 
     public CreateModel(IProductService productService)
     {
@@ -21,6 +22,8 @@ public class CreateModel : PageModel
 
     public void OnGet()
     {
+        // Load categories for the dropdown
+        Categories = _productService.GetCategoriesAsync().Result;
     }
 
     public async Task<IActionResult> OnPostAsync()

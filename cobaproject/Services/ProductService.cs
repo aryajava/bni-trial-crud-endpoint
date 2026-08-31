@@ -175,4 +175,16 @@ public class ProductService : IProductService
             _logger.LogWarning("[MASTER_PRODUCT] HARD_DELETE | ID={Id} | TraceId={TraceId}", id, TraceId);
         return rows > 0;
     }
+
+    #region Others
+
+    public async Task<List<string>> GetCategoriesAsync()
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var categories = await connection.QueryAsync<string>(
+            "SELECT DISTINCT CATEGORY FROM LOSCONSUMER.MASTER_PRODUCT WHERE IS_ACTIVE = 1;");
+        return categories.ToList();
+    }
+
+    #endregion Others
 }

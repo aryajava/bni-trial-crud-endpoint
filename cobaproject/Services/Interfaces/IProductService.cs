@@ -10,4 +10,8 @@ public interface IProductService
     Task<(ProductDto? Product, bool IsConflict)> UpdateAsync(int id, UpdateProductRequest request, string updatedBy);
     Task<bool> SoftDeleteAsync(int id, string updatedBy);
     Task<bool> HardDeleteAsync(int id);
+
+    #region Others
+    Task<List<string>> GetCategoriesAsync();
+    #endregion Others
 }

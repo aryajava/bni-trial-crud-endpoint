@@ -9,6 +9,8 @@ public class EditModel : PageModel
 {
     private readonly IProductService _productService;
 
+    private List<string> Categories { get; set; } = [];
+
     public EditModel(IProductService productService)
     {
         _productService = productService;
@@ -31,6 +33,7 @@ public class EditModel : PageModel
 
         Id = id;
         Request = CopyFrom(product);
+        Categories = _productService.GetCategoriesAsync().Result;
         return Page();
     }
 

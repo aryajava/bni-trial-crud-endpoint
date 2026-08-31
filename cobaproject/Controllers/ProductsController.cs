@@ -134,4 +134,15 @@ public class ProductsController : ControllerBase
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
+    
+    #region Others
+    
+    [HttpGet("categories")]
+    public async Task<IResult> GetCategories()
+    {
+        var categories = await _productService.GetCategoriesAsync();
+        return ResponseHelper.Success(HttpContext, categories);
+    }
+
+    #endregion Others
 }

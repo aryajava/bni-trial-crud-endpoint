@@ -21,7 +21,13 @@
     <textarea asp-for="Request.Description" rows="3"></textarea>
 
     <label asp-for="Request.Category"></label>
-    <input asp-for="Request.Category" />
+    <select asp-for="Request.Category" class="form-control">
+        <option value="">Pilih Kategori</option>
+        @foreach (var category in Model.Categories)
+        {
+            <option value="@category">@category</option>
+        }
+    </select>
     <span asp-validation-for="Request.Category" class="field-error"></span>
 
     <label asp-for="Request.Image"></label>
