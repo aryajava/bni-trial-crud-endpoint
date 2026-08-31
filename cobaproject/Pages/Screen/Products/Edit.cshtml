@@ -25,7 +25,14 @@
         <option value="">Pilih Kategori</option>
         @foreach (var category in Model.Categories)
         {
-            <option value="@category" @(Model.Request.Category == category ? "selected" : "")>@category</option>
+            if (Model.Request.Category == category)
+            {
+                <option value="@category" selected>@category</option>
+            }
+            else
+            {
+                <option value="@category">@category</option>
+            }
         }
     </select>
     <span asp-validation-for="Request.Category" class="field-error"></span>
