@@ -6,9 +6,14 @@
 
 <h1>Daftar Produk</h1>
 
-@if (TempData["SuccessMessage"] is string pesan)
-{
-    <div class="pesan-sukses">@pesan</div>
+@section Scripts {
+    @if (TempData["SuccessMessage"] is string pesan)
+    {
+        <script>
+            if (Swal.isVisible()) { Swal.close(); }
+            Swal.fire({ toast: true, position: "top-end", icon: "success", title: @System.Text.Json.JsonSerializer.Serialize(pesan), showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        </script>
+    }
 }
 
 <p><a class="btn btn-utama" asp-page="Create">+ Tambah Produk</a></p>
