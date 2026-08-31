@@ -4,7 +4,161 @@
     ViewData["Title"] = "Daftar Produk";
 }
 
-<h1>Daftar Produk</h1>
+<style>
+    .page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .page-header h1 { margin: 0; font-size: 22px; }
+
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+    .search { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #c5ccd8; border-radius: 8px; padding: 0 12px; flex: 1; min-width: 220px; max-width: 420px; }
+    .search .material-icons { color: #6b7280; }
+    .search input { border: none; outline: none; flex: 1; padding: 10px 0; font: inherit; background: transparent; }
+    .page-size { display: flex; align-items: center; gap: 8px; color: #374151; font-size: 14px; }
+    .page-size select { padding: 8px 10px; border: 1px solid #c5ccd8; border-radius: 8px; font: inherit; background: #fff; cursor: pointer; }
+
+    .filter-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 14px; background: #fff; border: 1px solid #d9dee7; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+    .f-group label { display: block; font-size: 11px; font-weight: 700; color: #4b5563; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .f-group select, .f-group input { width: 100%; padding: 8px 10px; border: 1px solid #c5ccd8; border-radius: 8px; font: inherit; background: #fff; }
+    .f-range { display: flex; align-items: center; gap: 8px; }
+    .f-range input { min-width: 0; }
+    .f-range span { color: #6b7280; }
+    .f-actions { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; text-decoration: none; font-size: 14px; }
+    .btn .material-icons { font-size: 18px; }
+    .btn-utama { background: #1a56db; color: #fff; }
+    .btn-utama:hover { background: #1648bb; }
+    .btn-kedua { background: #e5e9f0; color: #1f2937; }
+    .btn-kedua:hover { background: #d6dde8; }
+
+    .data-table { margin-top: 0; }
+    .data-table th { background: #eef2f8; padding: 0; }
+    .data-table th button.th-sort { display: flex; align-items: center; gap: 6px; width: 100%; border: none; background: none; font: inherit; font-weight: 700; cursor: pointer; color: #1f2937; padding: 10px 12px; text-align: left; white-space: nowrap; }
+    .data-table th button.th-sort:hover { color: #1a56db; }
+    .data-table th button.th-sort.active { color: #1a56db; }
+    .th-sort .sort-ic { font-size: 16px; color: #9ca3af; }
+    .th-sort.active .sort-ic { color: #1a56db; }
+    .data-table tbody tr:hover { background: #f5f8ff; }
+    .data-table td { padding: 9px 12px; vertical-align: middle; }
+    .td-title { font-weight: 600; color: #111827; }
+    .td-price { white-space: nowrap; }
+    .td-actions { white-space: nowrap; text-align: right; }
+    .td-id, .td-ver { font-variant-numeric: tabular-nums; color: #6b7280; }
+
+    .badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .muted { color: #9ca3af; font-size: 12px; }
+
+    .btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; text-decoration: none; }
+    .btn-icon .material-icons { font-size: 18px; }
+    .btn-edit { color: #1a56db; background: #eef4ff; }
+    .btn-edit:hover { background: #dbe7ff; }
+    .btn-delete { color: #b91c1c; background: #fee2e2; }
+    .btn-delete:hover { background: #fecaca; }
+
+    .row-loading, .row-empty { text-align: center; color: #6b7280; }
+    .spinner { display: inline-block; vertical-align: middle; animation: spin 1s linear infinite; font-size: 18px; }
+    @@keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .table-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+    #pageInfo { color: #4b5563; font-size: 14px; }
+    .pagination { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .pagination .pg { min-width: 36px; height: 36px; padding: 0 8px; border: 1px solid #d9dee7; border-radius: 8px; background: #fff; color: #1f2937; cursor: pointer; font: inherit; display: inline-flex; align-items: center; justify-content: center; }
+    .pagination .pg:hover:not(:disabled) { background: #eef2f8; }
+    .pagination .pg.active { background: #1a56db; color: #fff; border-color: #1a56db; }
+    .pagination .pg:disabled { opacity: .45; cursor: not-allowed; }
+    .pagination .pg .material-icons { font-size: 18px; }
+    .pagination .pg-ellipsis { color: #6b7280; padding: 0 2px; }
+
+    .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #d9dee7; border-radius: 10px; }
+    .table-wrap table { border: none; margin: 0; }
+</style>
+
+<div class="page-header">
+    <h1>Daftar Produk</h1>
+    <a class="btn btn-utama" asp-page="Create"><span class="material-icons">add</span> Tambah Produk</a>
+</div>
+
+<div class="toolbar">
+    <div class="search">
+        <span class="material-icons">search</span>
+        <input type="text" id="searchInput" placeholder="Cari di semua kolom..." autocomplete="off" />
+    </div>
+    <div class="page-size">
+        <span>Tampilkan</span>
+        <select id="pageSizeSelect">
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+        <span>data / halaman</span>
+    </div>
+</div>
+
+<div class="filter-panel">
+    <div class="f-group">
+        <label>Kategori</label>
+        <select id="categorySelect">
+            <option value="">Semua Kategori</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c">@c</option>
+            }
+        </select>
+    </div>
+    <div class="f-group">
+        <label>Harga (Rp)</label>
+        <div class="f-range">
+            <input type="number" id="priceMin" placeholder="Min" min="0" step="0.01" />
+            <span>–</span>
+            <input type="number" id="priceMax" placeholder="Max" min="0" step="0.01" />
+        </div>
+    </div>
+    <div class="f-group">
+        <label>Dibuat (Tanggal)</label>
+        <div class="f-range">
+            <input type="date" id="createdFrom" />
+            <span>–</span>
+            <input type="date" id="createdTo" />
+        </div>
+    </div>
+    <div class="f-group">
+        <label>Diubah (Tanggal)</label>
+        <div class="f-range">
+            <input type="date" id="updatedFrom" />
+            <span>–</span>
+            <input type="date" id="updatedTo" />
+        </div>
+    </div>
+    <div class="f-actions">
+        <button class="btn btn-utama" id="applyFilter"><span class="material-icons">filter_alt</span> Terapkan</button>
+        <button class="btn btn-kedua" id="resetFilter"><span class="material-icons">restart_alt</span> Reset</button>
+    </div>
+</div>
+
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><button class="th-sort active" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="title">Judul<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="price">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="category">Kategori<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="ratingRate">Rating<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="createdAt">Dibuat<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="updatedAt">Diubah<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="version">Versi<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="productRows">
+            <tr class="row-loading"><td colspan="9"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="table-footer">
+    <div id="pageInfo">Menampilkan 0–0 dari 0 data</div>
+    <div class="pagination" id="pagination"></div>
+</div>
 
 @section Scripts {
     @if (TempData["SuccessMessage"] is string pesan)
@@ -14,45 +168,243 @@
             Swal.fire({ toast: true, position: "top-end", icon: "success", title: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(pesan)), showConfirmButton: false, timer: 3000, timerProgressBar: true });
         </script>
     }
+
+    <script>
+        const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
+        const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKey));
+
+        const state = {
+            page: 1,
+            pageSize: 20,
+            sortBy: 'id',
+            sortOrder: 'asc',
+            search: '',
+            category: '',
+            priceMin: '',
+            priceMax: '',
+            createdFrom: '',
+            createdTo: '',
+            updatedFrom: '',
+            updatedTo: '',
+            total: 0,
+            totalPages: 0
+        };
+
+        const $ = (id) => document.getElementById(id);
+
+        function esc(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function formatRupiah(v) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(v);
+        }
+
+        function formatDateTime(iso) {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            if (isNaN(d)) return '-';
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) +
+                ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function buildQuery() {
+            const q = new URLSearchParams();
+            q.set('page', state.page);
+            q.set('pageSize', state.pageSize);
+            q.set('sortBy', state.sortBy);
+            q.set('sortOrder', state.sortOrder);
+            if (state.search.trim()) q.set('search', state.search.trim());
+            if (state.category) q.set('category', state.category);
+            if (state.priceMin !== '') q.set('priceFrom', state.priceMin);
+            if (state.priceMax !== '') q.set('priceTo', state.priceMax);
+            if (state.createdFrom) q.set('createdFrom', state.createdFrom);
+            if (state.createdTo) q.set('createdTo', state.createdTo + 'T23:59:59.999');
+            if (state.updatedFrom) q.set('updatedFrom', state.updatedFrom);
+            if (state.updatedTo) q.set('updatedTo', state.updatedTo + 'T23:59:59.999');
+            return q.toString();
+        }
+
+        function fromItem() {
+            return (state.totalPages === 0) ? 0 : ((state.page - 1) * state.pageSize) + 1;
+        }
+        function toItem() {
+            if (state.totalPages === 0) return 0;
+            const end = state.page * state.pageSize;
+            return end > state.total ? state.total : end;
+        }
+
+        function setPageMeta(page, total, totalPages) {
+            state.page = page;
+            state.total = total;
+            state.totalPages = totalPages;
+            const from = fromItem(), to = toItem();
+            $('pageInfo').textContent = from === 0
+                ? 'Menampilkan 0–0 dari ' + total + ' data'
+                : 'Menampilkan ' + from + '–' + to + ' dari ' + total + ' data';
+            renderPagination();
+        }
+
+        function renderRows(items) {
+            const tbody = $('productRows');
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="9"><span class="material-icons">inbox</span> Tidak ada data yang cocok dengan kriteria.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = items.map((item) => `
+                <tr>
+                    <td class="td-id">${item.id}</td>
+                    <td class="td-title">${esc(item.title)}</td>
+                    <td class="td-price">${formatRupiah(item.price)}</td>
+                    <td>${item.category ? `<span class="badge">${esc(item.category)}</span>` : '-'}</td>
+                    <td>${item.ratingRate != null ? `${Number(item.ratingRate).toFixed(1)} <span class="muted">(${item.ratingCount ?? 0})</span>` : '-'}</td>
+                    <td>${formatDateTime(item.createdAt)}</td>
+                    <td>${formatDateTime(item.updatedAt)}</td>
+                    <td class="td-ver">${item.version}</td>
+                    <td class="td-actions">
+                        <a class="btn-icon btn-edit" href="/Screen/Products/Edit?id=${item.id}" title="Edit"><span class="material-icons">edit</span></a>
+                        <a class="btn-icon btn-delete" href="/Screen/Products/Delete?id=${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
+                    </td>
+                </tr>`).join('');
+        }
+
+        function buildPages(current, total) {
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+            const candidates = [1, total];
+            for (let i = current - 2; i <= current + 2; i++) if (i >= 1 && i <= total) candidates.push(i);
+            const sorted = [...new Set(candidates)].sort((a, b) => a - b);
+            const out = [];
+            let prev = 0;
+            for (const p of sorted) {
+                if (p - prev > 1) out.push('...');
+                out.push(p);
+                prev = p;
+            }
+            return out;
+        }
+
+        function pgButton(icon, page, disabled, label) {
+            return `<button class="pg" data-page="${page}" ${disabled ? 'disabled' : ''} title="${label}"><span class="material-icons">${icon}</span></button>`;
+        }
+
+        function renderPagination() {
+            const el = $('pagination');
+            const total = state.totalPages;
+            if (total <= 1) { el.innerHTML = ''; return; }
+            const parts = [];
+            parts.push(pgButton('first_page', 1, state.page === 1, 'Halaman pertama'));
+            parts.push(pgButton('chevron_left', state.page - 1, state.page === 1, 'Halaman sebelumnya'));
+            for (const p of buildPages(state.page, total)) {
+                if (p === '...') parts.push('<span class="pg-ellipsis">. . .</span>');
+                else parts.push(`<button class="pg ${p === state.page ? 'active' : ''}" data-page="${p}">${p}</button>`);
+            }
+            parts.push(pgButton('chevron_right', state.page + 1, state.page === total, 'Halaman berikutnya'));
+            parts.push(pgButton('last_page', total, state.page === total, 'Halaman terakhir'));
+            el.innerHTML = parts.join('');
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.th-sort').forEach((btn) => {
+                const active = btn.dataset.sort === state.sortBy;
+                btn.classList.toggle('active', active);
+                const ic = btn.querySelector('.sort-ic');
+                if (!ic) return;
+                if (active) ic.textContent = state.sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward';
+                else ic.textContent = 'swap_vert';
+            });
+        }
+
+        async function loadData() {
+            const tbody = $('productRows');
+            tbody.innerHTML = '<tr class="row-loading"><td colspan="9"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>';
+            try {
+                const res = await fetch('/products/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const json = await res.json();
+                if (!json.isSuccess) throw new Error(json.message || 'Gagal memuat data.');
+                renderRows(json.data.items);
+                setPageMeta(json.data.page, json.data.total, json.data.totalPages);
+            } catch (err) {
+                tbody.innerHTML = `<tr class="row-empty"><td colspan="9">Gagal memuat data: ${esc(err.message)}</td></tr>`;
+                setPageMeta(1, 0, 0);
+            } finally {
+                updateSortIndicators();
+            }
+        }
+
+        function applyFilter() {
+            state.category = $('categorySelect').value;
+            state.priceMin = $('priceMin').value;
+            state.priceMax = $('priceMax').value;
+            state.createdFrom = $('createdFrom').value;
+            state.createdTo = $('createdTo').value;
+            state.updatedFrom = $('updatedFrom').value;
+            state.updatedTo = $('updatedTo').value;
+            state.page = 1;
+            loadData();
+        }
+
+        function resetFilter() {
+            $('categorySelect').value = '';
+            $('priceMin').value = '';
+            $('priceMax').value = '';
+            $('createdFrom').value = '';
+            $('createdTo').value = '';
+            $('updatedFrom').value = '';
+            $('updatedTo').value = '';
+            $('searchInput').value = '';
+            state.search = '';
+            state.category = '';
+            state.priceMin = '';
+            state.priceMax = '';
+            state.createdFrom = '';
+            state.createdTo = '';
+            state.updatedFrom = '';
+            state.updatedTo = '';
+            state.page = 1;
+            loadData();
+        }
+
+        let searchTimer = null;
+        function onSearchInput() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                state.search = $('searchInput').value;
+                state.page = 1;
+                loadData();
+            }, 350);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            $('searchInput').addEventListener('input', onSearchInput);
+            $('searchInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { clearTimeout(searchTimer); state.search = $('searchInput').value; state.page = 1; loadData(); }
+            });
+            $('pageSizeSelect').addEventListener('change', (e) => {
+                state.pageSize = Number(e.target.value);
+                state.page = 1;
+                loadData();
+            });
+            $('applyFilter').addEventListener('click', applyFilter);
+            $('resetFilter').addEventListener('click', resetFilter);
+            document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
+                const col = btn.dataset.sort;
+                if (state.sortBy === col) state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
+                else { state.sortBy = col; state.sortOrder = 'asc'; }
+                state.page = 1;
+                loadData();
+            }));
+            $('pagination').addEventListener('click', (e) => {
+                const btn = e.target.closest('.pg');
+                if (!btn || btn.disabled) return;
+                const page = Number(btn.dataset.page);
+                if (page >= 1 && page <= state.totalPages && page !== state.page) {
+                    state.page = page;
+                    loadData();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+            loadData();
+        });
+    </script>
 }
-
-<p><a class="btn btn-utama" asp-page="Create">+ Tambah Produk</a></p>
-
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Judul</th>
-            <th>Harga</th>
-            <th>Kategori</th>
-            <th>Rating</th>
-            <th>Versi</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.Products.Count == 0)
-        {
-            <tr><td colspan="7">Belum ada produk. Klik "Tambah Produk" untuk mulai.</td></tr>
-        }
-        @foreach (var p in Model.Products)
-        {
-            <tr>
-                <td>@p.Id</td>
-                <td>@p.Title</td>
-                <td>Rp @p.Price.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("id-ID"))</td>
-                <td>@(p.Category ?? "-")</td>
-                <td>@(p.RatingRate?.ToString("0.0") ?? "-") (@(p.RatingCount?.ToString() ?? "-"))</td>
-                <td>@p.CreatedAt</td>
-                <td>@p.CreatedBy</td>
-                <td>@p.UpdatedAt</td>
-                <td>@p.UpdatedBy</td>
-                <td>@p.Version</td>
-                <td>
-                    <a class="btn btn-kedua" asp-page="Edit" asp-route-id="@p.Id">Edit</a>
-                    <a class="btn btn-bahaya" asp-page="Delete" asp-route-id="@p.Id">Hapus</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
