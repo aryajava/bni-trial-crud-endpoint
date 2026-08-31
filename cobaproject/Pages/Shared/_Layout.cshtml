@@ -35,35 +35,68 @@
         th, td { padding: 8px 10px; border-bottom: 1px solid #e5e9f0; text-align: left; }
         th { background: #eef2f8; }
 
+        .page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+        .page-header h1 { margin: 0; font-size: 22px; }
+
         .btn {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
             border: 1px solid transparent;
             cursor: pointer;
             text-decoration: none;
             font-size: 14px;
         }
+        .btn .material-icons { font-size: 18px; }
         .btn-utama { background: #1a56db; color: white; }
+        .btn-utama:hover { background: #1648bb; }
         .btn-kedua { background: #e5e9f0; color: #1f2937; }
+        .btn-kedua:hover { background: #d6dde8; }
         .btn-bahaya { background: #b91c1c; color: white; }
+        .btn-bahaya:hover { background: #991b1b; }
 
-        form.kartu { max-width: 640px; background: white; padding: 20px 24px; border: 1px solid #d9dee7; }
-        form.kartu label { display: block; margin: 14px 0 4px; font-weight: 600; }
-        form.kartu input, form.kartu textarea {
+        .form-card { max-width: 720px; background: white; padding: 24px 28px; border: 1px solid #d9dee7; border-radius: 12px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+        .form-field { display: flex; flex-direction: column; gap: 6px; }
+        .form-field.full { grid-column: 1 / -1; }
+        .form-field label { font-size: 13px; font-weight: 600; color: #374151; }
+        .form-field input, .form-field select, .form-field textarea {
             width: 100%;
-            padding: 7px 10px;
+            padding: 9px 12px;
             border: 1px solid #c5ccd8;
-            border-radius: 6px;
+            border-radius: 8px;
             font: inherit;
+            background: #fff;
         }
-        form.kartu .tombol { margin-top: 20px; }
+        .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+            outline: none;
+            border-color: #1a56db;
+            box-shadow: 0 0 0 3px rgba(26, 86, 219, .12);
+        }
+        .form-actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+
+        .info-bar { display: flex; gap: 8px 20px; flex-wrap: wrap; background: #fff; border: 1px solid #d9dee7; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+        .info-bar .item { font-size: 13px; color: #4b5563; }
+        .info-bar .item b { color: #1f2937; }
+
+        .detail-card { max-width: 720px; background: white; border: 1px solid #d9dee7; border-radius: 12px; overflow: hidden; }
+        .detail-card .row { display: grid; grid-template-columns: 200px 1fr; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #eef2f6; }
+        .detail-card .row:last-child { border-bottom: none; }
+        .detail-card .row:nth-child(odd) { background: #fafbfd; }
+        .detail-card .k { font-weight: 600; color: #6b7280; font-size: 13px; }
+        .detail-card .v { color: #1f2937; }
+
+        .banner-hapus { display: flex; align-items: center; gap: 10px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 10px; margin: 16px 0; }
+        .banner-hapus .material-icons { font-size: 22px; }
+
         .pesan-error {
             background: #fee2e2; color: #991b1b;
-            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px;
+            padding: 10px 14px; border-radius: 8px; margin-bottom: 16px;
             border: 1px solid #fca5a5;
         }
-        .field-error { color: #b91c1c; font-size: 13px; }
+        .field-error { color: #b91c1c; font-size: 12px; }
     </style>
 </head>
 <body>

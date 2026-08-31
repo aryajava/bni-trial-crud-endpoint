@@ -43,6 +43,12 @@ public class EditModel : PageModel
 
         if (!ModelState.IsValid)
         {
+            var current = await _productService.GetByIdAsync(id);
+            if (current is not null)
+            {
+                Request.CreatedAt = current.CreatedAt;
+                Request.UpdatedAt = current.UpdatedAt;
+            }
             return Page();
         }
 
@@ -76,7 +82,9 @@ public class EditModel : PageModel
             Image = product.Image,
             RatingRate = product.RatingRate,
             RatingCount = product.RatingCount,
-            Version = product.Version
+            Version = product.Version,
+            CreatedAt = product.CreatedAt,
+            UpdatedAt = product.UpdatedAt
         };
     }
 }

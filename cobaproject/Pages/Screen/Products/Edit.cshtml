@@ -2,56 +2,76 @@
 @model cobaproject.Pages.Screen.Products.EditModel
 @{
     ViewData["Title"] = "Edit Produk";
+    var idId = System.Globalization.CultureInfo.GetCultureInfo("id-ID");
 }
 
-<h1>Edit Produk #@Model.Id</h1>
+<div class="page-header">
+    <h1>Edit Produk #@Model.Id</h1>
+    <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+</div>
 
-<form class="kartu" method="post">
+<div class="info-bar">
+    <div class="item"><b>ID:</b> @Model.Id</div>
+    <div class="item"><b>Dibuat:</b> @Model.Request.CreatedAt.ToString("dd MMM yyyy HH:mm", idId)</div>
+    <div class="item"><b>Diubah:</b> @(Model.Request.UpdatedAt?.ToString("dd MMM yyyy HH:mm", idId) ?? "-")</div>
+    <div class="item"><b>Versi:</b> @Model.Request.Version</div>
+</div>
+
+<form class="form-card" method="post">
     <div asp-validation-summary="All" class="pesan-error"></div>
 
-    <label asp-for="Request.Title"></label>
-    <input asp-for="Request.Title" />
-    <span asp-validation-for="Request.Title" class="field-error"></span>
+    <div class="form-grid">
+        <div class="form-field full">
+            <label asp-for="Request.Title">Judul</label>
+            <input asp-for="Request.Title" />
+            <span asp-validation-for="Request.Title" class="field-error"></span>
+        </div>
 
-    <label asp-for="Request.Price"></label>
-    <input data-rupiah data-rupiah-target="Request.Price" inputmode="decimal" />
-    <input asp-for="Request.Price" type="hidden" />
-    <span asp-validation-for="Request.Price" class="field-error"></span>
+        <div class="form-field">
+            <label asp-for="Request.Category">Kategori</label>
+            <select asp-for="Request.Category">
+                <option value="" disabled>Pilih Kategori</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category">@category</option>
+                }
+            </select>
+            <span asp-validation-for="Request.Category" class="field-error"></span>
+        </div>
 
-    <label asp-for="Request.Description"></label>
-    <textarea asp-for="Request.Description" rows="3"></textarea>
+        <div class="form-field">
+            <label asp-for="Request.Price">Harga</label>
+            <input data-rupiah data-rupiah-target="Request.Price" inputmode="decimal" />
+            <input asp-for="Request.Price" type="hidden" />
+            <span asp-validation-for="Request.Price" class="field-error"></span>
+        </div>
 
-    <label asp-for="Request.Category"></label>
-    <select asp-for="Request.Category" class="form-control">
-        <option value="" selected disabled>Pilih Kategori</option>
-        @foreach (var category in Model.Categories)
-        {
-            if (Model.Request.Category == category)
-            {
-                <option value="@category" selected>@category</option>
-            }
-            else
-            {
-                <option value="@category">@category</option>
-            }
-        }
-    </select>
-    <span asp-validation-for="Request.Category" class="field-error"></span>
+        <div class="form-field">
+            <label asp-for="Request.RatingRate">Rating</label>
+            <input asp-for="Request.RatingRate" />
+        </div>
 
-    <label asp-for="Request.Image"></label>
-    <input asp-for="Request.Image" />
+        <div class="form-field">
+            <label asp-for="Request.RatingCount">Jumlah Rating</label>
+            <input asp-for="Request.RatingCount" />
+        </div>
 
-    <label asp-for="Request.RatingRate"></label>
-    <input asp-for="Request.RatingRate" />
+        <div class="form-field full">
+            <label asp-for="Request.Image">URL Gambar</label>
+            <input asp-for="Request.Image" />
+        </div>
 
-    <label asp-for="Request.RatingCount"></label>
-    <input asp-for="Request.RatingCount" />
+        <div class="form-field full">
+            <label asp-for="Request.Description">Deskripsi</label>
+            <textarea asp-for="Request.Description" rows="4"></textarea>
+        </div>
+    </div>
 
     <input type="hidden" asp-for="Request.Version" />
 
-    <div class="tombol">
-        <button class="btn btn-utama" type="submit">Simpan</button>
-        <a class="btn btn-kedua" asp-page="Index">Batal</a>
+    <div class="form-actions">
+        <button class="btn btn-utama" type="submit"><span class="material-icons">save</span> Simpan</button>
+        <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">close</span> Batal</a>
     </div>
 </form>
 

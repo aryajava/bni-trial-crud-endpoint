@@ -5,9 +5,6 @@
 }
 
 <style>
-    .page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-    .page-header h1 { margin: 0; font-size: 22px; }
-
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
     .search { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #c5ccd8; border-radius: 8px; padding: 0 12px; flex: 1; min-width: 220px; max-width: 420px; }
     .search .material-icons { color: #6b7280; }
@@ -22,13 +19,6 @@
     .f-range input { min-width: 0; }
     .f-range span { color: #6b7280; }
     .f-actions { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
-
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; text-decoration: none; font-size: 14px; }
-    .btn .material-icons { font-size: 18px; }
-    .btn-utama { background: #1a56db; color: #fff; }
-    .btn-utama:hover { background: #1648bb; }
-    .btn-kedua { background: #e5e9f0; color: #1f2937; }
-    .btn-kedua:hover { background: #d6dde8; }
 
     .data-table { margin-top: 0; }
     .data-table th { background: #eef2f8; padding: 0; }
@@ -143,14 +133,16 @@
                 <th><button class="th-sort" data-sort="price">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="category">Kategori<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="ratingRate">Rating<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="createdBy">Dibuat Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="createdAt">Dibuat<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="updatedBy">Diubah Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="updatedAt">Diubah<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="version">Versi<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th>Aksi</th>
             </tr>
         </thead>
         <tbody id="productRows">
-            <tr class="row-loading"><td colspan="9"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>
+            <tr class="row-loading"><td colspan="11"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>
         </tbody>
     </table>
 </div>
@@ -248,7 +240,7 @@
         function renderRows(items) {
             const tbody = $('productRows');
             if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr class="row-empty"><td colspan="9"><span class="material-icons">inbox</span> Tidak ada data yang cocok dengan kriteria.</td></tr>';
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="11"><span class="material-icons">inbox</span> Tidak ada data yang cocok dengan kriteria.</td></tr>';
                 return;
             }
             tbody.innerHTML = items.map((item) => `
@@ -258,12 +250,14 @@
                     <td class="td-price">${formatRupiah(item.price)}</td>
                     <td>${item.category ? `<span class="badge">${esc(item.category)}</span>` : '-'}</td>
                     <td>${item.ratingRate != null ? `${Number(item.ratingRate).toFixed(1)} <span class="muted">(${item.ratingCount ?? 0})</span>` : '-'}</td>
+                    <td>${item.createdBy ? esc(item.createdBy) : '-'}</td>
                     <td>${formatDateTime(item.createdAt)}</td>
+                    <td>${item.updatedBy ? esc(item.updatedBy) : '-'}</td>
                     <td>${formatDateTime(item.updatedAt)}</td>
                     <td class="td-ver">${item.version}</td>
                     <td class="td-actions">
-                        <a class="btn-icon btn-edit" href="/Screen/Products/Edit?id=${item.id}" title="Edit"><span class="material-icons">edit</span></a>
-                        <a class="btn-icon btn-delete" href="/Screen/Products/Delete?id=${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
+                        <a class="btn-icon btn-edit" href="/Screen/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
+                        <a class="btn-icon btn-delete" href="/Screen/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
                     </td>
                 </tr>`).join('');
         }
@@ -325,7 +319,7 @@
                 renderRows(json.data.items);
                 setPageMeta(json.data.page, json.data.total, json.data.totalPages);
             } catch (err) {
-                tbody.innerHTML = `<tr class="row-empty"><td colspan="9">Gagal memuat data: ${esc(err.message)}</td></tr>`;
+                tbody.innerHTML = `<tr class="row-empty"><td colspan="11">Gagal memuat data: ${esc(err.message)}</td></tr>`;
                 setPageMeta(1, 0, 0);
             } finally {
                 updateSortIndicators();

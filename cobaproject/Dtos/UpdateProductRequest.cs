@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 
 namespace cobaproject.Dtos;
 
@@ -26,4 +27,10 @@ public class UpdateProductRequest
     [Required]
     [Range(1, int.MaxValue)]
     public int Version { get; set; }
+
+    [BindNever]
+    public DateTime CreatedAt { get; set; }
+
+    [BindNever]
+    public DateTime? UpdatedAt { get; set; }
 }

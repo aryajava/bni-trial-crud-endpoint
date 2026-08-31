@@ -2,30 +2,44 @@
 @model cobaproject.Pages.Screen.Products.DeleteModel
 @{
     ViewData["Title"] = "Hapus Produk";
+    var idId = System.Globalization.CultureInfo.GetCultureInfo("id-ID");
 }
 
-<h1>Hapus Produk</h1>
+<div class="page-header">
+    <h1>Hapus Produk #@Model.Product?.Id</h1>
+    <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+</div>
 
 @if (Model.Product is null)
 {
-    <p>Produk tidak ditemukan.</p>
-    <a class="btn btn-kedua" asp-page="Index">Kembali ke daftar</a>
+    <div class="pesan-error"><span class="material-icons" style="vertical-align: middle;">search_off</span> Produk tidak ditemukan.</div>
+    <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali ke daftar</a>
 }
 else
 {
-    <table>
-        <tr><th>ID</th><td>@Model.Product.Id</td></tr>
-        <tr><th>Judul</th><td>@Model.Product.Title</td></tr>
-        <tr><th>Harga</th><td>Rp @Model.Product.Price.ToString("N0")</td></tr>
-        <tr><th>Kategori</th><td>@(Model.Product.Category ?? "-")</td></tr>
-        <tr><th>Rating</th><td>@(Model.Product.RatingRate?.ToString("0.0") ?? "-") (@(Model.Product.RatingCount?.ToString() ?? "-"))</td></tr>
-    </table>
+    <div class="detail-card">
+        <div class="row"><div class="k">ID</div><div class="v">@Model.Product.Id</div></div>
+        <div class="row"><div class="k">Judul</div><div class="v">@Model.Product.Title</div></div>
+        <div class="row"><div class="k">Harga</div>
+            <div class="v">@Model.Product.Price.ToString("C2", idId)</div></div>
+        <div class="row"><div class="k">Kategori</div><div class="v">@(Model.Product.Category ?? "-")</div></div>
+        <div class="row"><div class="k">Rating</div>
+            <div class="v">@(Model.Product.RatingRate?.ToString("0.0", idId) ?? "-") (@(Model.Product.RatingCount?.ToString() ?? "-"))</div></div>
+        <div class="row"><div class="k">Dibuat</div><div class="v">@Model.Product.CreatedAt.ToString("dd MMM yyyy HH:mm", idId)</div></div>
+        <div class="row"><div class="k">Diubah</div><div class="v">@(Model.Product.UpdatedAt?.ToString("dd MMM yyyy HH:mm", idId) ?? "-")</div></div>
+        <div class="row"><div class="k">Versi</div><div class="v">@Model.Product.Version</div></div>
+    </div>
 
-    <p>Yakin ingin menghapus produk <strong>@Model.Product.Title</strong>?</p>
+    <div class="banner-hapus">
+        <span class="material-icons">warning</span>
+        <span>Yakin ingin menghapus produk <strong>@Model.Product.Title</strong>? Tindakan ini tidak dapat dibatalkan.</span>
+    </div>
 
     <form method="post">
-        <button class="btn btn-bahaya" type="submit">Hapus (soft delete)</button>
-        <button class="btn btn-bahaya" type="submit" asp-page-handler="Hard">Hapus permanen</button>
-        <a class="btn btn-kedua" asp-page="Index">Batal</a>
+        <div class="form-actions">
+            <button class="btn btn-bahaya" type="submit"><span class="material-icons">delete</span> Hapus (soft delete)</button>
+            <button class="btn btn-bahaya" type="submit" asp-page-handler="Hard"><span class="material-icons">delete_forever</span> Hapus permanen</button>
+            <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">close</span> Batal</a>
+        </div>
     </form>
 }

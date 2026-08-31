@@ -35,7 +35,9 @@ public class ProductService : IProductService
         ["ratingCount"] = "RATING_COUNT",
         ["isActive"] = "IS_ACTIVE",
         ["createdAt"] = "CREATED_AT",
+        ["createdBy"] = "CREATED_BY",
         ["updatedAt"] = "UPDATED_AT",
+        ["updatedBy"] = "UPDATED_BY",
         ["version"] = "VERSION",
     };
 
@@ -78,6 +80,8 @@ public class ProductService : IProductService
                  OR DESCRIPTION LIKE @Search ESCAPE '\'
                  OR CATEGORY LIKE @Search ESCAPE '\'
                  OR IMAGE LIKE @Search ESCAPE '\'
+                 OR CREATED_BY LIKE @Search ESCAPE '\'
+                 OR UPDATED_BY LIKE @Search ESCAPE '\'
                  OR CAST(PRICE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
                  OR CAST(RATING_RATE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
                  OR CAST(RATING_COUNT AS NVARCHAR(50)) LIKE @Search ESCAPE '\')

@@ -35,6 +35,10 @@ public static class ProductMapper
             RatingRate = entity.RatingRate,
             RatingCount = entity.RatingCount,
             IsActive = entity.IsActive,
+            CreatedAt = entity.CreatedAt,
+            CreatedBy = entity.CreatedBy,
+            UpdatedAt = entity.UpdatedAt,
+            UpdatedBy = entity.UpdatedBy,
             Version = entity.Version
         };
     }
