@@ -43,6 +43,8 @@
             --bs-body-color: #1F2937;
             --bs-body-font-size: 14px;
             --bs-body-font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            --bs-form-control-bg: #FFFFFF;
+            --bs-form-select-bg: #FFFFFF;
         }
 
         body { min-height: 100vh; }
@@ -150,6 +152,13 @@
         .table-data > :not(caption) > * > * { padding: 6px 10px; }
         .form-label { font-size: 13px; }
         .form-label.small { font-size: 12px; }
+        table thead { background: var(--gk-primary-soft); }
+        table thead th { color: var(--gk-primary-text); border-bottom: 2px solid var(--gk-border); }
+        .search-box .material-icons { font-size: 16px; }
+        .offcanvas-nav { width: 240px; }
+        .offcanvas .sidebar-brand { padding: 0; }
+        .offcanvas .nav-group-title { padding-left: 0; }
+        .detail-k { width: 200px; }
         th { white-space: nowrap; }
     </style>
 </head>
@@ -196,16 +205,16 @@
         </div>
     </div>
 
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMobile" style="width: 240px">
+    <div class="offcanvas offcanvas-start offcanvas-nav" tabindex="-1" id="sidebarMobile">
         <div class="offcanvas-header">
-            <a class="sidebar-brand" asp-page="/Screen/Products/Index" style="padding: 0">
+            <a class="sidebar-brand" asp-page="/Screen/Products/Index">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column">
-            <div class="nav-group-title" style="padding-left: 0">Master</div>
+            <div class="nav-group-title">Master</div>
             <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Screen/Products/Index">
                 <span class="material-icons">inventory_2</span> Master Produk
             </a>

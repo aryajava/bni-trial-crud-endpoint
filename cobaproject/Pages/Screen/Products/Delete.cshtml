@@ -33,7 +33,7 @@ else
         <div class="table-responsive">
             <table class="table table-striped align-middle mb-0">
                 <tbody>
-                    <tr><th class="text-secondary fw-semibold" style="width: 200px">ID</th><td>@Model.Product.Id</td></tr>
+                    <tr><th class="text-secondary fw-semibold detail-k">ID</th><td>@Model.Product.Id</td></tr>
                     <tr><th class="text-secondary fw-semibold">Judul</th><td>@Model.Product.Title</td></tr>
                     <tr><th class="text-secondary fw-semibold">Harga</th><td>@Model.Product.Price.ToString("C2", idId)</td></tr>
                     <tr><th class="text-secondary fw-semibold">Diskon</th><td>@(Model.Product.DiscountPercent.HasValue ? $"{Model.Product.DiscountPercent}%" : "-")</td></tr>
