@@ -33,13 +33,15 @@ public class EditModel : PageModel
 
         Id = id;
         Request = CopyFrom(product);
-        Categories = _productService.GetCategoriesAsync().Result;
+        await LoadCategoriesAsync();
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(int id)
     {
         Id = id;
+
+        await LoadCategoriesAsync();
 
         if (!ModelState.IsValid)
         {
@@ -63,6 +65,11 @@ public class EditModel : PageModel
 
         TempData["SuccessMessage"] = $"Produk \"{product.Title}\" berhasil disimpan.";
         return RedirectToPage("Index");
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        Categories = await _productService.GetCategoriesAsync();
     }
 
     private static UpdateProductRequest CopyFrom(ProductDto product)

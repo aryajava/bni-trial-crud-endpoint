@@ -20,14 +20,15 @@ public class CreateModel : PageModel
 
     private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SCREEN";
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        // Load categories for the dropdown
-        Categories = _productService.GetCategoriesAsync().Result;
+        await LoadCategoriesAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        await LoadCategoriesAsync();
+
         if (!ModelState.IsValid)
         {
             return Page();
@@ -42,5 +43,10 @@ public class CreateModel : PageModel
 
         TempData["SuccessMessage"] = $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}).";
         return RedirectToPage("Index");
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        Categories = await _productService.GetCategoriesAsync();
     }
 }
