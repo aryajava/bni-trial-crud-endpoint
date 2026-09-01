@@ -17,7 +17,7 @@ public class ProductService : IProductService
 
     private const string SelectColumns = """
         ID, TITLE, PRICE, DESCRIPTION, CATEGORY, IMAGE,
-        RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, IS_ACTIVE, CREATED_AT, CREATED_BY,
+        RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, STOCK, IS_ACTIVE, CREATED_AT, CREATED_BY,
         UPDATED_AT, UPDATED_BY, VERSION
         """;
 
@@ -38,6 +38,8 @@ public class ProductService : IProductService
         ["image"] = "IMAGE",
         ["ratingRate"] = "RATING_RATE",
         ["ratingCount"] = "RATING_COUNT",
+        ["discountPercent"] = "DISCOUNT_PERCENT",
+        ["stock"] = "STOCK",
         ["isActive"] = "IS_ACTIVE",
         ["createdAt"] = "CREATED_AT",
         ["createdBy"] = "CREATED_BY",
@@ -90,7 +92,8 @@ public class ProductService : IProductService
                  OR CAST(PRICE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
                  OR CAST(RATING_RATE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
                  OR CAST(RATING_COUNT AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
-                 OR CAST(DISCOUNT_PERCENT AS NVARCHAR(10)) LIKE @Search ESCAPE '\')
+                 OR CAST(DISCOUNT_PERCENT AS NVARCHAR(10)) LIKE @Search ESCAPE '\'
+                 OR CAST(STOCK AS NVARCHAR(10)) LIKE @Search ESCAPE '\')
                 """, query.Search);
 
         if (!string.IsNullOrWhiteSpace(query.Title))
@@ -105,6 +108,7 @@ public class ProductService : IProductService
                 "CATEGORY LIKE @Category ESCAPE '\\'", query.Category);
 
         AddRangeCondition(conditions, parameters, "Price", $"({EffectivePriceSql})", query.PriceFrom, query.PriceTo);
+        AddRangeCondition(conditions, parameters, "Stock", "STOCK", query.StockFrom, query.StockTo);
         AddRangeCondition(conditions, parameters, "Created", "CREATED_AT", query.CreatedFrom, query.CreatedTo);
         AddRangeCondition(conditions, parameters, "Updated", "UPDATED_AT", query.UpdatedFrom, query.UpdatedTo);
 
@@ -191,12 +195,12 @@ public class ProductService : IProductService
         var sql = """
             INSERT INTO LOSCONSUMER.MASTER_PRODUCT
                 (TITLE, PRICE, DESCRIPTION, CATEGORY, IMAGE,
-                 RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, IS_ACTIVE, CREATED_AT, CREATED_BY,
+                 RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, STOCK, IS_ACTIVE, CREATED_AT, CREATED_BY,
                  UPDATED_AT, UPDATED_BY, VERSION)
             OUTPUT INSERTED.ID
             VALUES
                 (@Title, @Price, @Description, @Category, @Image,
-                 @RatingRate, @RatingCount, @DiscountPercent, 1, GETDATE(), @CreatedBy,
+                 @RatingRate, @RatingCount, @DiscountPercent, @Stock, 1, GETDATE(), @CreatedBy,
                  NULL, NULL, 1);
             """;
 
@@ -210,6 +214,7 @@ public class ProductService : IProductService
             request.RatingRate,
             request.RatingCount,
             request.DiscountPercent,
+            Stock = request.Stock ?? 0,
             CreatedBy = createdBy
         });
 
@@ -234,6 +239,7 @@ public class ProductService : IProductService
                    RATING_RATE  = @RatingRate,
                    RATING_COUNT = @RatingCount,
                    DISCOUNT_PERCENT = @DiscountPercent,
+                   STOCK          = @Stock,
                    UPDATED_AT   = GETDATE(),
                    UPDATED_BY   = @UpdatedBy,
                    VERSION      = VERSION + 1
@@ -252,6 +258,7 @@ public class ProductService : IProductService
             request.RatingRate,
             request.RatingCount,
             request.DiscountPercent,
+            Stock = request.Stock ?? 0,
             UpdatedBy = updatedBy,
             Id = id,
             request.Version

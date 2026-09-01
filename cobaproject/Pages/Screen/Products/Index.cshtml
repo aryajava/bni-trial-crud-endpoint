@@ -105,6 +105,14 @@
         </div>
     </div>
     <div class="f-group">
+        <label>Stok</label>
+        <div class="f-range">
+            <input type="number" id="stockMin" placeholder="Min" min="0" step="1" />
+            <span>–</span>
+            <input type="number" id="stockMax" placeholder="Max" min="0" step="1" />
+        </div>
+    </div>
+    <div class="f-group">
         <label>Dibuat (Tanggal)</label>
         <div class="f-range">
             <input type="date" id="createdFrom" />
@@ -137,6 +145,7 @@
                 <th><button class="th-sort" data-sort="price" title="Sortir berdasarkan harga efektif (setelah diskon)">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="category">Kategori<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="ratingRate">Rating<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="stock">Stok<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="createdBy">Dibuat Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="createdAt">Dibuat<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="updatedBy">Diubah Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
@@ -145,7 +154,7 @@
             </tr>
         </thead>
         <tbody id="productRows">
-            <tr class="row-loading"><td colspan="11"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>
+            <tr class="row-loading"><td colspan="13"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>
         </tbody>
     </table>
 </div>
@@ -177,6 +186,8 @@
             category: '',
             priceMin: '',
             priceMax: '',
+            stockMin: '',
+            stockMax: '',
             createdFrom: '',
             createdTo: '',
             updatedFrom: '',
@@ -227,6 +238,8 @@
             if (state.category) q.set('category', state.category);
             if (state.priceMin !== '') q.set('priceFrom', state.priceMin);
             if (state.priceMax !== '') q.set('priceTo', state.priceMax);
+            if (state.stockMin !== '') q.set('stockFrom', state.stockMin);
+            if (state.stockMax !== '') q.set('stockTo', state.stockMax);
             if (state.createdFrom) q.set('createdFrom', state.createdFrom);
             if (state.createdTo) q.set('createdTo', state.createdTo + 'T23:59:59.999');
             if (state.updatedFrom) q.set('updatedFrom', state.updatedFrom);
@@ -254,10 +267,17 @@
             renderPagination();
         }
 
+        function renderStok(item) {
+            const s = item.stock ?? 0;
+            const cls = s <= 0 ? 'badge-habis' : s <= 5 ? 'badge-menipis' : 'badge-tersedia';
+            const lbl = s <= 0 ? 'Habis' : s <= 5 ? 'Menipis' : 'Tersedia';
+            return `${s} <span class="badge-stok ${cls}">${lbl}</span>`;
+        }
+
         function renderRows(items) {
             const tbody = $('productRows');
             if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr class="row-empty"><td colspan="11"><span class="material-icons">inbox</span> Tidak ada data yang cocok dengan kriteria.</td></tr>';
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="13"><span class="material-icons">inbox</span> Tidak ada data yang cocok dengan kriteria.</td></tr>';
                 return;
             }
             tbody.innerHTML = items.map((item, idx) => {
@@ -274,6 +294,7 @@
                     <td class="td-price">${renderHarga(item)}</td>
                     <td>${item.category ? `<span class="badge">${esc(item.category)}</span>` : '-'}</td>
                     <td>${item.ratingRate != null ? `${Number(item.ratingRate).toFixed(1)} <span class="muted">(${item.ratingCount ?? 0})</span>` : '-'}</td>
+                    <td>${renderStok(item)}</td>
                     <td>${item.createdBy ? esc(item.createdBy) : '-'}</td>
                     <td>${formatDateTime(item.createdAt)}</td>
                     <td>${item.updatedBy ? esc(item.updatedBy) : '-'}</td>
@@ -331,7 +352,7 @@
 
         async function loadData() {
             const tbody = $('productRows');
-            tbody.innerHTML = '<tr class="row-loading"><td colspan="9"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>';
+            tbody.innerHTML = '<tr class="row-loading"><td colspan="13"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>';
             try {
                 const res = await fetch('/products/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -340,7 +361,7 @@
                 renderRows(json.data.items);
                 setPageMeta(json.data.page, json.data.total, json.data.totalPages);
             } catch (err) {
-                tbody.innerHTML = `<tr class="row-empty"><td colspan="11">Gagal memuat data: ${esc(err.message)}</td></tr>`;
+                tbody.innerHTML = `<tr class="row-empty"><td colspan="13">Gagal memuat data: ${esc(err.message)}</td></tr>`;
                 setPageMeta(1, 0, 0);
             } finally {
                 updateSortIndicators();
@@ -351,6 +372,8 @@
             state.category = $('categorySelect').value;
             state.priceMin = $('priceMin').value;
             state.priceMax = $('priceMax').value;
+            state.stockMin = $('stockMin').value;
+            state.stockMax = $('stockMax').value;
             state.createdFrom = $('createdFrom').value;
             state.createdTo = $('createdTo').value;
             state.updatedFrom = $('updatedFrom').value;
@@ -363,6 +386,8 @@
             $('categorySelect').value = '';
             $('priceMin').value = '';
             $('priceMax').value = '';
+            $('stockMin').value = '';
+            $('stockMax').value = '';
             $('createdFrom').value = '';
             $('createdTo').value = '';
             $('updatedFrom').value = '';
@@ -372,6 +397,8 @@
             state.category = '';
             state.priceMin = '';
             state.priceMax = '';
+            state.stockMin = '';
+            state.stockMax = '';
             state.createdFrom = '';
             state.createdTo = '';
             state.updatedFrom = '';

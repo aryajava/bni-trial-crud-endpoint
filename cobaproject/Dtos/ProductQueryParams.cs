@@ -38,6 +38,12 @@ public class ProductQueryParams
     [Description("Batas atas rentang harga (inclusive).")]
     public decimal? PriceTo { get; set; }
 
+    [Description("Batas bawah rentang stok (inclusive).")]
+    public int? StockFrom { get; set; }
+
+    [Description("Batas atas rentang stok (inclusive).")]
+    public int? StockTo { get; set; }
+
     [Description("Batas bawah rentang CREATED_AT (inclusive).")]
     public DateTime? CreatedFrom { get; set; }
 

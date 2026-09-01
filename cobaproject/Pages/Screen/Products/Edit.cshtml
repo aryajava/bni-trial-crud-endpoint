@@ -52,7 +52,7 @@
         <div class="form-field">
             <label asp-for="Request.DiscountPercent">Diskon</label>
             <div class="field-input-group">
-                <input asp-for="Request.DiscountPercent" data-diskon inputmode="numeric" />
+                <input asp-for="Request.DiscountPercent" data-bilangan data-bilangan-max="100" inputmode="numeric" />
                 <span class="suffix">%</span>
             </div>
             <span asp-validation-for="Request.DiscountPercent" class="field-error"></span>
@@ -66,6 +66,12 @@
         <div class="form-field">
             <label asp-for="Request.RatingCount">Jumlah Rating</label>
             <input asp-for="Request.RatingCount" />
+        </div>
+
+        <div class="form-field">
+            <label asp-for="Request.Stock">Stok</label>
+            <input asp-for="Request.Stock" data-bilangan inputmode="numeric" />
+            <span asp-validation-for="Request.Stock" class="field-error"></span>
         </div>
 
         <div class="form-field full">
@@ -90,5 +96,5 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <partial name="_RupiahScriptsPartial" />
-    <partial name="_DiscountScriptsPartial" />
+    <partial name="_BilanganScriptsPartial" />
 }
