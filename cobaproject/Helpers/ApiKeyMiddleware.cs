@@ -7,7 +7,7 @@ namespace cobaproject.Helpers;
 
 public class ApiKeyMiddleware
 {
-    private static readonly string[] ExcludedPathPrefixes = ["/swagger", "/openapi", "/favicon.ico", "/_framework", "/_vs", "/screen"];
+    private static readonly string[] ExcludedPathPrefixes = ["/swagger", "/openapi", "/favicon.ico", "/_framework", "/_vs", "/screen", "/login", "/logout"];
 
     private readonly RequestDelegate _next;
     private readonly ApiKeyConfig _config;
@@ -22,7 +22,8 @@ public class ApiKeyMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (ExcludedPathPrefixes.Any(prefix => context.Request.Path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase)))
+        if (context.Request.Path == "/"
+            || ExcludedPathPrefixes.Any(prefix => context.Request.Path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase)))
         {
             await _next(context);
             return;
