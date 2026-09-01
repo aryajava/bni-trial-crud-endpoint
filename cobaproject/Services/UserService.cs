@@ -33,21 +33,6 @@ public class UserService : IUserService
     private string TraceId =>
         _httpContextAccessor.HttpContext?.Items["TraceId"]?.ToString() ?? Guid.NewGuid().ToString();
 
-    private static UserDto ToDto(MasterUser user) => new()
-    {
-        Id = user.Id,
-        Username = user.Username,
-        DisplayName = user.DisplayName,
-        Role = user.Role,
-        LastLoginAt = user.LastLoginAt,
-        IsActive = user.IsActive,
-        CreatedAt = user.CreatedAt,
-        CreatedBy = user.CreatedBy,
-        UpdatedAt = user.UpdatedAt,
-        UpdatedBy = user.UpdatedBy,
-        Version = user.Version
-    };
-
     public async Task<IEnumerable<UserDto>> GetAllAsync()
     {
         using var connection = new SqlConnection(_connectionString);
@@ -56,7 +41,7 @@ public class UserService : IUserService
             FROM LOSCONSUMER.MASTER_USER
             ORDER BY ID
             """);
-        return users.Select(ToDto);
+        return users.Select(UserMapper.ToDto);
     }
 
     public async Task<UserDto?> GetByIdAsync(int id)
@@ -67,7 +52,7 @@ public class UserService : IUserService
             FROM LOSCONSUMER.MASTER_USER
             WHERE ID = @Id
             """, new { Id = id });
-        return user is null ? null : ToDto(user);
+        return user is null ? null : UserMapper.ToDto(user);
     }
 
     public async Task<UserDto?> GetByUsernameAsync(string username)
@@ -78,7 +63,7 @@ public class UserService : IUserService
             FROM LOSCONSUMER.MASTER_USER
             WHERE USERNAME = @Username
             """, new { Username = username });
-        return user is null ? null : ToDto(user);
+        return user is null ? null : UserMapper.ToDto(user);
     }
 
     public async Task<(UserDto? User, string? Error)> AuthenticateAsync(string username, string password)
@@ -106,7 +91,7 @@ public class UserService : IUserService
             WHERE ID = @Id
             """, new { user.Id });
 
-        return (ToDto(user), null);
+        return (UserMapper.ToDto(user), null);
     }
 
     public async Task<(UserDto? User, string? SecretKey, string? Error)> CreateAsync(CreateUserRequest request, string createdBy)
