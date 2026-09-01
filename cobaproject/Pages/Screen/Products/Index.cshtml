@@ -205,7 +205,7 @@
             if (item.ratingRate == null) return '-';
             return `<div class="d-flex flex-column align-items-start">
                 <span class="fw-semibold"><span class="material-icons rating-star">star</span> ${Number(item.ratingRate).toFixed(1)}</span>
-                <span class="text-muted small">${item.ratingCount ?? 0} orang</span>
+                <span class="text-muted small">(${item.ratingCount ?? 0})</span>
             </div>`;
         }
 
