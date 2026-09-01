@@ -21,6 +21,7 @@ public class CreateProductRequest
     [StringLength(1000)]
     public string? Image { get; set; }
 
+    [Range(1, 5, ErrorMessage = "Rating harus antara 1 dan 5.")]
     public decimal? RatingRate { get; set; }
 
     public int? RatingCount { get; set; }
