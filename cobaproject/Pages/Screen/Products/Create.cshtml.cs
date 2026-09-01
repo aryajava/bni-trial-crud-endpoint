@@ -16,7 +16,7 @@ public class CreateModel : PageModel
     }
 
     [BindProperty]
-    public CreateProductRequest Request { get; set; } = new();
+    public new CreateProductRequest Request { get; set; } = new();
 
     private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SCREEN";
 

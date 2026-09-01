@@ -19,7 +19,7 @@ public class EditModel : PageModel
     public int Id { get; set; }
 
     [BindProperty]
-    public UpdateProductRequest Request { get; set; } = new();
+    public new UpdateProductRequest Request { get; set; } = new();
 
     private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SCREEN";
 
