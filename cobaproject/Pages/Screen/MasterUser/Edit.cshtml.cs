@@ -14,7 +14,7 @@ public class EditModel : PageModel
     private readonly IUserService _userService;
 
     [BindProperty]
-    public UpdateUserRequest Request { get; set; } = new();
+    public new UpdateUserRequest Request { get; set; } = new();
 
     public int Id { get; set; }
 

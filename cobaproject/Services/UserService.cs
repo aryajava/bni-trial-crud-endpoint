@@ -1,4 +1,3 @@
-using BCrypt.Net;
 using Dapper;
 using cobaproject.Configuration;
 using cobaproject.Dtos;
@@ -91,7 +90,7 @@ public class UserService : IUserService
             WHERE USERNAME = @Username
             """, new { Username = username });
 
-        if (user is null || !BCrypt.Verify(password, user.PasswordHash))
+        if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
             return (null, "invalid");
         }
@@ -118,7 +117,7 @@ public class UserService : IUserService
             return (null, "Username sudah dipakai.");
         }
 
-        var passwordHash = BCrypt.HashPassword(request.Password);
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         try
         {
@@ -216,7 +215,7 @@ public class UserService : IUserService
 
     public async Task<(bool Success, string? Error)> ResetPasswordAsync(int id, string newPassword, string updatedBy)
     {
-        var passwordHash = BCrypt.HashPassword(newPassword);
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
 
         using var connection = new SqlConnection(_connectionString);
         var affected = await connection.ExecuteAsync("""

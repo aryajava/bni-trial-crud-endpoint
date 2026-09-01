@@ -14,7 +14,7 @@ public class CreateModel : PageModel
     private readonly IUserService _userService;
 
     [BindProperty]
-    public CreateUserRequest Request { get; set; } = new();
+    public new CreateUserRequest Request { get; set; } = new();
 
     public List<string> AllowedRoles { get; private set; } = [];
 

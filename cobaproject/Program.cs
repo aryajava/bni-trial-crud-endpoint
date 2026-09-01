@@ -87,6 +87,7 @@ try
     var upgrader = DeployChanges.To
         .SqlDatabase(connectionString)
         .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+        .WithVariablesDisabled()
         .LogToConsole()
         .Build();
 
