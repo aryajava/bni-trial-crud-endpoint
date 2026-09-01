@@ -323,5 +323,20 @@ public class ProductService : IProductService
         return categories.ToList();
     }
 
+    public async Task<DashboardStatsDto> GetDashboardStatsAsync()
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var stats = await connection.QuerySingleAsync<DashboardStatsDto>("""
+            SELECT
+                COUNT(*)                                             AS Total,
+                ISNULL(SUM(CASE WHEN ISNULL(DISCOUNT_PERCENT, 0) > 0 THEN 1 ELSE 0 END), 0) AS Discounted,
+                ISNULL(SUM(CASE WHEN STOCK BETWEEN 1 AND 5 THEN 1 ELSE 0 END), 0)          AS LowStock,
+                ISNULL(SUM(CASE WHEN STOCK = 0 THEN 1 ELSE 0 END), 0)                       AS OutOfStock
+            FROM LOSCONSUMER.MASTER_PRODUCT
+            WHERE IS_ACTIVE = 1;
+            """);
+        return stats;
+    }
+
     #endregion Others
 }

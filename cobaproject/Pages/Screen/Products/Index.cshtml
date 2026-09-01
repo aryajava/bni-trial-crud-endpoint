@@ -1,167 +1,159 @@
 @page
 @model cobaproject.Pages.Screen.Products.IndexModel
 @{
-    ViewData["Title"] = "Daftar Produk";
+    ViewData["Title"] = "Master Produk";
 }
 
-<style>
-    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-    .search { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #c5ccd8; border-radius: 8px; padding: 0 12px; flex: 1; min-width: 220px; max-width: 420px; }
-    .search .material-icons { color: #6b7280; }
-    .search input { border: none; outline: none; flex: 1; padding: 10px 0; font: inherit; background: transparent; }
-    .page-size { display: flex; align-items: center; gap: 8px; color: #374151; font-size: 14px; }
-    .page-size select { padding: 8px 10px; border: 1px solid #c5ccd8; border-radius: 8px; font: inherit; background: #fff; cursor: pointer; }
-
-    .filter-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 14px; background: #fff; border: 1px solid #d9dee7; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
-    .f-group label { display: block; font-size: 11px; font-weight: 700; color: #4b5563; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
-    .f-group select, .f-group input { width: 100%; padding: 8px 10px; border: 1px solid #c5ccd8; border-radius: 8px; font: inherit; background: #fff; }
-    .f-range { display: flex; align-items: center; gap: 8px; }
-    .f-range input { min-width: 0; }
-    .f-range span { color: #6b7280; }
-    .f-actions { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
-
-    .data-table { margin-top: 0; }
-    .data-table th { background: #eef2f8; padding: 0; }
-    .data-table th button.th-sort { display: flex; align-items: center; gap: 6px; width: 100%; border: none; background: none; font: inherit; font-weight: 700; cursor: pointer; color: #1f2937; padding: 10px 12px; text-align: left; white-space: nowrap; }
-    .data-table th button.th-sort:hover { color: #1a56db; }
-    .data-table th button.th-sort.active { color: #1a56db; }
-    .th-sort .sort-ic { font-size: 16px; color: #9ca3af; }
-    .th-sort.active .sort-ic { color: #1a56db; }
-    .data-table tbody tr:hover { background: #f5f8ff; }
-    .data-table td { padding: 9px 12px; vertical-align: middle; }
-    .td-title { font-weight: 600; color: #111827; }
-    .td-price { white-space: nowrap; }
-    .td-price .harga-coretan { display: block; text-decoration: line-through; color: #9ca3af; font-size: 13px; }
-    .td-price .harga-diskon { display: block; font-weight: 700; color: #b91c1c; }
-    .td-actions { white-space: nowrap; text-align: right; }
-    .td-id, .td-ver { font-variant-numeric: tabular-nums; color: #6b7280; }
-
-    .badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-    .muted { color: #9ca3af; font-size: 12px; }
-
-    .btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; text-decoration: none; }
-    .btn-icon .material-icons { font-size: 18px; }
-    .btn-edit { color: #1a56db; background: #eef4ff; }
-    .btn-edit:hover { background: #dbe7ff; }
-    .btn-delete { color: #b91c1c; background: #fee2e2; }
-    .btn-delete:hover { background: #fecaca; }
-
-    .row-loading, .row-empty { text-align: center; color: #6b7280; }
-    .spinner { display: inline-block; vertical-align: middle; animation: spin 1s linear infinite; font-size: 18px; }
-    @@keyframes spin { 100% { transform: rotate(360deg); } }
-
-    .table-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
-    #pageInfo { color: #4b5563; font-size: 14px; }
-    .pagination { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .pagination .pg { min-width: 36px; height: 36px; padding: 0 8px; border: 1px solid #d9dee7; border-radius: 8px; background: #fff; color: #1f2937; cursor: pointer; font: inherit; display: inline-flex; align-items: center; justify-content: center; }
-    .pagination .pg:hover:not(:disabled) { background: #eef2f8; }
-    .pagination .pg.active { background: #1a56db; color: #fff; border-color: #1a56db; }
-    .pagination .pg:disabled { opacity: .45; cursor: not-allowed; }
-    .pagination .pg .material-icons { font-size: 18px; }
-    .pagination .pg-ellipsis { color: #6b7280; padding: 0 2px; }
-
-    .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #d9dee7; border-radius: 10px; }
-    .table-wrap table { border: none; margin: 0; }
-</style>
-
 <div class="page-header">
-    <h1>Daftar Produk</h1>
-    <a class="btn btn-utama" asp-page="Create"><span class="material-icons">add</span> Tambah Produk</a>
+    <h1>Master Produk</h1>
+    <a class="btn btn-primary" asp-page="Create"><span class="material-icons">add</span> Tambah Produk</a>
 </div>
 
-<div class="toolbar">
-    <div class="search">
-        <span class="material-icons">search</span>
-        <input type="text" id="searchInput" placeholder="Cari di semua kolom..." autocomplete="off" />
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card card-soft stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="icon-box icon-primary"><span class="material-icons">inventory_2</span></span>
+                <div>
+                    <div class="stat-value">@Model.Stats.Total</div>
+                    <div class="stat-label">Total Produk</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="page-size">
-        <span>Tampilkan</span>
-        <select id="pageSizeSelect">
+    <div class="col-6 col-lg-3">
+        <div class="card card-soft stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="icon-box icon-info"><span class="material-icons">sale</span></span>
+                <div>
+                    <div class="stat-value">@Model.Stats.Discounted</div>
+                    <div class="stat-label">Produk Diskon</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-soft stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="icon-box icon-warning"><span class="material-icons">warning_amber</span></span>
+                <div>
+                    <div class="stat-value">@Model.Stats.LowStock</div>
+                    <div class="stat-label">Stok Menipis (1–5)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card card-soft stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="icon-box icon-danger"><span class="material-icons">block</span></span>
+                <div>
+                    <div class="stat-value">@Model.Stats.OutOfStock</div>
+                    <div class="stat-label">Stok Habis</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+    <div class="input-group search-input">
+        <span class="input-group-text bg-white"><span class="material-icons" style="font-size: 18px">search</span></span>
+        <input type="text" id="searchInput" class="form-control" placeholder="Cari di semua kolom..." autocomplete="off" />
+    </div>
+    <div class="d-flex align-items-center gap-2 ms-md-auto">
+        <span class="text-secondary small">Tampilkan</span>
+        <select id="pageSizeSelect" class="form-select form-select-sm w-auto">
             <option value="20" selected>20</option>
             <option value="50">50</option>
             <option value="100">100</option>
         </select>
-        <span>data / halaman</span>
+        <span class="text-secondary small">data / halaman</span>
     </div>
 </div>
 
-<div class="filter-panel">
-    <div class="f-group">
-        <label>Kategori</label>
-        <select id="categorySelect">
-            <option value="">Semua Kategori</option>
-            @foreach (var c in Model.Categories)
-            {
-                <option value="@c">@c</option>
-            }
-        </select>
-    </div>
-    <div class="f-group">
-        <label>Harga Efektif (Rp)</label>
-        <div class="f-range">
-            <input type="number" id="priceMin" placeholder="Min" min="0" step="0.01" />
-            <span>–</span>
-            <input type="number" id="priceMax" placeholder="Max" min="0" step="0.01" />
+<div class="card card-soft mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Kategori</label>
+                <select id="categorySelect" class="form-select">
+                    <option value="">Semua Kategori</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c">@c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <label class="form-label small fw-semibold text-secondary mb-1">Harga Efektif (Rp)</label>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="number" id="priceMin" class="form-control" placeholder="Min" min="0" step="0.01" />
+                    <span class="text-secondary">–</span>
+                    <input type="number" id="priceMax" class="form-control" placeholder="Max" min="0" step="0.01" />
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Stok</label>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="number" id="stockMin" class="form-control" placeholder="Min" min="0" step="1" />
+                    <span class="text-secondary">–</span>
+                    <input type="number" id="stockMax" class="form-control" placeholder="Max" min="0" step="1" />
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Dibuat (Tanggal)</label>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" id="createdFrom" class="form-control" />
+                    <span class="text-secondary">–</span>
+                    <input type="date" id="createdTo" class="form-control" />
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-2">
+                <label class="form-label small fw-semibold text-secondary mb-1">Diubah (Tanggal)</label>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" id="updatedFrom" class="form-control" />
+                    <span class="text-secondary">–</span>
+                    <input type="date" id="updatedTo" class="form-control" />
+                </div>
+            </div>
+            <div class="col-md-12 col-xl-1 d-flex align-items-end gap-2">
+                <button class="btn btn-primary w-100" id="applyFilter"><span class="material-icons">filter_alt</span> Terapkan</button>
+                <button class="btn btn-outline-secondary w-100" id="resetFilter"><span class="material-icons">restart_alt</span> Reset</button>
+            </div>
         </div>
-    </div>
-    <div class="f-group">
-        <label>Stok</label>
-        <div class="f-range">
-            <input type="number" id="stockMin" placeholder="Min" min="0" step="1" />
-            <span>–</span>
-            <input type="number" id="stockMax" placeholder="Max" min="0" step="1" />
-        </div>
-    </div>
-    <div class="f-group">
-        <label>Dibuat (Tanggal)</label>
-        <div class="f-range">
-            <input type="date" id="createdFrom" />
-            <span>–</span>
-            <input type="date" id="createdTo" />
-        </div>
-    </div>
-    <div class="f-group">
-        <label>Diubah (Tanggal)</label>
-        <div class="f-range">
-            <input type="date" id="updatedFrom" />
-            <span>–</span>
-            <input type="date" id="updatedTo" />
-        </div>
-    </div>
-    <div class="f-actions">
-        <button class="btn btn-utama" id="applyFilter"><span class="material-icons">filter_alt</span> Terapkan</button>
-        <button class="btn btn-kedua" id="resetFilter"><span class="material-icons">restart_alt</span> Reset</button>
     </div>
 </div>
 
-<div class="table-wrap">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="text-align:center;">No.</th>
-                <th style="text-align:center;">Aksi</th>                
-                <th><button class="th-sort" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="title">Judul<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="price" title="Sortir berdasarkan harga efektif (setelah diskon)">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="category">Kategori<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="ratingRate">Rating<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="stock">Stok<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="createdBy">Dibuat Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="createdAt">Dibuat<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="updatedBy">Diubah Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="updatedAt">Diubah<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="version">Versi<span class="material-icons sort-ic">swap_vert</span></button></th>
-            </tr>
-        </thead>
-        <tbody id="productRows">
-            <tr class="row-loading"><td colspan="13"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>
-        </tbody>
-    </table>
-</div>
-
-<div class="table-footer">
-    <div id="pageInfo">Menampilkan 0–0 dari 0 data</div>
-    <div class="pagination" id="pagination"></div>
+<div class="card card-soft">
+    <div class="table-wrap">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-center">No.</th>
+                    <th class="text-center">Aksi</th>
+                    <th><button class="th-sort" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="title">Judul<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="price" title="Sortir berdasarkan harga efektif (setelah diskon)">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="category">Kategori<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="ratingRate">Rating<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="stock">Stok<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="createdBy">Dibuat Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="createdAt">Dibuat<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="updatedBy">Diubah Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="updatedAt">Diubah<span class="material-icons sort-ic">swap_vert</span></button></th>
+                    <th><button class="th-sort" data-sort="version">Versi<span class="material-icons sort-ic">swap_vert</span></button></th>
+                </tr>
+            </thead>
+            <tbody id="productRows">
+                <tr class="row-loading"><td colspan="13"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="card-body border-top d-flex align-items-center justify-content-between gap-3 flex-wrap py-3">
+        <div id="pageInfo" class="text-muted small">Menampilkan 0–0 dari 0 data</div>
+        <nav><ul class="pagination pagination-sm" id="pagination"></ul></nav>
+    </div>
 </div>
 
 @section Scripts {
@@ -218,6 +210,15 @@
             return `<span class="harga-coretan">${asli}</span><span class="harga-diskon">${formatRupiahBulat(efektif)}</span>`;
         }
 
+        function renderStok(item) {
+            const s = item.stock ?? 0;
+            const cls = s <= 0 ? 'bg-danger-subtle text-danger-emphasis'
+                : s <= 5 ? 'bg-warning-subtle text-warning-emphasis'
+                : 'bg-success-subtle text-success-emphasis';
+            const lbl = s <= 0 ? 'Habis' : s <= 5 ? 'Menipis' : 'Tersedia';
+            return `${s} <span class="badge ${cls}">${lbl}</span>`;
+        }
+
         function formatDateTime(iso) {
             if (!iso) return '-';
             const d = new Date(iso);
@@ -267,13 +268,6 @@
             renderPagination();
         }
 
-        function renderStok(item) {
-            const s = item.stock ?? 0;
-            const cls = s <= 0 ? 'badge-habis' : s <= 5 ? 'badge-menipis' : 'badge-tersedia';
-            const lbl = s <= 0 ? 'Habis' : s <= 5 ? 'Menipis' : 'Tersedia';
-            return `${s} <span class="badge-stok ${cls}">${lbl}</span>`;
-        }
-
         function renderRows(items) {
             const tbody = $('productRows');
             if (!items || items.length === 0) {
@@ -284,16 +278,18 @@
                 const nomor = ((state.page - 1) * state.pageSize) + idx + 1;
                 return `
                 <tr>
-                    <td>${nomor}</td>
-                    <td class="td-actions">
-                        <a class="btn-icon btn-edit" href="/Screen/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
-                        <a class="btn-icon btn-delete" href="/Screen/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
+                    <td class="td-nomor text-center">${nomor}</td>
+                    <td class="text-center">
+                        <div class="field-actions justify-content-center">
+                            <a class="btn-icon btn-edit" href="/Screen/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
+                            <a class="btn-icon btn-delete" href="/Screen/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
+                        </div>
                     </td>
                     <td class="td-id">${item.id}</td>
-                    <td class="td-title">${esc(item.title)}</td>
+                    <td class="td-title fw-semibold">${esc(item.title)}</td>
                     <td class="td-price">${renderHarga(item)}</td>
-                    <td>${item.category ? `<span class="badge">${esc(item.category)}</span>` : '-'}</td>
-                    <td>${item.ratingRate != null ? `${Number(item.ratingRate).toFixed(1)} <span class="muted">(${item.ratingCount ?? 0})</span>` : '-'}</td>
+                    <td>${item.category ? `<span class="badge bg-primary-subtle text-primary-emphasis">${esc(item.category)}</span>` : '-'}</td>
+                    <td>${item.ratingRate != null ? `${Number(item.ratingRate).toFixed(1)} <span class="text-muted small">(${item.ratingCount ?? 0})</span>` : '-'}</td>
                     <td>${renderStok(item)}</td>
                     <td>${item.createdBy ? esc(item.createdBy) : '-'}</td>
                     <td>${formatDateTime(item.createdAt)}</td>
@@ -301,7 +297,7 @@
                     <td>${formatDateTime(item.updatedAt)}</td>
                     <td class="td-ver">${item.version}</td>
                 </tr>`;
-            }).join(''); 
+            }).join('');
         }
 
         function buildPages(current, total) {
@@ -319,8 +315,8 @@
             return out;
         }
 
-        function pgButton(icon, page, disabled, label) {
-            return `<button class="pg" data-page="${page}" ${disabled ? 'disabled' : ''} title="${label}"><span class="material-icons">${icon}</span></button>`;
+        function pgItem(icon, page, disabled, label) {
+            return `<li class="page-item ${disabled ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${page}" title="${label}"><span class="material-icons">${icon}</span></a></li>`;
         }
 
         function renderPagination() {
@@ -328,14 +324,14 @@
             const total = state.totalPages;
             if (total <= 1) { el.innerHTML = ''; return; }
             const parts = [];
-            parts.push(pgButton('first_page', 1, state.page === 1, 'Halaman pertama'));
-            parts.push(pgButton('chevron_left', state.page - 1, state.page === 1, 'Halaman sebelumnya'));
+            parts.push(pgItem('first_page', 1, state.page === 1, 'Halaman pertama'));
+            parts.push(pgItem('chevron_left', state.page - 1, state.page === 1, 'Halaman sebelumnya'));
             for (const p of buildPages(state.page, total)) {
-                if (p === '...') parts.push('<span class="pg-ellipsis">. . .</span>');
-                else parts.push(`<button class="pg ${p === state.page ? 'active' : ''}" data-page="${p}">${p}</button>`);
+                if (p === '...') parts.push('<li class="page-item disabled"><span class="page-link pg-ellipsis">. . .</span></li>');
+                else parts.push(`<li class="page-item ${p === state.page ? 'active' : ''}"><a class="page-link" href="#" data-page="${p}">${p}</a></li>`);
             }
-            parts.push(pgButton('chevron_right', state.page + 1, state.page === total, 'Halaman berikutnya'));
-            parts.push(pgButton('last_page', total, state.page === total, 'Halaman terakhir'));
+            parts.push(pgItem('chevron_right', state.page + 1, state.page === total, 'Halaman berikutnya'));
+            parts.push(pgItem('last_page', total, state.page === total, 'Halaman terakhir'));
             el.innerHTML = parts.join('');
         }
 
@@ -352,7 +348,7 @@
 
         async function loadData() {
             const tbody = $('productRows');
-            tbody.innerHTML = '<tr class="row-loading"><td colspan="13"><span class="material-icons spinner">autorenew</span> Memuat data...</td></tr>';
+            tbody.innerHTML = '<tr class="row-loading"><td colspan="13"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
             try {
                 const res = await fetch('/products/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -442,9 +438,10 @@
                 loadData();
             }));
             $('pagination').addEventListener('click', (e) => {
-                const btn = e.target.closest('.pg');
-                if (!btn || btn.disabled) return;
-                const page = Number(btn.dataset.page);
+                const link = e.target.closest('.page-link');
+                if (!link || link.closest('.disabled')) return;
+                e.preventDefault();
+                const page = Number(link.dataset.page);
                 if (page >= 1 && page <= state.totalPages && page !== state.page) {
                     state.page = page;
                     loadData();

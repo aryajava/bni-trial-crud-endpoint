@@ -9,52 +9,61 @@
             : Math.Round((Model.Product.Price - Model.Product.Price * (Model.Product.DiscountPercent ?? 0) / 100m) / 100m,
                 MidpointRounding.AwayFromZero) * 100m;
     var stok = Model.Product?.Stock ?? 0;
-    var stokBadge = stok <= 0 ? "badge-habis" : stok <= 5 ? "badge-menipis" : "badge-tersedia";
+    var stokBadge = stok <= 0 ? "bg-danger-subtle text-danger-emphasis"
+        : stok <= 5 ? "bg-warning-subtle text-warning-emphasis"
+        : "bg-success-subtle text-success-emphasis";
     var stokLabel = stok <= 0 ? "Habis" : stok <= 5 ? "Menipis" : "Tersedia";
 }
 
 <div class="page-header">
     <h1>Hapus Produk #@Model.Product?.Id</h1>
-    <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+    <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
 </div>
 
 @if (Model.Product is null)
 {
-    <div class="pesan-error"><span class="material-icons" style="vertical-align: middle;">search_off</span> Produk tidak ditemukan.</div>
-    <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali ke daftar</a>
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+        <span class="material-icons">search_off</span> Produk tidak ditemukan.
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali ke daftar</a>
 }
 else
 {
-    <div class="detail-card">
-        <div class="row"><div class="k">ID</div><div class="v">@Model.Product.Id</div></div>
-        <div class="row"><div class="k">Judul</div><div class="v">@Model.Product.Title</div></div>
-        <div class="row"><div class="k">Harga</div>
-            <div class="v">@Model.Product.Price.ToString("C2", idId)</div></div>
-        <div class="row"><div class="k">Kategori</div><div class="v">@(Model.Product.Category ?? "-")</div></div>
-        <div class="row"><div class="k">Rating</div>
-            <div class="v">@(Model.Product.RatingRate?.ToString("0.0", idId) ?? "-") (@(Model.Product.RatingCount?.ToString() ?? "-"))</div></div>
-        <div class="row"><div class="k">Diskon</div><div class="v">@(Model.Product.DiscountPercent.HasValue ? $"{Model.Product.DiscountPercent}%" : "-")</div></div>
-        <div class="row"><div class="k">Stok</div>
-            <div class="v">@stok <span class="badge-stok @stokBadge">@stokLabel</span></div></div>
-        <div class="row"><div class="k">Harga Setelah Diskon</div>
-            <div class="v">@((Model.Product.DiscountPercent ?? 0) == 0
-                ? Model.Product.Price.ToString("C2", idId)
-                : hargaEfektif?.ToString("C0", idId))</div></div>
-        <div class="row"><div class="k">Dibuat</div><div class="v">@Model.Product.CreatedAt.ToString("dd MMM yyyy HH:mm", idId)</div></div>
-        <div class="row"><div class="k">Diubah</div><div class="v">@(Model.Product.UpdatedAt?.ToString("dd MMM yyyy HH:mm", idId) ?? "-")</div></div>
-        <div class="row"><div class="k">Versi</div><div class="v">@Model.Product.Version</div></div>
+    <div class="card card-soft">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <tbody>
+                    <tr><th class="text-secondary fw-semibold" style="width: 200px">ID</th><td>@Model.Product.Id</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Judul</th><td>@Model.Product.Title</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Harga</th><td>@Model.Product.Price.ToString("C2", idId)</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Diskon</th><td>@(Model.Product.DiscountPercent.HasValue ? $"{Model.Product.DiscountPercent}%" : "-")</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Harga Setelah Diskon</th>
+                        <td>@((Model.Product.DiscountPercent ?? 0) == 0
+                            ? Model.Product.Price.ToString("C2", idId)
+                            : hargaEfektif?.ToString("C0", idId))</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Kategori</th><td>@(Model.Product.Category ?? "-")</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Rating</th>
+                        <td>@(Model.Product.RatingRate?.ToString("0.0", idId) ?? "-") (@(Model.Product.RatingCount?.ToString() ?? "-"))</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Stok</th>
+                        <td>@stok <span class="badge @stokBadge">@stokLabel</span></td></tr>
+                    <tr><th class="text-secondary fw-semibold">Dibuat</th><td>@Model.Product.CreatedAt.ToString("dd MMM yyyy HH:mm", idId)</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Diubah</th><td>@(Model.Product.UpdatedAt?.ToString("dd MMM yyyy HH:mm", idId) ?? "-")</td></tr>
+                    <tr><th class="text-secondary fw-semibold">Versi</th><td>@Model.Product.Version</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="banner-hapus">
+    <div class="alert alert-warning d-flex align-items-center gap-2 mt-3 mb-0">
         <span class="material-icons">warning</span>
-        <span>Yakin ingin menghapus produk <strong>@Model.Product.Title</strong>? Tindakan ini tidak dapat dibatalkan.</span>
+        <span class="text-secondary small">Yakin ingin menghapus produk <strong>@Model.Product.Title</strong>? Soft delete mengembalikan data ke arsip; hapus permanen tidak dapat dibatalkan.</span>
     </div>
 
-    <form method="post">
-        <div class="form-actions">
-            <button class="btn btn-bahaya" type="submit"><span class="material-icons">delete</span> Hapus (soft delete)</button>
-            <button class="btn btn-bahaya" type="submit" asp-page-handler="Hard"><span class="material-icons">delete_forever</span> Hapus permanen</button>
-            <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">close</span> Batal</a>
+    <form method="post" class="mt-3">
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-danger" type="submit"><span class="material-icons">delete</span> Hapus (soft delete)</button>
+            <button class="btn btn-outline-danger" type="submit" asp-page-handler="Hard"><span class="material-icons">delete_forever</span> Hapus permanen</button>
+            <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">close</span> Batal</a>
         </div>
     </form>
 }

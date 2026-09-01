@@ -1,5 +1,14 @@
 <script>
     (function () {
+        // Hidden input (Request.Price) membawa atribut data-val, tapi jQuery Validate
+        // secara default mengabaikan elemen :hidden — aktifkan validasi untuk input
+        // tersembunyi yang memiliki data-val agar Required/Range tetap jalan client-side.
+        if (window.jQuery && jQuery.validator) {
+            jQuery.validator.setDefaults({
+                ignore: ':hidden:not([data-val])'
+            });
+        }
+
         var display = document.querySelector("input[data-rupiah]");
         if (!display) {
             return;

@@ -6,92 +6,96 @@
 
 <div class="page-header">
     <h1>Edit Produk #@Model.Id</h1>
-    <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+    <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
 </div>
 
-<div class="info-bar">
-    <div class="item"><b>ID:</b> @Model.Id</div>
-    <div class="item"><b>Versi:</b> @Model.Request.Version</div>
+<div class="d-flex gap-4 flex-wrap mb-3">
+    <span class="badge bg-primary-subtle text-primary-emphasis">ID: @Model.Id</span>
+    <span class="badge bg-secondary-subtle text-secondary-emphasis">Versi: @Model.Request.Version</span>
 </div>
 
-<form class="form-card" method="post">
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div asp-validation-summary="All" class="pesan-error"></div>
-    }
+<div class="card card-soft">
+    <div class="card-body p-4">
+        <form method="post">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+            }
 
-    <div class="form-grid">
-        <div class="form-field full">
-            <label asp-for="Request.Title">Judul</label>
-            <input asp-for="Request.Title" />
-            <span asp-validation-for="Request.Title" class="field-error"></span>
-        </div>
+            <div class="row g-4">
+                <div class="col-12">
+                    <label class="form-label" asp-for="Request.Title">Judul</label>
+                    <input asp-for="Request.Title" class="form-control" />
+                    <span asp-validation-for="Request.Title" class="field-error"></span>
+                </div>
 
-        <div class="form-field">
-            <label asp-for="Request.Category">Kategori</label>
-            <select asp-for="Request.Category">
-                <option value="" disabled>Pilih Kategori</option>
-                @foreach (var category in Model.Categories)
-                {
-                    <option value="@category">@category</option>
-                }
-            </select>
-            <span asp-validation-for="Request.Category" class="field-error"></span>
-        </div>
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Request.Category">Kategori</label>
+                    <select asp-for="Request.Category" class="form-select">
+                        <option value="" disabled>Pilih Kategori</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category">@category</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Request.Category" class="field-error"></span>
+                </div>
 
-        <div class="form-field">
-            <label asp-for="Request.Price">Harga</label>
-            <div class="field-input-group">
-                <span class="prefix">Rp</span>
-                <input data-rupiah data-rupiah-target="Request.Price" inputmode="decimal" />
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Request.Price">Harga</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">Rp</span>
+                        <input data-rupiah data-rupiah-target="Request.Price" inputmode="decimal" class="form-control" />
+                    </div>
+                    <input asp-for="Request.Price" type="hidden" />
+                    <span asp-validation-for="Request.Price" class="field-error"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Request.DiscountPercent">Diskon</label>
+                    <div class="input-group">
+                        <input asp-for="Request.DiscountPercent" data-bilangan data-bilangan-max="100" inputmode="numeric" class="form-control" />
+                        <span class="input-group-text bg-light">%</span>
+                    </div>
+                    <span asp-validation-for="Request.DiscountPercent" class="field-error"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Request.Stock">Stok</label>
+                    <input asp-for="Request.Stock" data-bilangan inputmode="numeric" class="form-control" />
+                    <span asp-validation-for="Request.Stock" class="field-error"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Request.RatingRate">Rating</label>
+                    <input asp-for="Request.RatingRate" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Request.RatingCount">Jumlah Rating</label>
+                    <input asp-for="Request.RatingCount" class="form-control" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" asp-for="Request.Image">URL Gambar</label>
+                    <input asp-for="Request.Image" class="form-control" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" asp-for="Request.Description">Deskripsi</label>
+                    <textarea asp-for="Request.Description" class="form-control" rows="4"></textarea>
+                </div>
             </div>
-            <input asp-for="Request.Price" type="hidden" />
-            <span asp-validation-for="Request.Price" class="field-error"></span>
-        </div>
 
-        <div class="form-field">
-            <label asp-for="Request.DiscountPercent">Diskon</label>
-            <div class="field-input-group">
-                <input asp-for="Request.DiscountPercent" data-bilangan data-bilangan-max="100" inputmode="numeric" />
-                <span class="suffix">%</span>
+            <input type="hidden" asp-for="Request.Version" />
+
+            <div class="mt-4 d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary" type="submit"><span class="material-icons">save</span> Simpan</button>
+                <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">close</span> Batal</a>
             </div>
-            <span asp-validation-for="Request.DiscountPercent" class="field-error"></span>
-        </div>
-
-        <div class="form-field">
-            <label asp-for="Request.RatingRate">Rating</label>
-            <input asp-for="Request.RatingRate" />
-        </div>
-
-        <div class="form-field">
-            <label asp-for="Request.RatingCount">Jumlah Rating</label>
-            <input asp-for="Request.RatingCount" />
-        </div>
-
-        <div class="form-field">
-            <label asp-for="Request.Stock">Stok</label>
-            <input asp-for="Request.Stock" data-bilangan inputmode="numeric" />
-            <span asp-validation-for="Request.Stock" class="field-error"></span>
-        </div>
-
-        <div class="form-field full">
-            <label asp-for="Request.Image">URL Gambar</label>
-            <input asp-for="Request.Image" />
-        </div>
-
-        <div class="form-field full">
-            <label asp-for="Request.Description">Deskripsi</label>
-            <textarea asp-for="Request.Description" rows="4"></textarea>
-        </div>
+        </form>
     </div>
-
-    <input type="hidden" asp-for="Request.Version" />
-
-    <div class="form-actions">
-        <button class="btn btn-utama" type="submit"><span class="material-icons">save</span> Simpan</button>
-        <a class="btn btn-kedua" asp-page="Index"><span class="material-icons">close</span> Batal</a>
-    </div>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
