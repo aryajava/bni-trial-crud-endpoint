@@ -1,5 +1,5 @@
 @page
-@model cobaproject.Pages.Screen.UserControl.IndexModel
+@model cobaproject.Pages.UserControl.IndexModel
 @using cobaproject.Helpers
 @{
     ViewData["Title"] = "User Control";
@@ -98,6 +98,15 @@
                                             <span class="material-icons">lock_reset</span>
                                         </button>
                                     </form>
+                                    <button type="button" class="btn btn-outline-info btn-sm btn-secret" data-id="@u.Id" title="Lihat secret key">
+                                        <span class="material-icons">key</span>
+                                    </button>
+                                    <form method="post" asp-page-handler="RegenerateSecret" class="m-0 form-regen-secret">
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <button type="button" class="btn btn-outline-dark btn-sm btn-regen-secret" title="Regenerasi secret key">
+                                            <span class="material-icons">refresh</span>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -113,7 +122,69 @@
 </div>
 
 @section Scripts {
+    @if (TempData["RegeneratedKey"] is string kunciRegen)
+    {
+        <script>
+            Swal.fire({
+                title: "Secret Key Baru",
+                html: "Kunci lama sudah tidak berlaku. Salin dan simpan — hanya ditampilkan sekali ini saja.",
+                input: "text",
+                inputValue: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(kunciRegen)),
+                inputAttributes: { readonly: "readonly", style: "font-family: monospace; letter-spacing: 1px;" },
+                confirmButtonText: "Salin",
+                showCancelButton: true,
+                cancelButtonText: "Tutup"
+            }).then(function (hasil) {
+                if (hasil.isConfirmed) {
+                    navigator.clipboard.writeText(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(kunciRegen))).then(function () {
+                        if (Swal.isVisible()) { Swal.close(); }
+                        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Secret key disalin.", showConfirmButton: false, timer: 2000 });
+                    });
+                }
+            });
+        </script>
+    }
     <script>
+        document.querySelectorAll(".btn-secret").forEach(function (btn) {
+            btn.addEventListener("click", async function () {
+                var res = await fetch("?handler=Secret&id=" + btn.getAttribute("data-id"));
+                var data = await res.json();
+                Swal.fire({
+                    title: "Secret Key \u2014 " + data.username,
+                    input: "text",
+                    inputValue: data.key,
+                    inputAttributes: { readonly: "readonly", style: "font-family: monospace; letter-spacing: 1px;" },
+                    confirmButtonText: "Salin",
+                    showCancelButton: true,
+                    cancelButtonText: "Tutup"
+                }).then(function (hasil) {
+                    if (hasil.isConfirmed) {
+                        navigator.clipboard.writeText(data.key).then(function () {
+                            if (Swal.isVisible()) { Swal.close(); }
+                            Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Secret key disalin.", showConfirmButton: false, timer: 2000 });
+                        });
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll(".btn-regen-secret").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                Swal.fire({
+                    title: "Regenerasi secret key?",
+                    text: "Kunci lama langsung tidak berlaku untuk API.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Ya, ganti",
+                    cancelButtonText: "Batal"
+                }).then(function (hasil) {
+                    if (hasil.isConfirmed) {
+                        btn.closest(".form-regen-secret").submit();
+                    }
+                });
+            });
+        });
+
         document.querySelectorAll(".btn-reset-pw").forEach(function (btn) {
             btn.addEventListener("click", function () {
                 var form = btn.closest(".form-reset-pw");

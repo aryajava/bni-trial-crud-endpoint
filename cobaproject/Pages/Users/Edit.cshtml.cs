@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace cobaproject.Pages.Screen.MasterUser;
+namespace cobaproject.Pages.Users;
 
 [Authorize(Roles = "ADMIN,OWNER")]
 public class EditModel : PageModel

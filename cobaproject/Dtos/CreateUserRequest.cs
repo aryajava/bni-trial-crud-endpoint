@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 
 namespace cobaproject.Dtos;
 
@@ -20,18 +19,4 @@ public partial class CreateUserRequest
     [Required(ErrorMessage = "Role wajib dipilih.")]
     [AllowedRoles]
     public string Role { get; set; } = "ADMIN";
-
-    [AttributeUsage(AttributeTargets.Property)]
-    private sealed class UsernamePatternAttribute : ValidationAttribute
-    {
-        public override bool IsValid(object? value) =>
-            value is not string s || s.Length == 0 || Regex.IsMatch(s, "^[a-z0-9]+$");
-    }
-
-    [AttributeUsage(AttributeTargets.Property)]
-    private sealed class AllowedRolesAttribute : ValidationAttribute
-    {
-        public override bool IsValid(object? value) =>
-            value is string role && (role == "ADMIN" || role == "OWNER");
-    }
 }

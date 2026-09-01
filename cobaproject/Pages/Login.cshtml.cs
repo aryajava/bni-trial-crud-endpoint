@@ -62,6 +62,6 @@ public class LoginModel : PageModel
             return Redirect(returnUrl);
         }
 
-        return RedirectToPage("/Screen/Products/Index");
+        return RedirectToPage("/Products/Index");
     }
 }

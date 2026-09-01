@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace cobaproject.Controllers;
 
 [ApiController]
-[Route("products/public")]
+[Route("api/products/public")]
 public class PublicProductsController : ControllerBase
 {
     private readonly IFakeStoreService _fakeStoreService;

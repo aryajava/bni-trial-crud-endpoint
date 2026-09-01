@@ -1,5 +1,5 @@
 @page
-@model cobaproject.Pages.Screen.Products.IndexModel
+@model cobaproject.Pages.Products.IndexModel
 @{
     ViewData["Title"] = "Master Produk";
 }
@@ -264,8 +264,8 @@
                     <td class="td-nomor col-no text-center">${nomor}</td>
                     <td class="col-aksi text-center">
                         <div class="field-actions justify-content-center">
-                            <a class="btn-icon btn-edit" href="/Screen/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
-                            <a class="btn-icon btn-delete" href="/Screen/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
+                            <a class="btn-icon btn-edit" href="/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
+                            <a class="btn-icon btn-delete" href="/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
                         </div>
                     </td>
                     <td class="td-id">${item.id}</td>
@@ -333,7 +333,7 @@
             const tbody = $('productRows');
             tbody.innerHTML = '<tr class="row-loading"><td colspan="13"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
             try {
-                const res = await fetch('/products/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
+                const res = await fetch('/api/products/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const json = await res.json();
                 if (!json.isSuccess) throw new Error(json.message || 'Gagal memuat data.');

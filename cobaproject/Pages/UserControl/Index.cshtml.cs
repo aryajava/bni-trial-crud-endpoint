@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace cobaproject.Pages.Screen.UserControl;
+namespace cobaproject.Pages.UserControl;
 
 [Authorize(Roles = "OWNER")]
 public class IndexModel : PageModel
@@ -119,6 +119,43 @@ public class IndexModel : PageModel
         await _userService.ResetPasswordAsync(id, newPassword!, Caller);
         TempData["SuccessMessage"] = $"Password user \"{target.Display}\" berhasil di-reset.";
         return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRegenerateSecretAsync(int id)
+    {
+        var target = await _userService.GetByIdAsync(id);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        var (ok, secretKey, error) = await _userService.RegenerateSecretKeyAsync(id, Caller);
+        if (!ok)
+        {
+            ModelState.AddModelError(string.Empty, error ?? "Gagal regenerasi secret key.");
+            await LoadAsync();
+            return Page();
+        }
+
+        TempData["RegeneratedKey"] = secretKey;
+        TempData["SuccessMessage"] = $"Secret key \"{target.Display}\" diganti.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnGetSecretAsync(int id)
+    {
+        var target = await _userService.GetByIdAsync(id);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        var key = await _userService.GetSecretKeyAsync(id);
+        return Content(System.Text.Json.JsonSerializer.Serialize(new
+        {
+            username = target.Display,
+            key
+        }), "application/json");
     }
 
     private async Task LoadAsync()

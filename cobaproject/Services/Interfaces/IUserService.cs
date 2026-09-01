@@ -10,7 +10,10 @@ public interface IUserService
 
     Task<(UserDto? User, string? Error)> AuthenticateAsync(string username, string password);
 
-    Task<(UserDto? User, string? Error)> CreateAsync(CreateUserRequest request, string createdBy);
+    Task<(UserDto? User, string? SecretKey, string? Error)> CreateAsync(CreateUserRequest request, string createdBy);
+    Task<UserDto?> GetBySecretKeyAsync(string secretKey);
+    Task<string?> GetSecretKeyAsync(int id);
+    Task<(bool Success, string? SecretKey, string? Error)> RegenerateSecretKeyAsync(int id, string updatedBy);
     Task<(UserDto? User, bool IsConflict)> UpdateAsync(int id, UpdateUserRequest request, string updatedBy);
     Task<(bool Success, string? Error)> SoftDeleteAsync(int id, string updatedBy);
     Task<(bool Success, string? Error)> ChangeRoleAsync(int id, string newRole, string updatedBy);

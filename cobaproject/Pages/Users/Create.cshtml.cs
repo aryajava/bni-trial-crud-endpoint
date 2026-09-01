@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace cobaproject.Pages.Screen.MasterUser;
+namespace cobaproject.Pages.Users;
 
 [Authorize(Roles = "ADMIN,OWNER")]
 public class CreateModel : PageModel
@@ -49,13 +49,14 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var (user, error) = await _userService.CreateAsync(Request, Caller);
+        var (user, secretKey, error) = await _userService.CreateAsync(Request, Caller);
         if (user is null)
         {
             ModelState.AddModelError(string.Empty, error ?? "Gagal menyimpan user.");
             return Page();
         }
 
+        TempData["NewSecretKey"] = secretKey;
         TempData["SuccessMessage"] = $"User \"{user.Display}\" berhasil dibuat.";
         return RedirectToPage("Index");
     }

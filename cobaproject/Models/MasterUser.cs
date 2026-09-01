@@ -8,6 +8,7 @@ public class MasterUser
     public string PasswordHash { get; set; } = string.Empty;
     public string? DisplayName { get; set; }
     public string Role { get; set; } = "ADMIN";
+    public string? SecretKey { get; set; }
     public DateTime? LastLoginAt { get; set; }
 
     public bool IsActive { get; set; }

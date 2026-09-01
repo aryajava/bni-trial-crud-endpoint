@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
 
-namespace cobaproject.Pages.Screen.Products;
+namespace cobaproject.Pages.Products;
 
 [Authorize]
 public class CreateModel : PageModel

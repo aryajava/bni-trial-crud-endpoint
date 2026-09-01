@@ -19,9 +19,9 @@
         <label class="form-label" asp-for="Password">Password</label>
         <div class="input-group">
             <span class="input-group-text"><span class="material-icons">lock</span></span>
-            <input asp-for="Password" class="form-control" autocomplete="current-password" id="inputPassword" />
+            <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" id="inputPassword" />
             <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1" title="Perlihatkan/sembunyikan password">
-                <span class="material-icons" id="togglePasswordIcon">visibility</span>
+                <span class="material-icons" id="togglePasswordIcon">visibility_off</span>
             </button>
         </div>
         <span asp-validation-for="Password" class="field-error"></span>
@@ -41,7 +41,7 @@
             var icon = document.getElementById("togglePasswordIcon");
             var tersembunyi = input.type === "password";
             input.type = tersembunyi ? "text" : "password";
-            icon.textContent = tersembunyi ? "visibility_off" : "visibility";
+            icon.textContent = tersembunyi ? "visibility" : "visibility_off";
             input.focus();
         });
     </script>

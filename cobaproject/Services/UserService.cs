@@ -16,7 +16,7 @@ public class UserService : IUserService
     private readonly ILogger<UserService> _logger;
 
     private const string SelectColumns = """
-        ID, USERNAME, PASSWORD_HASH, DISPLAY_NAME, ROLE, LAST_LOGIN_AT,
+        ID, USERNAME, PASSWORD_HASH, DISPLAY_NAME, ROLE, SECRET_KEY, LAST_LOGIN_AT,
         IS_ACTIVE, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY, VERSION
         """;
 
@@ -109,22 +109,23 @@ public class UserService : IUserService
         return (ToDto(user), null);
     }
 
-    public async Task<(UserDto? User, string? Error)> CreateAsync(CreateUserRequest request, string createdBy)
+    public async Task<(UserDto? User, string? SecretKey, string? Error)> CreateAsync(CreateUserRequest request, string createdBy)
     {
         var existing = await GetByUsernameAsync(request.Username);
         if (existing is not null)
         {
-            return (null, "Username sudah dipakai.");
+            return (null, null, "Username sudah dipakai.");
         }
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        var secretKey = Guid.NewGuid().ToString("N");
 
         try
         {
             using var connection = new SqlConnection(_connectionString);
             var id = await connection.ExecuteScalarAsync<int>("""
-                INSERT INTO LOSCONSUMER.MASTER_USER (USERNAME, PASSWORD_HASH, DISPLAY_NAME, ROLE, CREATED_BY)
-                VALUES (@Username, @PasswordHash, @DisplayName, @Role, @CreatedBy);
+                INSERT INTO LOSCONSUMER.MASTER_USER (USERNAME, PASSWORD_HASH, DISPLAY_NAME, ROLE, SECRET_KEY, CREATED_BY)
+                VALUES (@Username, @PasswordHash, @DisplayName, @Role, @SecretKey, @CreatedBy);
                 SELECT CAST(SCOPE_IDENTITY() AS INT);
                 """, new
             {
@@ -132,16 +133,53 @@ public class UserService : IUserService
                 PasswordHash = passwordHash,
                 request.DisplayName,
                 request.Role,
+                SecretKey = secretKey,
                 CreatedBy = createdBy
             });
 
             _logger.LogInformation("[{TraceId}] User {Username} dibuat oleh {Creator}", TraceId, request.Username, createdBy);
-            return (await GetByIdAsync(id), null);
+            var created = await GetByIdAsync(id);
+            return (created, secretKey, null);
         }
         catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601)
         {
-            return (null, "Username sudah dipakai.");
+            return (null, null, "Username sudah dipakai.");
         }
+    }
+
+    public async Task<UserDto?> GetBySecretKeyAsync(string secretKey)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var user = await connection.QuerySingleOrDefaultAsync<MasterUser>($"""
+            SELECT {SelectColumns}
+            FROM LOSCONSUMER.MASTER_USER
+            WHERE SECRET_KEY = @SecretKey AND IS_ACTIVE = 1
+            """, new { SecretKey = secretKey });
+        return user is null ? null : ToDto(user);
+    }
+
+    public async Task<string?> GetSecretKeyAsync(int id)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.ExecuteScalarAsync<string>(
+            "SELECT SECRET_KEY FROM LOSCONSUMER.MASTER_USER WHERE ID = @Id",
+            new { Id = id });
+    }
+
+    public async Task<(bool Success, string? SecretKey, string? Error)> RegenerateSecretKeyAsync(int id, string updatedBy)
+    {
+        var secretKey = Guid.NewGuid().ToString("N");
+
+        using var connection = new SqlConnection(_connectionString);
+        var affected = await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET SECRET_KEY = @SecretKey,
+                UPDATED_AT = GETDATE(),
+                UPDATED_BY = @UpdatedBy,
+                VERSION = VERSION + 1
+            WHERE ID = @Id
+            """, new { Id = id, SecretKey = secretKey, UpdatedBy = updatedBy });
+        return affected > 0 ? (true, secretKey, null) : (false, null, "User tidak ditemukan.");
     }
 
     public async Task<(UserDto? User, bool IsConflict)> UpdateAsync(int id, UpdateUserRequest request, string updatedBy)

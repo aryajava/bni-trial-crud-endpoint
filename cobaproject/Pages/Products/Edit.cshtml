@@ -1,12 +1,17 @@
-@page
-@model cobaproject.Pages.Screen.Products.CreateModel
+@page "{id:int}"
+@model cobaproject.Pages.Products.EditModel
 @{
-    ViewData["Title"] = "Tambah Produk";
+    ViewData["Title"] = "Edit Produk";
 }
 
 <div class="page-header">
-    <h1>Tambah Produk</h1>
+    <h1>Edit Produk #@Model.Id</h1>
     <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+</div>
+
+<div class="d-flex gap-4 flex-wrap mb-3">
+    <span class="badge bg-primary-subtle text-primary-emphasis">ID: @Model.Id</span>
+    <span class="badge bg-secondary-subtle text-secondary-emphasis">Versi: @Model.Request.Version</span>
 </div>
 
 <div class="card card-soft">
@@ -22,7 +27,7 @@
                 <div class="col-md-6">
                     <label class="form-label" asp-for="Request.Category">Kategori</label>
                     <select asp-for="Request.Category" class="form-select form-select-sm">
-                        <option value="" selected disabled>Pilih Kategori</option>
+                        <option value="" disabled>Pilih Kategori</option>
                         @foreach (var category in Model.Categories)
                         {
                             <option value="@category">@category</option>
@@ -77,6 +82,8 @@
                     <textarea asp-for="Request.Description" class="form-control form-control-sm" rows="4"></textarea>
                 </div>
             </div>
+
+            <input type="hidden" asp-for="Request.Version" />
 
             <div class="mt-4 d-flex gap-2 flex-wrap">
                 <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">save</span> Simpan</button>

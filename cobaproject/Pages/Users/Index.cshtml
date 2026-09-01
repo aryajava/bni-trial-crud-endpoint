@@ -1,5 +1,5 @@
 @page
-@model cobaproject.Pages.Screen.MasterUser.IndexModel
+@model cobaproject.Pages.Users.IndexModel
 @using cobaproject.Helpers
 @{
     ViewData["Title"] = "Master User";
@@ -98,6 +98,28 @@
 </div>
 
 @section Scripts {
+    @if (TempData["NewSecretKey"] is string kunciBaru)
+    {
+        <script>
+            Swal.fire({
+                title: "Secret Key User Baru",
+                html: "Salin dan simpan — hanya ditampilkan sekali ini saja.",
+                input: "text",
+                inputValue: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(kunciBaru)),
+                inputAttributes: { readonly: "readonly", style: "font-family: monospace; letter-spacing: 1px;" },
+                confirmButtonText: "Salin",
+                showCancelButton: true,
+                cancelButtonText: "Tutup"
+            }).then(function (hasil) {
+                if (hasil.isConfirmed) {
+                    navigator.clipboard.writeText(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(kunciBaru))).then(function () {
+                        if (Swal.isVisible()) { Swal.close(); }
+                        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Secret key disalin.", showConfirmButton: false, timer: 2000 });
+                    });
+                }
+            });
+        </script>
+    }
     <script>
         document.querySelectorAll(".btn-confirm-delete").forEach(function (btn) {
             btn.addEventListener("click", function () {

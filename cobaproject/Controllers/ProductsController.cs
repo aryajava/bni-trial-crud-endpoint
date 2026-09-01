@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace cobaproject.Controllers;
 
 [ApiController]
-[Route("products")]
+[Route("api/products")]
 public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;

@@ -1,9 +1,9 @@
 @using System.Security.Claims
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-    var isProductPages = currentPage.StartsWith("/Screen/Products", StringComparison.OrdinalIgnoreCase);
-    var isMasterUserPages = currentPage.StartsWith("/Screen/MasterUser", StringComparison.OrdinalIgnoreCase);
-    var isUserControlPages = currentPage.StartsWith("/Screen/UserControl", StringComparison.OrdinalIgnoreCase);
+    var isProductPages = currentPage.StartsWith("/Products", StringComparison.OrdinalIgnoreCase);
+    var isMasterUserPages = currentPage.StartsWith("/Users", StringComparison.OrdinalIgnoreCase);
+    var isUserControlPages = currentPage.StartsWith("/UserControl", StringComparison.OrdinalIgnoreCase);
     var crumbRoot = ViewData["CrumbRoot"] as string ?? "Master Produk";
     var signedIn = User.Identity?.IsAuthenticated == true;
     var isOwner = User.IsInRole("OWNER");
@@ -182,7 +182,7 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar d-none d-lg-flex">
-            <a class="sidebar-brand" asp-page="/Screen/Products/Index">
+            <a class="sidebar-brand" asp-page="/Products/Index">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -190,19 +190,19 @@
                 @if (signedIn)
                 {
                     <div class="nav-group-title">Master</div>
-                    <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Screen/Products/Index">
+                    <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Products/Index">
                         <span class="material-icons">inventory_2</span> Master Produk
                     </a>
                     @if (isAdmin || isOwner)
                     {
-                        <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Screen/MasterUser/Index">
+                        <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Users/Index">
                             <span class="material-icons">group</span> Master User
                         </a>
                     }
                     @if (isOwner)
                     {
                         <div class="nav-group-title">Maintenance</div>
-                        <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Screen/UserControl/Index">
+                        <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
                             <span class="material-icons">manage_accounts</span> User Control
                         </a>
                     }
@@ -226,7 +226,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a asp-page="@(isMasterUserPages ? "/Screen/MasterUser/Index" : isUserControlPages ? "/Screen/UserControl/Index" : "/Screen/Products/Index")">@crumbRoot</a>
+                <a asp-page="@(isMasterUserPages ? "/Users/Index" : isUserControlPages ? "/UserControl/Index" : "/Products/Index")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -260,7 +260,7 @@
 
     <div class="offcanvas offcanvas-start offcanvas-nav" tabindex="-1" id="sidebarMobile">
         <div class="offcanvas-header">
-            <a class="sidebar-brand" asp-page="/Screen/Products/Index">
+            <a class="sidebar-brand" asp-page="/Products/Index">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -270,19 +270,19 @@
             @if (signedIn)
             {
                 <div class="nav-group-title">Master</div>
-                <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Screen/Products/Index">
+                <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Products/Index">
                     <span class="material-icons">inventory_2</span> Master Produk
                 </a>
                 @if (isAdmin || isOwner)
                 {
-                    <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Screen/MasterUser/Index">
+                    <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Users/Index">
                         <span class="material-icons">group</span> Master User
                     </a>
                 }
                 @if (isOwner)
                 {
                     <div class="nav-group-title">Maintenance</div>
-                    <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Screen/UserControl/Index">
+                    <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
                         <span class="material-icons">manage_accounts</span> User Control
                     </a>
                 }
