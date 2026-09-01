@@ -128,6 +128,8 @@
     <table class="data-table">
         <thead>
             <tr>
+                <th style="text-align:center;">No.</th>
+                <th style="text-align:center;">Aksi</th>                
                 <th><button class="th-sort" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="title">Judul<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="price">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
@@ -138,7 +140,6 @@
                 <th><button class="th-sort" data-sort="updatedBy">Diubah Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="updatedAt">Diubah<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="version">Versi<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th>Aksi</th>
             </tr>
         </thead>
         <tbody id="productRows">
@@ -245,8 +246,15 @@
                 tbody.innerHTML = '<tr class="row-empty"><td colspan="11"><span class="material-icons">inbox</span> Tidak ada data yang cocok dengan kriteria.</td></tr>';
                 return;
             }
-            tbody.innerHTML = items.map((item) => `
+            tbody.innerHTML = items.map((item, idx) => {
+                const nomor = ((state.page - 1) * state.pageSize) + idx + 1;
+                return `
                 <tr>
+                    <td>${nomor}</td>
+                    <td class="td-actions">
+                        <a class="btn-icon btn-edit" href="/Screen/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
+                        <a class="btn-icon btn-delete" href="/Screen/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
+                    </td>
                     <td class="td-id">${item.id}</td>
                     <td class="td-title">${esc(item.title)}</td>
                     <td class="td-price">${formatRupiah(item.price)}</td>
@@ -257,11 +265,8 @@
                     <td>${item.updatedBy ? esc(item.updatedBy) : '-'}</td>
                     <td>${formatDateTime(item.updatedAt)}</td>
                     <td class="td-ver">${item.version}</td>
-                    <td class="td-actions">
-                        <a class="btn-icon btn-edit" href="/Screen/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
-                        <a class="btn-icon btn-delete" href="/Screen/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
-                    </td>
-                </tr>`).join('');
+                </tr>`;
+            }).join(''); 
         }
 
         function buildPages(current, total) {
