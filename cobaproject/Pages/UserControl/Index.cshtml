@@ -76,7 +76,6 @@
                                     {
                                         <form method="post" asp-page-handler="ToggleActive" class="m-0">
                                             <input type="hidden" name="id" value="@u.Id" />
-                                            <input type="hidden" name="isActive" value="@(!u.IsActive)" />
                                             @if (u.IsActive)
                                             {
                                                 <button type="button" class="btn btn-outline-danger btn-sm btn-toggle-off" title="Nonaktifkan">

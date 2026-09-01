@@ -64,7 +64,7 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostToggleActiveAsync(int? id, string? isActive)
+    public async Task<IActionResult> OnPostToggleActiveAsync(int? id)
     {
         var target = id is null ? null : await _userService.GetByIdAsync(id.Value);
         if (target is null)
@@ -72,11 +72,9 @@ public class IndexModel : PageModel
             return NotFound();
         }
 
-        if (!bool.TryParse(isActive, out var active))
-        {
-            ModelState.AddModelError(string.Empty, "Nilai status tidak valid.");
-        }
-        else if (target.Id == CurrentUserId)
+        var active = !target.IsActive;
+
+        if (target.Id == CurrentUserId)
         {
             ModelState.AddModelError(string.Empty, "Tidak dapat menonaktifkan akun sendiri.");
         }

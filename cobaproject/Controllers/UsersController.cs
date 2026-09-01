@@ -224,6 +224,26 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpGet("{id:int}/secret-key")]
+    public async Task<IResult> GetSecretKey(int id)
+    {
+        try
+        {
+            var user = await _userService.GetByIdAsync(id);
+            if (user is null)
+            {
+                return ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
+            }
+
+            var key = await _userService.GetSecretKeyAsync(id);
+            return ResponseHelper.Success(HttpContext, new { user.Username, key });
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+
     [HttpPost("{id:int}/secret-key/regenerate")]
     public async Task<IResult> RegenerateSecret(int id)
     {
