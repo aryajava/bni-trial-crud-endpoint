@@ -114,8 +114,8 @@
         <table class="table table-hover table-data align-middle mb-0">
             <thead>
                 <tr>
-                    <th class="text-center">No.</th>
-                    <th class="text-center">Aksi</th>
+                    <th class="col-no text-center">No.</th>
+                    <th class="col-aksi text-center">Aksi</th>
                     <th><button class="th-sort" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
                     <th><button class="th-sort" data-sort="title">Judul<span class="material-icons sort-ic">swap_vert</span></button></th>
                     <th><button class="th-sort" data-sort="price" title="Sortir berdasarkan harga efektif (setelah diskon)">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
@@ -261,8 +261,8 @@
                 const nomor = ((state.page - 1) * state.pageSize) + idx + 1;
                 return `
                 <tr>
-                    <td class="td-nomor text-center">${nomor}</td>
-                    <td class="text-center">
+                    <td class="td-nomor col-no text-center">${nomor}</td>
+                    <td class="col-aksi text-center">
                         <div class="field-actions justify-content-center">
                             <a class="btn-icon btn-edit" href="/Screen/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
                             <a class="btn-icon btn-delete" href="/Screen/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
