@@ -17,7 +17,7 @@
 
 <div class="page-header">
     <h1>Hapus Produk #@Model.Product?.Id</h1>
-    <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
 </div>
 
 @if (Model.Product is null)
@@ -25,7 +25,7 @@
     <div class="alert alert-danger d-flex align-items-center gap-2">
         <span class="material-icons">search_off</span> Produk tidak ditemukan.
     </div>
-    <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali ke daftar</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali ke daftar</a>
 }
 else
 {
@@ -61,9 +61,9 @@ else
 
     <form method="post" class="mt-3">
         <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-danger" type="submit"><span class="material-icons">delete</span> Hapus (soft delete)</button>
-            <button class="btn btn-outline-danger" type="submit" asp-page-handler="Hard"><span class="material-icons">delete_forever</span> Hapus permanen</button>
-            <a class="btn btn-outline-secondary" asp-page="Index"><span class="material-icons">close</span> Batal</a>
+            <button class="btn btn-danger btn-sm" type="submit"><span class="material-icons">delete</span> Hapus (soft delete)</button>
+            <button class="btn btn-outline-danger btn-sm" type="submit" asp-page-handler="Hard"><span class="material-icons">delete_forever</span> Hapus permanen</button>
+            <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">close</span> Batal</a>
         </div>
     </form>
 }

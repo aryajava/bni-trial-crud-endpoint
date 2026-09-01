@@ -6,7 +6,7 @@
 
 <div class="page-header">
     <h1>Master Produk</h1>
-    <a class="btn btn-primary" asp-page="Create"><span class="material-icons">add</span> Tambah Produk</a>
+    <a class="btn btn-primary btn-sm" asp-page="Create"><span class="material-icons">add</span> Tambah Produk</a>
 </div>
 
 <div class="row g-3 mb-4">
@@ -56,73 +56,54 @@
     </div>
 </div>
 
-<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
-    <div class="input-group input-group-sm search-input">
+<div class="filter-inline d-flex flex-wrap align-items-end gap-2 mb-3">
+    <div class="input-group input-group-sm search-box">
         <span class="input-group-text bg-white"><span class="material-icons" style="font-size: 16px">search</span></span>
         <input type="text" id="searchInput" class="form-control" placeholder="Cari di semua kolom..." autocomplete="off" />
     </div>
-    <div class="d-flex align-items-center gap-2 ms-md-auto">
-        <span class="text-secondary small">Tampilkan</span>
-        <select id="pageSizeSelect" class="form-select form-select-sm w-auto">
-            <option value="20" selected>20</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="categorySelect">Kategori</label>
+        <select id="categorySelect" class="form-select form-select-sm">
+            <option value="">Semua Kategori</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c">@c</option>
+            }
         </select>
-        <span class="text-secondary small">data / halaman</span>
     </div>
-</div>
-
-<div class="card card-soft mb-3">
-    <div class="card-body p-2">
-        <div class="row g-2">
-            <div class="col-md-6 col-xl-2">
-                <label class="form-label small fw-semibold text-secondary mb-1">Kategori</label>
-                <select id="categorySelect" class="form-select form-select-sm">
-                    <option value="">Semua Kategori</option>
-                    @foreach (var c in Model.Categories)
-                    {
-                        <option value="@c">@c</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-6 col-xl-3">
-                <label class="form-label small fw-semibold text-secondary mb-1">Harga Efektif (Rp)</label>
-                <div class="d-flex align-items-center gap-2">
-                    <input type="number" id="priceMin" class="form-control form-control-sm" placeholder="Min" min="0" step="0.01" />
-                    <span class="text-secondary">–</span>
-                    <input type="number" id="priceMax" class="form-control form-control-sm" placeholder="Max" min="0" step="0.01" />
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-2">
-                <label class="form-label small fw-semibold text-secondary mb-1">Stok</label>
-                <div class="d-flex align-items-center gap-2">
-                    <input type="number" id="stockMin" class="form-control form-control-sm" placeholder="Min" min="0" step="1" />
-                    <span class="text-secondary">–</span>
-                    <input type="number" id="stockMax" class="form-control form-control-sm" placeholder="Max" min="0" step="1" />
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-2">
-                <label class="form-label small fw-semibold text-secondary mb-1">Dibuat (Tanggal)</label>
-                <div class="d-flex align-items-center gap-2">
-                    <input type="date" id="createdFrom" class="form-control form-control-sm" />
-                    <span class="text-secondary">–</span>
-                    <input type="date" id="createdTo" class="form-control form-control-sm" />
-                </div>
-            </div>
-            <div class="col-md-6 col-xl-2">
-                <label class="form-label small fw-semibold text-secondary mb-1">Diubah (Tanggal)</label>
-                <div class="d-flex align-items-center gap-2">
-                    <input type="date" id="updatedFrom" class="form-control form-control-sm" />
-                    <span class="text-secondary">–</span>
-                    <input type="date" id="updatedTo" class="form-control form-control-sm" />
-                </div>
-            </div>
-            <div class="col-md-12 col-xl-1 d-flex align-items-end gap-2">
-                <button class="btn btn-primary btn-sm w-100" id="applyFilter"><span class="material-icons">filter_alt</span> Terapkan</button>
-                <button class="btn btn-outline-secondary btn-sm w-100" id="resetFilter"><span class="material-icons">restart_alt</span> Reset</button>
-            </div>
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0">Harga (Rp)</label>
+        <div class="d-flex align-items-center gap-1">
+            <input type="number" id="priceMin" class="form-control form-control-sm w-num" placeholder="Min" min="0" step="0.01" />
+            <span class="text-secondary">–</span>
+            <input type="number" id="priceMax" class="form-control form-control-sm w-num" placeholder="Max" min="0" step="0.01" />
         </div>
     </div>
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0">Stok</label>
+        <div class="d-flex align-items-center gap-1">
+            <input type="number" id="stockMin" class="form-control form-control-sm w-num" placeholder="Min" min="0" step="1" />
+            <span class="text-secondary">–</span>
+            <input type="number" id="stockMax" class="form-control form-control-sm w-num" placeholder="Max" min="0" step="1" />
+        </div>
+    </div>
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0">Dibuat</label>
+        <div class="d-flex align-items-center gap-1">
+            <input type="date" id="createdFrom" class="form-control form-control-sm w-date" />
+            <span class="text-secondary">–</span>
+            <input type="date" id="createdTo" class="form-control form-control-sm w-date" />
+        </div>
+    </div>
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0">Diubah</label>
+        <div class="d-flex align-items-center gap-1">
+            <input type="date" id="updatedFrom" class="form-control form-control-sm w-date" />
+            <span class="text-secondary">–</span>
+            <input type="date" id="updatedTo" class="form-control form-control-sm w-date" />
+        </div>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm" id="resetFilter"><span class="material-icons">restart_alt</span> Reset</button>
 </div>
 
 <div class="card card-soft">
@@ -150,8 +131,16 @@
             </tbody>
         </table>
     </div>
-    <div class="card-body border-top d-flex align-items-center justify-content-between gap-3 flex-wrap py-3">
-        <div id="pageInfo" class="text-muted small">Menampilkan 0–0 dari 0 data</div>
+    <div class="card-body border-top d-flex align-items-center justify-content-between gap-3 flex-wrap py-2 px-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <select id="pageSizeSelect" class="form-select form-select-sm w-auto">
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            <span class="text-secondary small">data / halaman</span>
+            <span id="pageInfo" class="text-muted small">Hal 0 dari 0 (0 data)</span>
+        </div>
         <nav><ul class="pagination pagination-sm" id="pagination"></ul></nav>
     </div>
 </div>
@@ -184,7 +173,6 @@
             createdTo: '',
             updatedFrom: '',
             updatedTo: '',
-            total: 0,
             totalPages: 0
         };
 
@@ -216,7 +204,10 @@
                 : s <= 5 ? 'bg-warning-subtle text-warning-emphasis'
                 : 'bg-success-subtle text-success-emphasis';
             const lbl = s <= 0 ? 'Habis' : s <= 5 ? 'Menipis' : 'Tersedia';
-            return `${s} <span class="badge ${cls}">${lbl}</span>`;
+            return `<div class="d-flex flex-column align-items-start">
+                <span class="fw-semibold">${s}</span>
+                <span class="badge ${cls}">${lbl}</span>
+            </div>`;
         }
 
         function formatDateTime(iso) {
@@ -248,23 +239,12 @@
             return q.toString();
         }
 
-        function fromItem() {
-            return (state.totalPages === 0) ? 0 : ((state.page - 1) * state.pageSize) + 1;
-        }
-        function toItem() {
-            if (state.totalPages === 0) return 0;
-            const end = state.page * state.pageSize;
-            return end > state.total ? state.total : end;
-        }
-
         function setPageMeta(page, total, totalPages) {
             state.page = page;
-            state.total = total;
             state.totalPages = totalPages;
-            const from = fromItem(), to = toItem();
-            $('pageInfo').textContent = from === 0
-                ? 'Menampilkan 0–0 dari ' + total + ' data'
-                : 'Menampilkan ' + from + '–' + to + ' dari ' + total + ' data';
+            $('pageInfo').textContent = total === 0
+                ? 'Hal 0 dari 0 (0 data)'
+                : `Hal ${page} dari ${totalPages} (${total} data)`;
             renderPagination();
         }
 
@@ -364,12 +344,19 @@
             }
         }
 
-        function applyFilter() {
-            state.category = $('categorySelect').value;
-            state.priceMin = $('priceMin').value;
-            state.priceMax = $('priceMax').value;
-            state.stockMin = $('stockMin').value;
-            state.stockMax = $('stockMax').value;
+        function onRangeInput() {
+            clearTimeout(rangeTimer);
+            rangeTimer = setTimeout(() => {
+                state.priceMin = $('priceMin').value;
+                state.priceMax = $('priceMax').value;
+                state.stockMin = $('stockMin').value;
+                state.stockMax = $('stockMax').value;
+                state.page = 1;
+                loadData();
+            }, 400);
+        }
+
+        function onDateChange() {
             state.createdFrom = $('createdFrom').value;
             state.createdTo = $('createdTo').value;
             state.updatedFrom = $('updatedFrom').value;
@@ -404,6 +391,7 @@
         }
 
         let searchTimer = null;
+        let rangeTimer = null;
         function onSearchInput() {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(() => {
@@ -423,7 +411,15 @@
                 state.page = 1;
                 loadData();
             });
-            $('applyFilter').addEventListener('click', applyFilter);
+            $('categorySelect').addEventListener('change', (e) => {
+                state.category = e.target.value;
+                state.page = 1;
+                loadData();
+            });
+            ['priceMin', 'priceMax', 'stockMin', 'stockMax'].forEach((id) =>
+                $(id).addEventListener('input', onRangeInput));
+            ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach((id) =>
+                $(id).addEventListener('change', onDateChange));
             $('resetFilter').addEventListener('click', resetFilter);
             document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
                 const col = btn.dataset.sort;
