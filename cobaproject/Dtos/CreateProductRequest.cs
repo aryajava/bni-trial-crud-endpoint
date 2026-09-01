@@ -4,8 +4,8 @@ namespace cobaproject.Dtos;
 
 public class CreateProductRequest
 {
-    [Required]
-    [StringLength(500)]
+    [Required(ErrorMessage = "Judul wajib diisi.")]
+    [StringLength(500, ErrorMessage = "Judul maksimal 500 karakter.")]
     public string Title { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Harga wajib diisi.")]
@@ -15,10 +15,10 @@ public class CreateProductRequest
     public string? Description { get; set; }
 
     [Required(ErrorMessage = "Kategori wajib dipilih.")]
-    [StringLength(200)]
+    [StringLength(200, ErrorMessage = "Kategori maksimal 200 karakter.")]
     public string? Category { get; set; }
 
-    [StringLength(1000)]
+    [StringLength(1000, ErrorMessage = "URL gambar maksimal 1000 karakter.")]
     public string? Image { get; set; }
 
     [Required(ErrorMessage = "Rating wajib diisi.")]
