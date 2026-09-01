@@ -201,6 +201,14 @@
             return `<span class="harga-coretan">${asli}</span><span class="harga-diskon">${formatRupiahBulat(efektif)}</span>`;
         }
 
+        function renderRating(item) {
+            if (item.ratingRate == null) return '-';
+            return `<div class="d-flex flex-column align-items-start">
+                <span class="fw-semibold"><span class="material-icons rating-star">star</span> ${Number(item.ratingRate).toFixed(1)}</span>
+                <span class="text-muted small">${item.ratingCount ?? 0} orang</span>
+            </div>`;
+        }
+
         function renderStok(item) {
             const s = item.stock ?? 0;
             const cls = s <= 0 ? 'bg-danger-subtle text-danger-emphasis'
@@ -272,7 +280,7 @@
                     <td class="td-title fw-semibold">${esc(item.title)}</td>
                     <td class="td-price">${renderHarga(item)}</td>
                     <td>${item.category ? `<span class="badge bg-primary-subtle text-primary-emphasis">${esc(item.category)}</span>` : '-'}</td>
-                    <td>${item.ratingRate != null ? `<span class="material-icons rating-star">star</span> ${Number(item.ratingRate).toFixed(1)} <span class="text-muted small">(${item.ratingCount ?? 0})</span>` : '-'}</td>
+                    <td>${renderRating(item)}</td>
                     <td>${renderStok(item)}</td>
                     <td>${item.createdBy ? esc(item.createdBy) : '-'}</td>
                     <td>${formatDateTime(item.createdAt)}</td>
