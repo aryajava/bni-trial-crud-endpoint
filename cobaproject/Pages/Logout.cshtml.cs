@@ -10,6 +10,7 @@ public class LogoutModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["InfoMessage"] = "Anda telah keluar.";
         return RedirectToPage("/Login");
     }
 }

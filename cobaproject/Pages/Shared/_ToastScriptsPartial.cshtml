@@ -1,0 +1,33 @@
+<script>
+    (function () {
+        function tampilToast(icon, judul, timer) {
+            if (window.Swal) {
+                if (Swal.isVisible()) { Swal.close(); }
+                Swal.fire({ toast: true, position: "top-end", icon: icon, title: judul, showConfirmButton: false, timer: timer, timerProgressBar: true });
+            }
+        }
+
+        @if (TempData["SuccessMessage"] is string sukses)
+        {
+            <text>tampilToast("success", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(sukses)), 3000);</text>
+        }
+        else if (TempData["InfoMessage"] is string info)
+        {
+            <text>tampilToast("info", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(info)), 3000);</text>
+        }
+        else
+        {
+            @{
+                var errorModel = ViewData.ModelState
+                    .Where(kv => kv.Key.Length == 0)
+                    .SelectMany(kv => kv.Value.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .FirstOrDefault(m => !string.IsNullOrWhiteSpace(m));
+            }
+            @if (errorModel is not null)
+            {
+                <text>tampilToast("error", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(errorModel)), 5000);</text>
+            }
+        }
+    })();
+</script>

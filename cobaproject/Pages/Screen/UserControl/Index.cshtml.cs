@@ -64,19 +64,23 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostToggleActiveAsync(int id, bool isActive)
+    public async Task<IActionResult> OnPostToggleActiveAsync(int? id, string? isActive)
     {
-        var target = await _userService.GetByIdAsync(id);
+        var target = id is null ? null : await _userService.GetByIdAsync(id.Value);
         if (target is null)
         {
             return NotFound();
         }
 
-        if (target.Id == CurrentUserId)
+        if (!bool.TryParse(isActive, out var active))
+        {
+            ModelState.AddModelError(string.Empty, "Nilai status tidak valid.");
+        }
+        else if (target.Id == CurrentUserId)
         {
             ModelState.AddModelError(string.Empty, "Tidak dapat menonaktifkan akun sendiri.");
         }
-        else if (!isActive && target.IsActive
+        else if (!active && target.IsActive
                  && await _userService.CountActiveByRoleAsync(target.Role) <= 1)
         {
             ModelState.AddModelError(string.Empty, $"Tidak dapat menonaktifkan user {target.Role} aktif terakhir.");
@@ -88,8 +92,8 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        await _userService.SetActiveAsync(id, isActive, Caller);
-        TempData["SuccessMessage"] = $"User \"{target.Display}\" {(isActive ? "diaktifkan" : "dinonaktifkan")}.";
+        await _userService.SetActiveAsync(target.Id, active, Caller);
+        TempData["SuccessMessage"] = $"User \"{target.Display}\" {(active ? "diaktifkan" : "dinonaktifkan")}.";
         return RedirectToPage();
     }
 

@@ -13,11 +13,6 @@
 <div class="card card-soft">
     <div class="card-body p-3">
         <form method="post" style="max-width: 560px;">
-            @if (!ViewData.ModelState.IsValid)
-            {
-                <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
-            }
-
             <div class="mb-3">
                 <label class="form-label" asp-for="Request.Username">Username</label>
                 <input asp-for="Request.Username" class="form-control" autocomplete="off" />

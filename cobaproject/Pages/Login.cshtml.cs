@@ -12,6 +12,7 @@ namespace cobaproject.Pages;
 public class LoginModel : PageModel
 {
     private readonly IUserService _userService;
+    private readonly ILogger<LoginModel> _logger;
 
     [BindProperty]
     public string Username { get; set; } = string.Empty;
@@ -19,9 +20,10 @@ public class LoginModel : PageModel
     [BindProperty]
     public string Password { get; set; } = string.Empty;
 
-    public LoginModel(IUserService userService)
+    public LoginModel(IUserService userService, ILogger<LoginModel> logger)
     {
         _userService = userService;
+        _logger = logger;
     }
 
     public void OnGet()
@@ -38,9 +40,8 @@ public class LoginModel : PageModel
         var (user, error) = await _userService.AuthenticateAsync(Username.Trim(), Password);
         if (user is null)
         {
-            ModelState.AddModelError(string.Empty, error == "inactive"
-                ? "Akun ini dinonaktifkan. Hubungi pemilik toko."
-                : "Username atau password salah.");
+            _logger.LogWarning("[AUTH] Login gagal untuk {Username} (alasan {Reason})", Username, error ?? "invalid");
+            ModelState.AddModelError(string.Empty, "Username atau password salah.");
             return Page();
         }
 

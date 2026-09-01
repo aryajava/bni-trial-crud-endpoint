@@ -40,7 +40,7 @@ public class CreateModel : PageModel
 
         if (!AllowedRoles.Contains(Request.Role))
         {
-            ModelState.AddModelError(nameof(Request.Role),
+            ModelState.AddModelError(string.Empty,
                 "Anda tidak berhak membuat user dengan role tersebut.");
         }
 
@@ -52,7 +52,7 @@ public class CreateModel : PageModel
         var (user, error) = await _userService.CreateAsync(Request, Caller);
         if (user is null)
         {
-            ModelState.AddModelError(nameof(Request.Username), error ?? "Gagal menyimpan user.");
+            ModelState.AddModelError(string.Empty, error ?? "Gagal menyimpan user.");
             return Page();
         }
 

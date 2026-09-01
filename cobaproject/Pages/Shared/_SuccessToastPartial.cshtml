@@ -1,7 +1,0 @@
-@if (TempData["SuccessMessage"] is string pesan)
-{
-    <script>
-        if (Swal.isVisible()) { Swal.close(); }
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(pesan)), showConfirmButton: false, timer: 3000, timerProgressBar: true });
-    </script>
-}

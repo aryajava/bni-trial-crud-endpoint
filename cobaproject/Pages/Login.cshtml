@@ -2,35 +2,47 @@
 @model cobaproject.Pages.LoginModel
 @{
     ViewData["Title"] = "Login";
+    Layout = "_LoginLayout";
 }
-<div class="page-header">
-    <h1>Login</h1>
-</div>
 
-<div class="card card-soft" style="max-width: 420px;">
-    <div class="card-body p-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
-
-            <div class="mb-3">
-                <label class="form-label" asp-for="Username">Username</label>
-                <input asp-for="Username" class="form-control" autocomplete="username" autofocus />
-                <span asp-validation-for="Username" class="field-error"></span>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label" asp-for="Password">Password</label>
-                <input asp-for="Password" class="form-control" autocomplete="current-password" />
-                <span asp-validation-for="Password" class="field-error"></span>
-            </div>
-
-            <input type="hidden" name="returnUrl" value="@Request.Query["ReturnUrl"]" />
-
-            <button class="btn btn-primary w-100" type="submit"><span class="material-icons">login</span> Masuk</button>
-        </form>
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label" asp-for="Username">Username</label>
+        <div class="input-group">
+            <span class="input-group-text"><span class="material-icons">person</span></span>
+            <input asp-for="Username" class="form-control" autocomplete="username" autofocus />
+        </div>
+        <span asp-validation-for="Username" class="field-error"></span>
     </div>
-</div>
+
+    <div class="mb-4">
+        <label class="form-label" asp-for="Password">Password</label>
+        <div class="input-group">
+            <span class="input-group-text"><span class="material-icons">lock</span></span>
+            <input asp-for="Password" class="form-control" autocomplete="current-password" id="inputPassword" />
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1" title="Perlihatkan/sembunyikan password">
+                <span class="material-icons" id="togglePasswordIcon">visibility</span>
+            </button>
+        </div>
+        <span asp-validation-for="Password" class="field-error"></span>
+    </div>
+
+    <input type="hidden" name="returnUrl" value="@Request.Query["ReturnUrl"]" />
+
+    <button class="btn btn-masuk w-100 text-white py-2" type="submit">
+        <span class="material-icons">login</span> Masuk
+    </button>
+</form>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById("togglePassword").addEventListener("click", function () {
+            var input = document.getElementById("inputPassword");
+            var icon = document.getElementById("togglePasswordIcon");
+            var tersembunyi = input.type === "password";
+            input.type = tersembunyi ? "text" : "password";
+            icon.textContent = tersembunyi ? "visibility_off" : "visibility";
+            input.focus();
+        });
+    </script>
 }
