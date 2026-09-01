@@ -6,6 +6,7 @@ using cobaproject.Helpers;
 using cobaproject.Services;
 using cobaproject.Services.Interfaces;
 using DbUp;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Data.SqlClient;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -60,6 +61,17 @@ builder.Services.Configure<DatabaseConfig>(builder.Configuration.GetSection("Con
 builder.Services.AddScoped<IRequestLogService, RequestLogService>();
 builder.Services.AddScoped<IResponseLogService, ResponseLogService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login";
+        options.AccessDeniedPath = "/Login";
+        options.Cookie.Name = "GKLaku.Auth";
+        options.SlidingExpiration = true;
+    });
+builder.Services.AddAuthorization();
 
 builder.Services.AddHttpClient<IFakeStoreService, FakeStoreService>(client =>
     client.BaseAddress = new Uri(builder.Configuration["FakeStoreApi:BaseUrl"]!));
@@ -107,6 +119,7 @@ if (app.Urls.Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnor
 app.UseMiddleware<RequestResponseMiddleware>();
 app.UseMiddleware<ApiKeyMiddleware>();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -116,7 +129,13 @@ if (app.Environment.IsDevelopment()
     && string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_OPEN_BROWSER")))
 {
     app.Lifetime.ApplicationStarted.Register(() =>
-        OpenBrowserInEdge("http://localhost:5251/swagger"));
+    {
+        var url = app.Urls.FirstOrDefault(u => u.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            ?? "http://localhost:5251";
+        url = url.Replace("://0.0.0.0", "://localhost", StringComparison.OrdinalIgnoreCase)
+                 .Replace("://+", "://localhost", StringComparison.OrdinalIgnoreCase);
+        OpenBrowserInEdge(url);
+    });
 }
 
 app.Run();

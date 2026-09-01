@@ -3,9 +3,11 @@ using cobaproject.Dtos;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 namespace cobaproject.Pages.Screen.Products;
 
+[Authorize]
 public class IndexModel : PageModel
 {
     private readonly IProductService _productService;

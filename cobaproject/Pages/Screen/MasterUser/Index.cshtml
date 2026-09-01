@@ -1,0 +1,125 @@
+@page
+@model cobaproject.Pages.Screen.MasterUser.IndexModel
+@using cobaproject.Helpers
+@{
+    ViewData["Title"] = "Master User";
+    ViewData["CrumbRoot"] = "Master User";
+}
+
+<div class="page-header">
+    <h1>Master User</h1>
+    <a class="btn btn-primary btn-sm" asp-page="Create"><span class="material-icons">add</span> Tambah User</a>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+}
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <div class="mb-2">
+            <form method="get" class="input-group input-group-sm search-box">
+                <span class="input-group-text bg-white"><span class="material-icons">search</span></span>
+                <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="Cari username / nama / role..." autocomplete="off" />
+                <button class="btn btn-outline-secondary" type="submit">Cari</button>
+            </form>
+        </div>
+
+        <div class="table-wrap">
+            <table class="table table-data align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="col-no">No</th>
+                        <th>Username</th>
+                        <th>Nama Tampilan</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Login Terakhir</th>
+                        <th>Dibuat</th>
+                        <th class="col-aksi">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Rows.Count; i++)
+                    {
+                        var r = Model.Rows[i];
+                        var u = r.User;
+                        <tr class="@(u.IsActive ? "" : "table-secondary")">
+                            <td class="td-nomor">@(i + 1)</td>
+                            <td class="fw-semibold">@u.Username @(r.IsSelf ? "(Anda)" : "")</td>
+                            <td>@(string.IsNullOrWhiteSpace(u.DisplayName) ? "—" : u.DisplayName)</td>
+                            <td>
+                                @if (u.Role == UserRolePolicy.Owner)
+                                {
+                                    <span class="badge bg-dark">OWNER</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">ADMIN</span>
+                                }
+                            </td>
+                            <td>
+                                @if (u.IsActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success-emphasis">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Nonaktif</span>
+                                }
+                            </td>
+                            <td class="td-nomor">@(u.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "—")</td>
+                            <td class="td-nomor">@u.CreatedAt.ToString("dd MMM yyyy")<br /><small class="text-muted">oleh @u.CreatedBy</small></td>
+                            <td>
+                                <div class="field-actions">
+                                    @if (r.CanManage)
+                                    {
+                                        <a class="btn-icon btn-edit" asp-page="Edit" asp-route-id="@u.Id" title="Edit">
+                                            <span class="material-icons">edit</span>
+                                        </a>
+                                    }
+                                    @if (r.CanDelete)
+                                    {
+                                        <form method="post" asp-page-handler="Delete" class="m-0">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button type="button" class="btn-icon btn-delete btn-confirm-delete" title="Nonaktifkan user" data-confirm="Nonaktifkan user '@u.Display'?">
+                                                <span class="material-icons">person_off</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Rows.Count == 0)
+                    {
+                        <tr><td colspan="8" class="row-empty py-4">Tidak ada user ditemukan.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_SuccessToastPartial" />
+    <script>
+        document.querySelectorAll(".btn-confirm-delete").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                Swal.fire({
+                    title: "Yakin nonaktifkan user ini?",
+                    text: btn.getAttribute("data-confirm"),
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Ya, nonaktifkan",
+                    cancelButtonText: "Batal"
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        btn.closest("form").submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

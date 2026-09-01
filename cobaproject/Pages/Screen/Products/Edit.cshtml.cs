@@ -2,9 +2,11 @@ using cobaproject.Dtos;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
 
 namespace cobaproject.Pages.Screen.Products;
 
+[Authorize]
 public class EditModel : PageModel
 {
     private readonly IProductService _productService;
@@ -21,7 +23,9 @@ public class EditModel : PageModel
     [BindProperty]
     public new UpdateProductRequest Request { get; set; } = new();
 
-    private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SCREEN";
+    private string Caller => User.Identity?.Name
+        ?? HttpContext.Items["Caller"]?.ToString()
+        ?? "SCREEN";
 
     public async Task<IActionResult> OnGetAsync(int id)
     {

@@ -1,7 +1,14 @@
+@using System.Security.Claims
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
     var isProductPages = currentPage.StartsWith("/Screen/Products", StringComparison.OrdinalIgnoreCase);
+    var isMasterUserPages = currentPage.StartsWith("/Screen/MasterUser", StringComparison.OrdinalIgnoreCase);
+    var isUserControlPages = currentPage.StartsWith("/Screen/UserControl", StringComparison.OrdinalIgnoreCase);
     var crumbRoot = ViewData["CrumbRoot"] as string ?? "Master Produk";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var isOwner = User.IsInRole("OWNER");
+    var isAdmin = User.IsInRole("ADMIN");
+    var displayName = User.FindFirstValue("DisplayName") ?? User.Identity?.Name ?? "";
 }
 <!DOCTYPE html>
 <html lang="id" data-bs-theme="light">
@@ -180,10 +187,26 @@
                 Toko GKLaku
             </a>
             <div class="sidebar-nav">
-                <div class="nav-group-title">Master</div>
-                <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Screen/Products/Index">
-                    <span class="material-icons">inventory_2</span> Master Produk
-                </a>
+                @if (signedIn)
+                {
+                    <div class="nav-group-title">Master</div>
+                    <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Screen/Products/Index">
+                        <span class="material-icons">inventory_2</span> Master Produk
+                    </a>
+                    @if (isAdmin || isOwner)
+                    {
+                        <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Screen/MasterUser/Index">
+                            <span class="material-icons">group</span> Master User
+                        </a>
+                    }
+                    @if (isOwner)
+                    {
+                        <div class="nav-group-title">Maintenance</div>
+                        <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Screen/UserControl/Index">
+                            <span class="material-icons">manage_accounts</span> User Control
+                        </a>
+                    }
+                }
             </div>
             <div class="sidebar-footer">
                 <a class="nav-link" href="/swagger" target="_blank">
@@ -198,15 +221,30 @@
                         data-bs-toggle="offcanvas" data-bs-target="#sidebarMobile" aria-label="Buka menu">
                     <span class="material-icons">menu</span>
                 </button>
-                <nav aria-label="breadcrumb" class="breadcrumb-nav">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a asp-page="/Screen/Products/Index">@crumbRoot</a></li>
-                        @if (!string.Equals(ViewData["Title"]?.ToString(), "Master Produk", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
-                        }
-                    </ol>
-                </nav>
+                @if (signedIn)
+{
+    <nav aria-label="breadcrumb" class="breadcrumb-nav">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a asp-page="@(isMasterUserPages ? "/Screen/MasterUser/Index" : isUserControlPages ? "/Screen/UserControl/Index" : "/Screen/Products/Index")">@crumbRoot</a>
+            </li>
+            @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+            }
+        </ol>
+    </nav>
+}
+<div class="ms-auto d-flex align-items-center gap-2">
+    @if (signedIn)
+    {
+        <span class="text-muted small">@displayName</span>
+        <span class="badge @(isOwner ? "bg-dark" : "bg-primary-subtle text-primary-emphasis")">@(isOwner ? "OWNER" : "ADMIN")</span>
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Logout" title="Keluar">
+            <span class="material-icons">logout</span>
+        </a>
+    }
+</div>
             </div>
 
             <main class="content">
@@ -229,10 +267,26 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column">
-            <div class="nav-group-title">Master</div>
-            <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Screen/Products/Index">
-                <span class="material-icons">inventory_2</span> Master Produk
-            </a>
+            @if (signedIn)
+            {
+                <div class="nav-group-title">Master</div>
+                <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Screen/Products/Index">
+                    <span class="material-icons">inventory_2</span> Master Produk
+                </a>
+                @if (isAdmin || isOwner)
+                {
+                    <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Screen/MasterUser/Index">
+                        <span class="material-icons">group</span> Master User
+                    </a>
+                }
+                @if (isOwner)
+                {
+                    <div class="nav-group-title">Maintenance</div>
+                    <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Screen/UserControl/Index">
+                        <span class="material-icons">manage_accounts</span> User Control
+                    </a>
+                }
+            }
             <div class="mt-auto">
                 <a class="nav-link" href="/swagger" target="_blank">
                     <span class="material-icons">api</span> Dokumentasi API

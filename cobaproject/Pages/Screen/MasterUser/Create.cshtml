@@ -1,0 +1,62 @@
+@page
+@model cobaproject.Pages.Screen.MasterUser.CreateModel
+@{
+    ViewData["Title"] = "Tambah User";
+    ViewData["CrumbRoot"] = "Master User";
+}
+
+<div class="page-header">
+    <h1>Tambah User</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+</div>
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <form method="post" style="max-width: 560px;">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="Request.Username">Username</label>
+                <input asp-for="Request.Username" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Request.Username" class="field-error"></span>
+                <div class="form-text">Huruf kecil dan angka, 3–50 karakter.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="Request.DisplayName">Nama Tampilan</label>
+                <input asp-for="Request.DisplayName" class="form-control" />
+                <span asp-validation-for="Request.DisplayName" class="field-error"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="Request.Password">Password Awal</label>
+                <input asp-for="Request.Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Request.Password" class="field-error"></span>
+                <div class="form-text">Minimal 6 karakter.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="Request.Role">Role</label>
+                <select asp-for="Request.Role" class="form-select">
+                    @foreach (var role in Model.AllowedRoles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+                <span asp-validation-for="Request.Role" class="field-error"></span>
+            </div>
+
+            <div class="mt-4 d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">save</span> Simpan</button>
+                <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">close</span> Batal</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

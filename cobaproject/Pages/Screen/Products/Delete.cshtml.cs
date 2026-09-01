@@ -2,9 +2,11 @@ using cobaproject.Dtos;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
 
 namespace cobaproject.Pages.Screen.Products;
 
+[Authorize]
 public class DeleteModel : PageModel
 {
     private readonly IProductService _productService;
@@ -16,7 +18,9 @@ public class DeleteModel : PageModel
 
     public ProductDto? Product { get; set; }
 
-    private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SCREEN";
+    private string Caller => User.Identity?.Name
+        ?? HttpContext.Items["Caller"]?.ToString()
+        ?? "SCREEN";
 
     public async Task<IActionResult> OnGetAsync(int id)
     {

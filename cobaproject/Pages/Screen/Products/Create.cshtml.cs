@@ -2,9 +2,11 @@ using cobaproject.Dtos;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
 
 namespace cobaproject.Pages.Screen.Products;
 
+[Authorize]
 public class CreateModel : PageModel
 {
     private readonly IProductService _productService;
@@ -18,7 +20,9 @@ public class CreateModel : PageModel
     [BindProperty]
     public new CreateProductRequest Request { get; set; } = new();
 
-    private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SCREEN";
+    private string Caller => User.Identity?.Name
+        ?? HttpContext.Items["Caller"]?.ToString()
+        ?? "SCREEN";
 
     public async Task OnGetAsync()
     {

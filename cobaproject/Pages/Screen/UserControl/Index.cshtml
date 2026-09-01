@@ -1,0 +1,161 @@
+@page
+@model cobaproject.Pages.Screen.UserControl.IndexModel
+@using cobaproject.Helpers
+@{
+    ViewData["Title"] = "User Control";
+    ViewData["CrumbRoot"] = "User Control";
+}
+
+<div class="page-header">
+    <h1>User Control</h1>
+    <span class="badge bg-dark">Khusus Owner</span>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+}
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <div class="table-wrap">
+            <table class="table table-data align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="col-no">No</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Login Terakhir</th>
+                        <th style="width: 300px;">Kontrol</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Rows.Count; i++)
+                    {
+                        var r = Model.Rows[i];
+                        var u = r.User;
+                        <tr class="@(u.IsActive ? "" : "table-secondary")">
+                            <td class="td-nomor">@(i + 1)</td>
+                            <td>
+                                <span class="fw-semibold">@u.Username</span> @(r.IsSelf ? "(Anda)" : "")
+                                <br /><small class="text-muted">@(string.IsNullOrWhiteSpace(u.DisplayName) ? "—" : u.DisplayName)</small>
+                            </td>
+                            <td>
+                                @if (u.Role == UserRolePolicy.Owner)
+                                {
+                                    <span class="badge bg-dark">OWNER</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">ADMIN</span>
+                                }
+                            </td>
+                            <td>
+                                @if (u.IsActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success-emphasis">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Nonaktif</span>
+                                }
+                            </td>
+                            <td class="td-nomor">@(u.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "—")</td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1 align-items-center">
+                                    @if (r.CanChangeRole)
+                                    {
+                                        <form method="post" asp-page-handler="ChangeRole" class="d-inline-flex gap-1 align-items-center m-0">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <select name="role" class="form-select form-select-sm" style="width: 110px;">
+                                                <option value="ADMIN" selected="@(u.Role == UserRolePolicy.Admin)">ADMIN</option>
+                                                <option value="OWNER" selected="@(u.Role == UserRolePolicy.Owner)">OWNER</option>
+                                            </select>
+                                            <button class="btn btn-outline-primary btn-sm" type="submit" title="Simpan role">
+                                                <span class="material-icons">admin_panel_settings</span>
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (r.CanToggle)
+                                    {
+                                        <form method="post" asp-page-handler="ToggleActive" class="m-0">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <input type="hidden" name="isActive" value="@(!u.IsActive)" />
+                                            @if (u.IsActive)
+                                            {
+                                                <button type="button" class="btn btn-outline-danger btn-sm btn-toggle-off" title="Nonaktifkan">
+                                                    <span class="material-icons">block</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-outline-success btn-sm" title="Aktifkan">
+                                                    <span class="material-icons">check_circle</span>
+                                                </button>
+                                            }
+                                        </form>
+                                    }
+                                    <form method="post" asp-page-handler="ResetPassword" class="m-0 form-reset-pw">
+                                        <input type="hidden" name="id" value="@u.Id" />
+                                        <input type="hidden" name="newPassword" class="input-new-pw" />
+                                        <button type="button" class="btn btn-outline-warning btn-sm btn-reset-pw" title="Reset password">
+                                            <span class="material-icons">lock_reset</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Rows.Count == 0)
+                    {
+                        <tr><td colspan="6" class="row-empty py-4">Tidak ada user.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_SuccessToastPartial" />
+    <script>
+        document.querySelectorAll(".btn-reset-pw").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var form = btn.closest(".form-reset-pw");
+                var username = btn.closest("tr").querySelector(".fw-semibold").textContent.trim();
+                Swal.fire({
+                    title: "Reset Password",
+                    text: "Password baru untuk user " + username + " (minimal 6 karakter):",
+                    input: "password",
+                    inputAttributes: { autocapitalize: "off" },
+                    showCancelButton: true,
+                    confirmButtonText: "Reset",
+                    cancelButtonText: "Batal"
+                }).then(function (result) {
+                    if (result.isConfirmed && result.value) {
+                        form.querySelector(".input-new-pw").value = result.value;
+                        form.submit();
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll(".btn-toggle-off").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                Swal.fire({
+                    title: "Nonaktifkan user ini?",
+                    text: "User tidak bisa login sampai diaktifkan kembali.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "Ya, nonaktifkan",
+                    cancelButtonText: "Batal"
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        btn.closest("form").submit();
+                    }
+                });
+            });
+        });
+    </script>
+}
