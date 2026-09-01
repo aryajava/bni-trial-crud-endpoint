@@ -5,21 +5,6 @@ namespace cobaproject.Mappers;
 
 public static class UserMapper
 {
-    public static MasterUser ToEntity(UserDto dto)
-    {
-        return new MasterUser
-        {
-            Username = dto.Username ?? string.Empty,
-            PasswordHash = dto.PasswordHash ?? string.Empty,
-            DisplayName = dto.DisplayName ?? string.Empty,
-            Role = dto.Role ?? string.Empty,
-            SecretKey = dto.SecretKey ?? string.Empty,
-            IsActive = dto.IsActive,
-            CreatedBy = dto.CreatedBy ?? "SYSTEM",
-            Version = 1
-        };
-    }
-
     public static UserDto ToDto(MasterUser entity)
     {
         return new UserDto
@@ -30,8 +15,6 @@ public static class UserMapper
             Role = entity.Role,
             LastLoginAt = entity.LastLoginAt,
             IsActive = entity.IsActive,
-            PasswordHash = entity.PasswordHash,
-            SecretKey = entity.SecretKey,
             CreatedAt = entity.CreatedAt,
             CreatedBy = entity.CreatedBy,
             UpdatedAt = entity.UpdatedAt,
