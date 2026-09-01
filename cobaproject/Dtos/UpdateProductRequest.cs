@@ -21,6 +21,7 @@ public class UpdateProductRequest
     [StringLength(1000)]
     public string? Image { get; set; }
 
+    [Required(ErrorMessage = "Rating wajib diisi.")]
     [Range(1, 5, ErrorMessage = "Rating harus antara 1 dan 5.")]
     public decimal? RatingRate { get; set; }
 
