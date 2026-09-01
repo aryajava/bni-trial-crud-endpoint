@@ -31,6 +31,8 @@
     .data-table td { padding: 9px 12px; vertical-align: middle; }
     .td-title { font-weight: 600; color: #111827; }
     .td-price { white-space: nowrap; }
+    .td-price .harga-coretan { display: block; text-decoration: line-through; color: #9ca3af; font-size: 13px; }
+    .td-price .harga-diskon { display: block; font-weight: 700; color: #b91c1c; }
     .td-actions { white-space: nowrap; text-align: right; }
     .td-id, .td-ver { font-variant-numeric: tabular-nums; color: #6b7280; }
 
@@ -95,7 +97,7 @@
         </select>
     </div>
     <div class="f-group">
-        <label>Harga (Rp)</label>
+        <label>Harga Efektif (Rp)</label>
         <div class="f-range">
             <input type="number" id="priceMin" placeholder="Min" min="0" step="0.01" />
             <span>–</span>
@@ -132,7 +134,7 @@
                 <th style="text-align:center;">Aksi</th>                
                 <th><button class="th-sort" data-sort="id">ID<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="title">Judul<span class="material-icons sort-ic">swap_vert</span></button></th>
-                <th><button class="th-sort" data-sort="price">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
+                <th><button class="th-sort" data-sort="price" title="Sortir berdasarkan harga efektif (setelah diskon)">Harga<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="category">Kategori<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="ratingRate">Rating<span class="material-icons sort-ic">swap_vert</span></button></th>
                 <th><button class="th-sort" data-sort="createdBy">Dibuat Oleh<span class="material-icons sort-ic">swap_vert</span></button></th>
@@ -191,6 +193,18 @@
 
         function formatRupiah(v) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(v);
+        }
+
+        function formatRupiahBulat(v) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v);
+        }
+
+        function renderHarga(item) {
+            const asli = formatRupiah(item.price);
+            const disc = item.discountPercent ?? 0;
+            if (disc <= 0) return asli;
+            const efektif = Math.round((item.price - item.price * disc / 100) / 100) * 100;
+            return `<span class="harga-coretan">${asli}</span><span class="harga-diskon">${formatRupiahBulat(efektif)}</span>`;
         }
 
         function formatDateTime(iso) {
@@ -257,7 +271,7 @@
                     </td>
                     <td class="td-id">${item.id}</td>
                     <td class="td-title">${esc(item.title)}</td>
-                    <td class="td-price">${formatRupiah(item.price)}</td>
+                    <td class="td-price">${renderHarga(item)}</td>
                     <td>${item.category ? `<span class="badge">${esc(item.category)}</span>` : '-'}</td>
                     <td>${item.ratingRate != null ? `${Number(item.ratingRate).toFixed(1)} <span class="muted">(${item.ratingCount ?? 0})</span>` : '-'}</td>
                     <td>${item.createdBy ? esc(item.createdBy) : '-'}</td>

@@ -34,6 +34,7 @@ public static class ProductMapper
             Image = entity.Image,
             RatingRate = entity.RatingRate,
             RatingCount = entity.RatingCount,
+            DiscountPercent = entity.DiscountPercent,
             IsActive = entity.IsActive,
             CreatedAt = entity.CreatedAt,
             CreatedBy = entity.CreatedBy,

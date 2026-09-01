@@ -24,4 +24,7 @@ public class CreateProductRequest
     public decimal? RatingRate { get; set; }
 
     public int? RatingCount { get; set; }
+
+    [Range(0, 100, ErrorMessage = "Diskon harus di antara 0 dan 100.")]
+    public int? DiscountPercent { get; set; }
 }

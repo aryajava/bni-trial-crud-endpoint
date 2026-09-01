@@ -83,6 +83,7 @@ public class EditModel : PageModel
             Image = product.Image,
             RatingRate = product.RatingRate,
             RatingCount = product.RatingCount,
+            DiscountPercent = product.DiscountPercent,
             Version = product.Version
         };
     }

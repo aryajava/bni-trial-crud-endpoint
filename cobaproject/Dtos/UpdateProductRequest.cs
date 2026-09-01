@@ -25,6 +25,9 @@ public class UpdateProductRequest
 
     public int? RatingCount { get; set; }
 
+    [Range(0, 100, ErrorMessage = "Diskon harus di antara 0 dan 100.")]
+    public int? DiscountPercent { get; set; }
+
     [Required]
     [Range(1, int.MaxValue)]
     public int Version { get; set; }

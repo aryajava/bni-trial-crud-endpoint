@@ -11,6 +11,7 @@ public class MasterProduct
     public string? Image { get; set; }
     public decimal? RatingRate { get; set; }
     public int? RatingCount { get; set; }
+    public int? DiscountPercent { get; set; }
 
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }

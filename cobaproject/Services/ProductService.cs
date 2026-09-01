@@ -17,17 +17,22 @@ public class ProductService : IProductService
 
     private const string SelectColumns = """
         ID, TITLE, PRICE, DESCRIPTION, CATEGORY, IMAGE,
-        RATING_RATE, RATING_COUNT, IS_ACTIVE, CREATED_AT, CREATED_BY,
+        RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, IS_ACTIVE, CREATED_AT, CREATED_BY,
         UPDATED_AT, UPDATED_BY, VERSION
         """;
 
     private const int MaxPageSize = 100;
 
+    private const string EffectivePriceSql = """
+        CASE WHEN ISNULL(DISCOUNT_PERCENT, 0) = 0 THEN PRICE
+             ELSE ROUND(PRICE - PRICE * ISNULL(DISCOUNT_PERCENT, 0) / 100.0, -2) END
+        """;
+
     private static readonly Dictionary<string, string> SortColumns = new(StringComparer.OrdinalIgnoreCase)
     {
         ["id"] = "ID",
         ["title"] = "TITLE",
-        ["price"] = "PRICE",
+        ["price"] = $"({EffectivePriceSql})",
         ["description"] = "DESCRIPTION",
         ["category"] = "CATEGORY",
         ["image"] = "IMAGE",
@@ -84,7 +89,8 @@ public class ProductService : IProductService
                  OR UPDATED_BY LIKE @Search ESCAPE '\'
                  OR CAST(PRICE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
                  OR CAST(RATING_RATE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
-                 OR CAST(RATING_COUNT AS NVARCHAR(50)) LIKE @Search ESCAPE '\')
+                 OR CAST(RATING_COUNT AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
+                 OR CAST(DISCOUNT_PERCENT AS NVARCHAR(10)) LIKE @Search ESCAPE '\')
                 """, query.Search);
 
         if (!string.IsNullOrWhiteSpace(query.Title))
@@ -98,7 +104,7 @@ public class ProductService : IProductService
             AddContainsCondition(conditions, parameters, "Category",
                 "CATEGORY LIKE @Category ESCAPE '\\'", query.Category);
 
-        AddRangeCondition(conditions, parameters, "Price", "PRICE", query.PriceFrom, query.PriceTo);
+        AddRangeCondition(conditions, parameters, "Price", $"({EffectivePriceSql})", query.PriceFrom, query.PriceTo);
         AddRangeCondition(conditions, parameters, "Created", "CREATED_AT", query.CreatedFrom, query.CreatedTo);
         AddRangeCondition(conditions, parameters, "Updated", "UPDATED_AT", query.UpdatedFrom, query.UpdatedTo);
 
@@ -185,12 +191,12 @@ public class ProductService : IProductService
         var sql = """
             INSERT INTO LOSCONSUMER.MASTER_PRODUCT
                 (TITLE, PRICE, DESCRIPTION, CATEGORY, IMAGE,
-                 RATING_RATE, RATING_COUNT, IS_ACTIVE, CREATED_AT, CREATED_BY,
+                 RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, IS_ACTIVE, CREATED_AT, CREATED_BY,
                  UPDATED_AT, UPDATED_BY, VERSION)
             OUTPUT INSERTED.ID
             VALUES
                 (@Title, @Price, @Description, @Category, @Image,
-                 @RatingRate, @RatingCount, 1, GETDATE(), @CreatedBy,
+                 @RatingRate, @RatingCount, @DiscountPercent, 1, GETDATE(), @CreatedBy,
                  NULL, NULL, 1);
             """;
 
@@ -203,6 +209,7 @@ public class ProductService : IProductService
             request.Image,
             request.RatingRate,
             request.RatingCount,
+            request.DiscountPercent,
             CreatedBy = createdBy
         });
 
@@ -226,6 +233,7 @@ public class ProductService : IProductService
                    IMAGE        = @Image,
                    RATING_RATE  = @RatingRate,
                    RATING_COUNT = @RatingCount,
+                   DISCOUNT_PERCENT = @DiscountPercent,
                    UPDATED_AT   = GETDATE(),
                    UPDATED_BY   = @UpdatedBy,
                    VERSION      = VERSION + 1
@@ -243,6 +251,7 @@ public class ProductService : IProductService
             request.Image,
             request.RatingRate,
             request.RatingCount,
+            request.DiscountPercent,
             UpdatedBy = updatedBy,
             Id = id,
             request.Version

@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = "Hapus Produk";
     var idId = System.Globalization.CultureInfo.GetCultureInfo("id-ID");
+    decimal? hargaEfektif = Model.Product is null ? null
+        : (Model.Product.DiscountPercent ?? 0) == 0
+            ? Model.Product.Price
+            : Math.Round((Model.Product.Price - Model.Product.Price * (Model.Product.DiscountPercent ?? 0) / 100m) / 100m,
+                MidpointRounding.AwayFromZero) * 100m;
 }
 
 <div class="page-header">
@@ -25,6 +30,11 @@ else
         <div class="row"><div class="k">Kategori</div><div class="v">@(Model.Product.Category ?? "-")</div></div>
         <div class="row"><div class="k">Rating</div>
             <div class="v">@(Model.Product.RatingRate?.ToString("0.0", idId) ?? "-") (@(Model.Product.RatingCount?.ToString() ?? "-"))</div></div>
+        <div class="row"><div class="k">Diskon</div><div class="v">@(Model.Product.DiscountPercent.HasValue ? $"{Model.Product.DiscountPercent}%" : "-")</div></div>
+        <div class="row"><div class="k">Harga Setelah Diskon</div>
+            <div class="v">@((Model.Product.DiscountPercent ?? 0) == 0
+                ? Model.Product.Price.ToString("C2", idId)
+                : hargaEfektif?.ToString("C0", idId))</div></div>
         <div class="row"><div class="k">Dibuat</div><div class="v">@Model.Product.CreatedAt.ToString("dd MMM yyyy HH:mm", idId)</div></div>
         <div class="row"><div class="k">Diubah</div><div class="v">@(Model.Product.UpdatedAt?.ToString("dd MMM yyyy HH:mm", idId) ?? "-")</div></div>
         <div class="row"><div class="k">Versi</div><div class="v">@Model.Product.Version</div></div>

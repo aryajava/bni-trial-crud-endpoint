@@ -1,0 +1,29 @@
+<script>
+    (function () {
+        var display = document.querySelector("input[data-diskon]");
+        if (!display) {
+            return;
+        }
+
+        function sync(teks) {
+            var digit = teks.replace(/\D/g, "").slice(0, 3);
+            var n = digit === "" ? 0 : parseInt(digit, 10);
+            if (n > 100) {
+                n = 100;
+                digit = "100";
+            }
+            display.value = digit;
+        }
+
+        display.addEventListener("input", function () {
+            sync(display.value);
+        });
+
+        display.addEventListener("keydown", function (e) {
+            if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E" ||
+                e.key === "." || e.key === ",") {
+                e.preventDefault();
+            }
+        });
+    })();
+</script>
