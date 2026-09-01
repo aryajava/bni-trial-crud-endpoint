@@ -9,12 +9,6 @@
             return;
         }
 
-        function formatAngka(n) {
-            return "Rp " + n.toLocaleString("id-ID", {
-                maximumFractionDigits: 2
-            });
-        }
-
         function formatKetik(teks) {
             var digit = teks.replace(/\D/g, "");
             if (!digit) {
@@ -22,22 +16,22 @@
                 hidden.value = "";
                 return;
             }
-            display.value = "Rp " + digit.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            display.value = Number(digit).toLocaleString("id-ID");
             hidden.value = digit;
         }
 
         var awal = parseFloat(hidden.value);
         if (hidden.value.trim() !== "" && !isNaN(awal)) {
-            display.value = formatAngka(awal);
+            display.value = awal.toLocaleString("id-ID", { maximumFractionDigits: 2 });
         }
 
         display.addEventListener("input", function () {
             formatKetik(display.value);
         });
 
-        display.addEventListener("focus", function () {
-            if (display.value === "Rp ") {
-                display.value = "";
+        display.addEventListener("keydown", function (e) {
+            if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                e.preventDefault();
             }
         });
     })();

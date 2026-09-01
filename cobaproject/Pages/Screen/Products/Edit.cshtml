@@ -41,7 +41,10 @@
 
         <div class="form-field">
             <label asp-for="Request.Price">Harga</label>
-            <input data-rupiah data-rupiah-target="Request.Price" inputmode="decimal" />
+            <div class="field-input-group">
+                <span class="prefix">Rp</span>
+                <input data-rupiah data-rupiah-target="Request.Price" inputmode="decimal" />
+            </div>
             <input asp-for="Request.Price" type="hidden" />
             <span asp-validation-for="Request.Price" class="field-error"></span>
         </div>
