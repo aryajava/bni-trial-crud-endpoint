@@ -2,6 +2,7 @@ using Dapper;
 using cobaproject.Configuration;
 using cobaproject.Dtos;
 using cobaproject.Helpers;
+using cobaproject.Mappers;
 using cobaproject.Models;
 using cobaproject.Services.Interfaces;
 using Microsoft.Data.SqlClient;
@@ -140,7 +141,7 @@ public class UserService : IUserService
             FROM LOSCONSUMER.MASTER_USER
             WHERE SECRET_KEY = @SecretKey AND IS_ACTIVE = 1
             """, new { SecretKey = secretKey });
-        return user is null ? null : ToDto(user);
+        return user is null ? null : UserMapper.ToDto(user);
     }
 
     public async Task<string?> GetSecretKeyAsync(int id)

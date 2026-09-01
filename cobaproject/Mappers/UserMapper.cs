@@ -14,7 +14,7 @@ public static class UserMapper
             DisplayName = dto.DisplayName ?? string.Empty,
             Role = dto.Role ?? string.Empty,
             SecretKey = dto.SecretKey ?? string.Empty,
-            IsActive = dto.IsActive ?? true,
+            IsActive = dto.IsActive,
             CreatedBy = dto.CreatedBy ?? "SYSTEM",
             Version = 1
         };
@@ -30,6 +30,8 @@ public static class UserMapper
             Role = entity.Role,
             LastLoginAt = entity.LastLoginAt,
             IsActive = entity.IsActive,
+            PasswordHash = entity.PasswordHash,
+            SecretKey = entity.SecretKey,
             CreatedAt = entity.CreatedAt,
             CreatedBy = entity.CreatedBy,
             UpdatedAt = entity.UpdatedAt,

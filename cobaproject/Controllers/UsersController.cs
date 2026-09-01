@@ -118,7 +118,7 @@ public class UsersController : ControllerBase
                     [$"Tidak dapat menghapus user {user.Role} aktif terakhir."]);
             }
 
-            var deleted = await _userService.SoftDeleteAsync(id, Caller);
+            var (deleted, _) = await _userService.SoftDeleteAsync(id, Caller);
             return deleted
                 ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" berhasil dinonaktifkan.", "Success")
                 : ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");

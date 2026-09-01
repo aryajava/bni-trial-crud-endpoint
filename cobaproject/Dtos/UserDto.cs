@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace cobaproject.Dtos;
 
 public class UserDto
@@ -8,6 +10,12 @@ public class UserDto
     public string? DisplayName { get; set; }
     public string Role { get; set; } = "ADMIN";
     public DateTime? LastLoginAt { get; set; }
+
+    [JsonIgnore]
+    public string? PasswordHash { get; set; }
+
+    [JsonIgnore]
+    public string? SecretKey { get; set; }
 
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
