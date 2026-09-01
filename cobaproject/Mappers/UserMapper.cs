@@ -5,7 +5,7 @@ namespace cobaproject.Mappers;
 
 public static class UserMapper
 {
-    public static MasterUser ToEntity(FakeStoreUserDto dto)
+    public static MasterUser ToEntity(UserDto dto)
     {
         return new MasterUser
         {
