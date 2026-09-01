@@ -1,3 +1,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+<script>
+    $.validator.setDefaults({
+        messages: {
+            required: "Kolom ini wajib diisi.",
+            number: "Harus berupa angka yang benar.",
+            digits: "Harus berupa angka bulat.",
+            range: $.validator.format("Nilai harus antara {0} dan {1}."),
+            max: $.validator.format("Nilai maksimal {0}."),
+            min: $.validator.format("Nilai minimal {0}."),
+            maxlength: $.validator.format("Maksimal {0} karakter."),
+            minlength: $.validator.format("Minimal {0} karakter."),
+            email: "Format email tidak valid.",
+            url: "Format URL tidak valid.",
+            date: "Format tanggal tidak valid.",
+            dateISO: "Format tanggal tidak valid (ISO).",
+            creditcard: "Nomor kartu kredit tidak valid.",
+            equalTo: "Isian harus sama."
+        }
+    });
+</script>
