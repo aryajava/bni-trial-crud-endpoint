@@ -272,7 +272,7 @@
                     <td class="td-title fw-semibold">${esc(item.title)}</td>
                     <td class="td-price">${renderHarga(item)}</td>
                     <td>${item.category ? `<span class="badge bg-primary-subtle text-primary-emphasis">${esc(item.category)}</span>` : '-'}</td>
-                    <td>${item.ratingRate != null ? `${Number(item.ratingRate).toFixed(1)} <span class="text-muted small">(${item.ratingCount ?? 0})</span>` : '-'}</td>
+                    <td>${item.ratingRate != null ? `<span class="material-icons rating-star">star</span> ${Number(item.ratingRate).toFixed(1)} <span class="text-muted small">(${item.ratingCount ?? 0})</span>` : '-'}</td>
                     <td>${renderStok(item)}</td>
                     <td>${item.createdBy ? esc(item.createdBy) : '-'}</td>
                     <td>${formatDateTime(item.createdAt)}</td>
