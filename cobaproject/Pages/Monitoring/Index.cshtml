@@ -59,8 +59,6 @@
         const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
         const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKey));
         const CAN_DECIDE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CanDecide));
-        const URL_APPROVE = '@Url.Page("Index", "Approve")';
-        const URL_REJECT = '@Url.Page("Index", "Reject")';
 
         const state = {
             page: 1,
@@ -145,19 +143,9 @@
                     : '<span class="text-muted">—</span>';
                 let keputusan = '<span class="text-muted">—</span>';
                 if (CAN_DECIDE && menunggu) {
-                    keputusan = '<div class="field-actions">' +
-                        '<form method="post" action="' + URL_APPROVE + '" class="m-0 form-approve">' +
-                        '<input type="hidden" name="id" value="' + item.id + '" />' +
-                        '<input type="hidden" name="version" value="' + item.version + '" />' +
-                        '<input type="hidden" name="reason" class="reason-input" />' +
-                        '<button type="submit" class="btn btn-success btn-sm btn-approve" title="Setujui diskon"><span class="material-icons">check</span></button>' +
-                        '</form>' +
-                        '<form method="post" action="' + URL_REJECT + '" class="m-0 form-reject">' +
-                        '<input type="hidden" name="id" value="' + item.id + '" />' +
-                        '<input type="hidden" name="version" value="' + item.version + '" />' +
-                        '<input type="hidden" name="reason" class="reason-input" />' +
-                        '<button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon"><span class="material-icons">close</span></button>' +
-                        '</form>' +
+                    keputusan = '<div class="field-actions justify-content-center">' +
+                        '<button type="button" class="btn btn-success btn-sm btn-approve" data-id="' + item.id + '" data-version="' + item.version + '" title="Setujui diskon"><span class="material-icons">check</span></button>' +
+                        '<button type="button" class="btn btn-outline-danger btn-sm btn-reject" data-id="' + item.id + '" data-version="' + item.version + '" title="Tolak diskon"><span class="material-icons">close</span></button>' +
                         '</div>';
                 }
                 return '<tr>' +
@@ -237,8 +225,31 @@
             }
         }
 
+        async function postDecision(id, version, approve, reason) {
+            const url = '/api/discount-approvals/' + id + (approve ? '/approve' : '/reject');
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        [API_KEY_HEADER]: API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ version: version, reason: reason || '' })
+                });
+                const json = await res.json().catch(() => null);
+                if (!res.ok) {
+                    throw new Error((json && json.message) ? json.message : ('HTTP ' + res.status));
+                }
+                Swal.fire({ toast: true, position: "top-end", icon: "success",
+                    title: json.message || 'Keputusan tersimpan.', showConfirmButton: false, timer: 2500 });
+                loadData();
+            } catch (err) {
+                Swal.fire({ toast: true, position: "top-end", icon: "error",
+                    title: err.message, showConfirmButton: false, timer: 4000 });
+            }
+        }
+
         function onApproveClick(btn) {
-            const form = btn.closest('.form-approve');
             Swal.fire({
                 title: 'Setujui Permintaan Diskon',
                 input: 'text',
@@ -250,14 +261,12 @@
                 icon: 'success'
             }).then(function (result) {
                 if (result.isConfirmed) {
-                    form.querySelector('.reason-input').value = (result.value || '').trim();
-                    form.submit();
+                    postDecision(btn.dataset.id, btn.dataset.version, true, (result.value || '').trim());
                 }
             });
         }
 
         function onRejectClick(btn) {
-            const form = btn.closest('.form-reject');
             Swal.fire({
                 title: 'Tolak Permintaan Diskon',
                 input: 'text',
@@ -274,8 +283,7 @@
                 icon: 'warning'
             }).then(function (result) {
                 if (result.isConfirmed) {
-                    form.querySelector('.reason-input').value = (result.value || '').trim();
-                    form.submit();
+                    postDecision(btn.dataset.id, btn.dataset.version, false, (result.value || '').trim());
                 }
             });
         }

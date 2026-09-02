@@ -101,6 +101,12 @@ public static class ResponseHelper
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
     }
 
+    public static IResult Forbidden(HttpContext context, string message = "Akses ditolak. Anda tidak memiliki hak untuk operasi ini.") =>
+        Results.Json(
+            Build<object>(context, false, StatusCodes.Status403Forbidden, message, null,
+                new List<string> { "Anda tidak memiliki hak untuk operasi ini." }),
+            statusCode: StatusCodes.Status403Forbidden);
+
     public static IResult Error(HttpContext context, Exception ex,
         string message = "Terjadi kesalahan internal server.") =>
         Results.Json(
