@@ -14,7 +14,7 @@
         <div class="card-body py-5 text-center text-muted">
             <span class="material-icons d-block fs-1 mb-2">task_alt</span>
             @(Model.CanDecide
-                ? "Tidak ada permintaan diskon yang menunggu."
+                ? "Belum ada permintaan diskon."
                 : "Anda belum pernah mengajukan permintaan diskon.")
         </div>
     </div>
@@ -27,29 +27,57 @@ else
                 <table class="table table-data align-middle mb-0">
                     <thead>
                         <tr>
+                            <th class="col-no text-center">No</th>
+                            @if (Model.CanDecide)
+                            {
+                                <th class="col-aksi">Keputusan</th>
+                            }
+                            <th>ID</th>
                             <th>Produk</th>
                             <th>Permintaan Diskon</th>
                             <th>Status</th>
                             <th>Diajukan</th>
-                            @if (!Model.CanDecide)
-                            {
-                                <th>Keputusan</th>
-                            }
-                            @if (Model.CanDecide)
-                            {
-                                <th>Pengaju</th>
-                                <th class="col-aksi">Keputusan</th>
-                            }
+                            <th>Pengaju</th>
+                            <th>Catatan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var r in Model.Items)
+                        @for (var i = 0; i < Model.Items.Count; i++)
                         {
-                            <tr>
-                                <td>
-                                    <span class="fw-semibold">@r.Title</span>
-                                    <br /><small class="text-muted">ID @r.ProductId</small>
-                                </td>
+                            var r = Model.Items[i];
+                            var menunggu = r.Status == "MENUNGGU";
+                            <tr class="@(menunggu ? "" : "table-secondary")">
+                                <td class="td-nomor text-center">@(i + 1)</td>
+                                @if (Model.CanDecide)
+                                {
+                                    <td>
+                                        @if (menunggu)
+                                        {
+                                            <div class="field-actions">
+                                                <form method="post" asp-page-handler="Approve" class="m-0 form-approve">
+                                                    <input type="hidden" name="id" value="@r.Id" />
+                                                    <input type="hidden" name="reason" class="reason-input" />
+                                                    <button type="submit" class="btn btn-success btn-sm btn-approve" title="Setujui diskon">
+                                                        <span class="material-icons">check</span> Setujui
+                                                    </button>
+                                                </form>
+                                                <form method="post" asp-page-handler="Reject" class="m-0 form-reject">
+                                                    <input type="hidden" name="id" value="@r.Id" />
+                                                    <input type="hidden" name="reason" class="reason-input" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon">
+                                                        <span class="material-icons">close</span> Tolak
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                }
+                                <td class="td-id">@r.ProductId</td>
+                                <td class="fw-semibold">@r.Title</td>
                                 <td>
                                     <span class="text-muted text-decoration-line-through">@(r.OldValue?.ToString("0.##") + "%" ?? "-")</span>
                                     <span class="material-icons arrow-next" style="vertical-align: middle; font-size: 16px;">arrow_forward</span>
@@ -70,47 +98,23 @@ else
                                     }
                                 </td>
                                 <td class="td-nomor">@r.RequestedAt.ToString("dd MMM yyyy HH:mm")</td>
-                                @if (!Model.CanDecide)
-                                {
-                                    <td>
-                                        @if (r.DecidedAt is not null)
+                                <td>@r.RequestedBy</td>
+                                <td>
+                                    @if (string.IsNullOrWhiteSpace(r.Reason))
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@r.Reason</span>
+                                        @if (!Model.CanDecide && r.DecidedAt is not null)
                                         {
-                                            <div>
-                                                <span>@(r.DecidedBy == "SISTEM" ? "Otomatis" : r.DecidedBy)</span>
-                                                <br /><small class="text-muted">@r.DecidedAt.Value.ToString("dd MMM yyyy HH:mm")</small>
-                                            </div>
-                                            @if (!string.IsNullOrWhiteSpace(r.Reason))
-                                            {
-                                                <small class="text-muted d-block">@r.Reason</small>
-                                            }
+                                            <small class="text-muted d-block">
+                                                (oleh @(r.DecidedBy == "SISTEM" ? "otomatis" : r.DecidedBy), @r.DecidedAt.Value.ToString("dd MMM yyyy HH:mm"))
+                                            </small>
                                         }
-                                        else
-                                        {
-                                            <span class="text-muted">—</span>
-                                        }
-                                    </td>
-                                }
-                                @if (Model.CanDecide)
-                                {
-                                    <td>@r.RequestedBy</td>
-                                    <td>
-                                        <div class="field-actions">
-                                            <form method="post" asp-page-handler="Approve" class="m-0">
-                                                <input type="hidden" name="id" value="@r.Id" />
-                                                <button type="submit" class="btn btn-success btn-sm" title="Setujui diskon">
-                                                    <span class="material-icons">check</span> Setujui
-                                                </button>
-                                            </form>
-                                            <form method="post" asp-page-handler="Reject" class="m-0 form-reject">
-                                                <input type="hidden" name="id" value="@r.Id" />
-                                                <input type="hidden" name="reason" class="reason-input" />
-                                                <button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon">
-                                                    <span class="material-icons">close</span> Tolak
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                }
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -124,14 +128,39 @@ else
     @if (Model.CanDecide)
     {
         <script>
+            document.querySelectorAll('.form-approve').forEach(function (form) {
+                form.querySelector('.btn-approve').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Setujui Permintaan Diskon',
+                        input: 'text',
+                        inputLabel: 'Catatan (opsional)',
+                        inputValue: 'Disetujui',
+                        showCancelButton: true,
+                        confirmButtonText: 'Setujui',
+                        cancelButtonText: 'Batal',
+                        icon: 'success'
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            form.querySelector('.reason-input').value = (result.value || '').trim();
+                            form.submit();
+                        }
+                    });
+                });
+            });
             document.querySelectorAll('.form-reject').forEach(function (form) {
                 form.querySelector('.btn-reject').addEventListener('click', function (e) {
                     e.preventDefault();
                     Swal.fire({
                         title: 'Tolak Permintaan Diskon',
                         input: 'text',
-                        inputLabel: 'Alasan (opsional)',
+                        inputLabel: 'Alasan (wajib diisi)',
                         inputPlaceholder: 'Contoh: diskon terlalu besar',
+                        inputValidator: function (value) {
+                            if (!value || !value.trim()) {
+                                return 'Alasan penolakan wajib diisi.';
+                            }
+                        },
                         showCancelButton: true,
                         confirmButtonText: 'Tolak',
                         cancelButtonText: 'Batal',

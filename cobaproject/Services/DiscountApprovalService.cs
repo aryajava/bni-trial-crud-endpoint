@@ -60,15 +60,15 @@ public class DiscountApprovalService : IDiscountApprovalService
         return (request, null);
     }
 
-    public async Task<List<DiscountApprovalDto>> GetPendingAsync()
+
+    public async Task<List<DiscountApprovalDto>> GetAllAsync()
     {
         using var connection = new SqlConnection(_connectionString);
         var rows = await connection.QueryAsync<DiscountApprovalRow>($"""
             SELECT {SelectColumns}
             FROM LOSCONSUMER.TRX_DISCOUNT_APPROVAL A
             JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = A.PRODUCT_ID
-            WHERE A.STATUS = 'MENUNGGU'
-            ORDER BY A.REQUESTED_AT;
+            ORDER BY A.REQUESTED_AT DESC;
             """);
         return rows.Select(DiscountApprovalMapper.ToDto).ToList();
     }
@@ -123,8 +123,10 @@ public class DiscountApprovalService : IDiscountApprovalService
 
         if (!approve)
         {
-            await MarkDecidedAsync(connection, id, Ditolak, decidedBy,
-                string.IsNullOrWhiteSpace(reason) ? null : reason.Trim());
+            if (string.IsNullOrWhiteSpace(reason))
+                return "Alasan penolakan wajib diisi.";
+
+            await MarkDecidedAsync(connection, id, Ditolak, decidedBy, reason.Trim());
             return null;
         }
 
@@ -137,7 +139,9 @@ public class DiscountApprovalService : IDiscountApprovalService
             WHERE  ID           = @ProductId;
             """, new { request.NewValue, DecidedBy = decidedBy, request.ProductId });
 
-        await MarkDecidedAsync(connection, id, Disetujui, decidedBy, null);
+        // Catatan persetujuan opsional; kosong diberi default agar kolom Catatan terisi.
+        await MarkDecidedAsync(connection, id, Disetujui, decidedBy,
+            string.IsNullOrWhiteSpace(reason) ? "Disetujui" : reason.Trim());
         return null;
     }
 

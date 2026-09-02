@@ -15,7 +15,7 @@ public interface IDiscountApprovalService
     Task<(DiscountApprovalDto? Request, string? Error)> RequestAsync(
         int productId, decimal? oldValue, decimal? newValue, string requestedBy);
 
-    Task<List<DiscountApprovalDto>> GetPendingAsync();
+    Task<List<DiscountApprovalDto>> GetAllAsync();
 
     /// <summary>Semua permintaan yang diajukan <paramref name="requestedBy"/> (terbaru di atas).</summary>
     Task<List<DiscountApprovalDto>> GetForUserAsync(string requestedBy);

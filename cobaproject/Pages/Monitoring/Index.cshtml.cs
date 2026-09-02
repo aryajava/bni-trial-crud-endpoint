@@ -30,7 +30,7 @@ public class IndexModel : PageModel
     {
         CanDecide = User.IsInRole(UserRolePolicy.Owner);
         Items = CanDecide
-            ? await _approvalService.GetPendingAsync()
+            ? await _approvalService.GetAllAsync()
             : await _approvalService.GetForUserAsync(Caller);
         ViewData["CrumbRoot"] = "Monitoring";
     }
