@@ -13,7 +13,16 @@ BEGIN
             UPDATED_AT  DATETIME2    NULL,
             UPDATED_BY  NVARCHAR(100) NULL,
             VERSION     INT          NOT NULL DEFAULT 1;
+END;
+GO
 
+-- Batch terpisah: kolom baru baru bisa direferensikan setelah ALTER dieksekusi.
+IF EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID('LOSCONSUMER.TRX_DISCOUNT_APPROVAL')
+      AND name = 'CREATED_AT'
+)
+BEGIN
     -- Backfill baris lama: audit mengikuti fakta yang sudah tercatat.
     UPDATE LOSCONSUMER.TRX_DISCOUNT_APPROVAL
     SET    CREATED_AT = REQUESTED_AT,
