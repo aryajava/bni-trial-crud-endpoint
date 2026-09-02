@@ -26,14 +26,24 @@
 
                 <div class="col-md-6">
                     <label class="form-label" asp-for="Request.CategoryId">Kategori</label>
-                    <select asp-for="Request.CategoryId" class="form-select form-select-sm">
-                        <option value="" disabled>Pilih Kategori</option>
-                        @foreach (var category in Model.Categories)
-                        {
-                            <option value="@category.Id">@category.Name</option>
-                        }
-                    </select>
-                    <span asp-validation-for="Request.CategoryId" class="field-error"></span>
+                    @if (Model.Categories.Count == 0)
+                    {
+                        <div class="alert alert-warning py-2 small mb-1">
+                            Belum ada kategori. <a asp-page="/Categories/Index">Tambahkan di Master Kategori</a> dulu.
+                        </div>
+                        <span asp-validation-for="Request.CategoryId" class="field-error"></span>
+                    }
+                    else
+                    {
+                        <select asp-for="Request.CategoryId" class="form-select form-select-sm">
+                            <option value="" disabled>Pilih Kategori</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Request.CategoryId" class="field-error"></span>
+                    }
                 </div>
 
                 <div class="col-md-6">
