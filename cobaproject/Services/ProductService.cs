@@ -141,7 +141,8 @@ public class ProductService : IProductService
             WHERE {whereClause};
             """, parameters);
 
-        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "P.ID";
+        var sortColumn = !string.IsNullOrEmpty(query.SortBy)
+            && SortColumns.TryGetValue(query.SortBy, out var column) ? column : "P.ID";
         var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
         var tieBreaker = sortColumn == "P.ID" ? string.Empty : ", P.ID";
 

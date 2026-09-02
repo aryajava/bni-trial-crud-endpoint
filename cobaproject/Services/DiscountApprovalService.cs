@@ -121,7 +121,8 @@ public class DiscountApprovalService : IDiscountApprovalService
             {whereClause};
             """, parameters);
 
-        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "A.CREATED_AT";
+        var sortColumn = !string.IsNullOrEmpty(query.SortBy)
+            && SortColumns.TryGetValue(query.SortBy, out var column) ? column : "A.CREATED_AT";
         var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
         var tieBreaker = sortColumn == "A.ID" ? string.Empty : ", A.ID DESC";
 
