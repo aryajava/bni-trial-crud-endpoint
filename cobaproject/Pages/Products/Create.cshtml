@@ -58,13 +58,14 @@
 
                 <div class="col-md-6">
                     <label class="form-label" asp-for="Request.RatingRate">Rating</label>
-                    <input asp-for="Request.RatingRate" class="form-control form-control-sm" />
+                    <input asp-for="Request.RatingRate" data-bilangan data-bilangan-desimal data-bilangan-max="5" inputmode="decimal" class="form-control form-control-sm" />
                     <span asp-validation-for="Request.RatingRate" class="field-error"></span>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label" asp-for="Request.RatingCount">Jumlah Rating</label>
-                    <input asp-for="Request.RatingCount" class="form-control form-control-sm" />
+                    <input asp-for="Request.RatingCount" data-bilangan inputmode="numeric" class="form-control form-control-sm" />
+                    <span asp-validation-for="Request.RatingCount" class="field-error"></span>
                 </div>
 
                 <div class="col-12">
