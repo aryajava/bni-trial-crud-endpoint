@@ -47,11 +47,11 @@
                             <td>
                                 @if (u.Role == UserRolePolicy.Owner)
                                 {
-                                    <span class="badge bg-dark">OWNER</span>
+                                    <span class="badge bg-dark">@UserRolePolicy.DisplayName(u.Role)</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-primary-subtle text-primary-emphasis">ADMIN</span>
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">@UserRolePolicy.DisplayName(u.Role)</span>
                                 }
                             </td>
                             <td>

@@ -8,7 +8,7 @@
 
 <div class="page-header">
     <h1>User Control</h1>
-    <span class="badge bg-dark">Khusus Owner</span>
+    <span class="badge bg-dark">Khusus Pemilik Toko</span>
 </div>
 
 <div class="card card-soft">
@@ -39,11 +39,11 @@
                             <td>
                                 @if (u.Role == UserRolePolicy.Owner)
                                 {
-                                    <span class="badge bg-dark">OWNER</span>
+                                    <span class="badge bg-dark">@UserRolePolicy.DisplayName(u.Role)</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-primary-subtle text-primary-emphasis">ADMIN</span>
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">@UserRolePolicy.DisplayName(u.Role)</span>
                                 }
                             </td>
                             <td>
@@ -64,8 +64,8 @@
                                         <form method="post" asp-page-handler="ChangeRole" class="d-inline-flex gap-1 align-items-center m-0">
                                             <input type="hidden" name="id" value="@u.Id" />
                                             <select name="role" class="form-select form-select-sm" style="width: 110px;">
-                                                <option value="ADMIN" selected="@(u.Role == UserRolePolicy.Admin)">ADMIN</option>
-                                                <option value="OWNER" selected="@(u.Role == UserRolePolicy.Owner)">OWNER</option>
+                                                <option value="ADMIN" selected="@(u.Role == UserRolePolicy.Admin)">Admin Toko</option>
+                                                <option value="OWNER" selected="@(u.Role == UserRolePolicy.Owner)">Pemilik Toko</option>
                                             </select>
                                             <button class="btn btn-outline-primary btn-sm" type="submit" title="Simpan role">
                                                 <span class="material-icons">admin_panel_settings</span>

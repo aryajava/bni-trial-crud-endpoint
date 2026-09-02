@@ -208,7 +208,7 @@ public class UserService : IUserService
     {
         if (!UserRolePolicy.IsValidRole(newRole))
         {
-            return (false, "Role tidak valid.");
+            return (false, "Jenis role tidak dikenali.");
         }
 
         using var connection = new SqlConnection(_connectionString);

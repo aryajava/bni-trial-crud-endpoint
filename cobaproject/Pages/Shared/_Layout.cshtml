@@ -8,6 +8,7 @@
     var signedIn = User.Identity?.IsAuthenticated == true;
     var isOwner = User.IsInRole("OWNER");
     var isAdmin = User.IsInRole("ADMIN");
+    var currentRole = User.FindFirstValue(ClaimTypes.Role) ?? UserRolePolicy.Admin;
     var displayName = User.FindFirstValue("DisplayName") ?? User.Identity?.Name ?? "";
 }
 <!DOCTYPE html>
@@ -239,7 +240,7 @@
     @if (signedIn)
     {
         <span class="text-muted small">@displayName</span>
-        <span class="badge @(isOwner ? "bg-dark" : "bg-primary-subtle text-primary-emphasis")">@(isOwner ? "OWNER" : "ADMIN")</span>
+        <span class="badge @(isOwner ? "bg-dark" : "bg-primary-subtle text-primary-emphasis")">@UserRolePolicy.DisplayName(currentRole)</span>
         <a class="btn btn-outline-secondary btn-sm" asp-page="/Logout" title="Keluar">
             <span class="material-icons">logout</span>
         </a>

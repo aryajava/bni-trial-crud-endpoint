@@ -14,6 +14,17 @@ public static class UserRolePolicy
     public static bool IsValidRole(string? role) => role is Admin or Owner;
 
     /// <summary>
+    /// Label tampilan untuk user (badge, dropdown, pesan). Nilai internal tetap
+    /// OWNER/ADMIN; istilah "manusia" hanya di lapisan tampilan.
+    /// </summary>
+    public static string DisplayName(string role) => role switch
+    {
+        Owner => "Pemilik Toko",
+        Admin => "Admin Toko",
+        _ => role
+    };
+
+    /// <summary>
     /// Apakah <paramref name="actorRole"/> berhak mengelola akun ber-role <paramref name="targetRole"/>.
     /// Owner boleh mengelola semua; Admin hanya sesama Admin (hierarki Owner &gt; Admin).
     /// </summary>
