@@ -39,7 +39,7 @@
                         <th><button type="button" class="th-sort" data-sort="title">Produk <span class="material-icons sort-ic">swap_vert</span></button></th>
                         <th><button type="button" class="th-sort" data-sort="newValue">Permintaan Diskon <span class="material-icons sort-ic">swap_vert</span></button></th>
                         <th><button type="button" class="th-sort" data-sort="status">Status <span class="material-icons sort-ic">swap_vert</span></button></th>
-                        <th><button type="button" class="th-sort" data-sort="requestedAt">Diajukan <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="createdAt">Diajukan <span class="material-icons sort-ic">swap_vert</span></button></th>
                         <th><button type="button" class="th-sort" data-sort="requestedBy">Pengaju <span class="material-icons sort-ic">swap_vert</span></button></th>
                         <th><button type="button" class="th-sort" data-sort="reason">Catatan <span class="material-icons sort-ic">swap_vert</span></button></th>
                     </tr>
@@ -65,7 +65,7 @@
         const state = {
             page: 1,
             pageSize: 10,
-            sortBy: 'requestedAt',
+            sortBy: 'createdAt',
             sortOrder: 'desc',
             status: '',
             search: '',
@@ -91,7 +91,7 @@
         function pushUrl() {
             const q = new URLSearchParams();
             if (state.page > 1) q.set('page', state.page);
-            if (state.sortBy !== 'requestedAt' || state.sortOrder !== 'desc') {
+            if (state.sortBy !== 'createdAt' || state.sortOrder !== 'desc') {
                 q.set('sortBy', state.sortBy);
                 q.set('sortOrder', state.sortOrder);
             }
@@ -148,11 +148,13 @@
                     keputusan = '<div class="field-actions">' +
                         '<form method="post" action="' + URL_APPROVE + '" class="m-0 form-approve">' +
                         '<input type="hidden" name="id" value="' + item.id + '" />' +
+                        '<input type="hidden" name="version" value="' + item.version + '" />' +
                         '<input type="hidden" name="reason" class="reason-input" />' +
                         '<button type="submit" class="btn btn-success btn-sm btn-approve" title="Setujui diskon"><span class="material-icons">check</span> Setujui</button>' +
                         '</form>' +
                         '<form method="post" action="' + URL_REJECT + '" class="m-0 form-reject">' +
                         '<input type="hidden" name="id" value="' + item.id + '" />' +
+                        '<input type="hidden" name="version" value="' + item.version + '" />' +
                         '<input type="hidden" name="reason" class="reason-input" />' +
                         '<button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon"><span class="material-icons">close</span> Tolak</button>' +
                         '</form>' +
@@ -298,7 +300,7 @@
                 const col = btn.dataset.sort;
                 if (state.sortBy === col) {
                     if (state.sortOrder === 'asc') state.sortOrder = 'desc';
-                    else { state.sortBy = 'requestedAt'; state.sortOrder = 'desc'; }
+                    else { state.sortBy = 'createdAt'; state.sortOrder = 'desc'; }
                 } else {
                     state.sortBy = col;
                     state.sortOrder = 'asc';

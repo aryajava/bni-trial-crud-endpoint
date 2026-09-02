@@ -20,7 +20,8 @@ public class DiscountApprovalService : IDiscountApprovalService
 
     private const string SelectColumns = """
         A.ID, A.PRODUCT_ID, P.TITLE, A.OLD_VALUE, A.NEW_VALUE,
-        A.REQUESTED_BY, A.REQUESTED_AT, A.STATUS, A.DECIDED_AT, A.DECIDED_BY, A.REASON
+        A.REQUESTED_BY, A.REQUESTED_AT, A.STATUS, A.DECIDED_AT, A.DECIDED_BY, A.REASON,
+        A.VERSION
         """;
 
     private static readonly Dictionary<string, string> SortColumns = new(StringComparer.OrdinalIgnoreCase)
@@ -29,7 +30,7 @@ public class DiscountApprovalService : IDiscountApprovalService
         ["title"] = "P.TITLE",
         ["newValue"] = "A.NEW_VALUE",
         ["status"] = "A.STATUS",
-        ["requestedAt"] = "A.REQUESTED_AT",
+        ["createdAt"] = "A.CREATED_AT",
         ["requestedBy"] = "A.REQUESTED_BY",
         ["reason"] = "A.REASON",
     };
@@ -68,9 +69,11 @@ public class DiscountApprovalService : IDiscountApprovalService
 
         var id = await connection.ExecuteScalarAsync<int>("""
             INSERT INTO LOSCONSUMER.TRX_DISCOUNT_APPROVAL
-                (PRODUCT_ID, OLD_VALUE, NEW_VALUE, REQUESTED_BY)
+                (PRODUCT_ID, OLD_VALUE, NEW_VALUE, REQUESTED_BY,
+                 IS_ACTIVE, CREATED_AT, CREATED_BY, VERSION)
             OUTPUT INSERTED.ID
-            VALUES (@ProductId, @OldValue, @NewValue, @RequestedBy);
+            VALUES (@ProductId, @OldValue, @NewValue, @RequestedBy,
+                    1, GETDATE(), @RequestedBy, 1);
             """, new { ProductId = productId, OldValue = oldValue, NewValue = newValue, RequestedBy = requestedBy });
 
         var request = await GetByIdAsync(id);
@@ -118,7 +121,7 @@ public class DiscountApprovalService : IDiscountApprovalService
             {whereClause};
             """, parameters);
 
-        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "A.REQUESTED_AT";
+        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "A.CREATED_AT";
         var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
         var tieBreaker = sortColumn == "A.ID" ? string.Empty : ", A.ID DESC";
 
@@ -156,7 +159,7 @@ public class DiscountApprovalService : IDiscountApprovalService
             """);
     }
 
-    public async Task<string?> DecideAsync(int id, bool approve, string decidedBy, string? reason)
+    public async Task<string?> DecideAsync(int id, bool approve, string decidedBy, string? reason, int version)
     {
         using var connection = new SqlConnection(_connectionString);
 
@@ -177,9 +180,9 @@ public class DiscountApprovalService : IDiscountApprovalService
         // oleh pihak lain (mis. OWNER/SYSTEM yang bypass) — tidak menimpa apa pun.
         if (product is null || !product.IsActive || product.DiscountPercent != request.OldValue)
         {
-            await MarkDecidedAsync(connection, id, Ditolak, System,
-                "Nilai diskon produk sudah berubah; permintaan tidak lagi berlaku.");
-            return null;
+            var gugur = await MarkDecidedAsync(connection, id, Ditolak, System,
+                "Nilai diskon produk sudah berubah; permintaan tidak lagi berlaku.", version, isActive: false);
+            return gugur ? null : "Permintaan sudah diubah oleh proses lain. Muat ulang halaman, lalu putuskan kembali.";
         }
 
         if (!approve)
@@ -187,11 +190,19 @@ public class DiscountApprovalService : IDiscountApprovalService
             if (string.IsNullOrWhiteSpace(reason))
                 return "Alasan penolakan wajib diisi.";
 
-            await MarkDecidedAsync(connection, id, Ditolak, decidedBy, reason.Trim());
-            return null;
+            var ditolak = await MarkDecidedAsync(connection, id, Ditolak, decidedBy, reason.Trim(), version);
+            return ditolak ? null : "Permintaan sudah diubah oleh proses lain. Muat ulang halaman, lalu putuskan kembali.";
         }
 
-        await connection.ExecuteAsync("""
+        // Catatan persetujuan opsional; kosong diberi default agar kolom Catatan terisi.
+        // Keputusan dicatat lebih dulu (cek VERSION) — diskon diterapkan setelahnya,
+        // sehingga konflik versi tidak meninggalkan produk ter-update tanpa keputusan.
+        var setujui = await MarkDecidedAsync(connection, id, Disetujui, decidedBy,
+            string.IsNullOrWhiteSpace(reason) ? "Disetujui" : reason.Trim(), version);
+        if (!setujui)
+            return "Permintaan sudah diubah oleh proses lain. Muat ulang halaman, lalu putuskan kembali.";
+
+        var updated = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_PRODUCT
             SET    DISCOUNT_PERCENT = @NewValue,
                    UPDATED_AT   = GETDATE(),
@@ -200,9 +211,9 @@ public class DiscountApprovalService : IDiscountApprovalService
             WHERE  ID           = @ProductId;
             """, new { request.NewValue, DecidedBy = decidedBy, request.ProductId });
 
-        // Catatan persetujuan opsional; kosong diberi default agar kolom Catatan terisi.
-        await MarkDecidedAsync(connection, id, Disetujui, decidedBy,
-            string.IsNullOrWhiteSpace(reason) ? "Disetujui" : reason.Trim());
+        if (updated == 0)
+            return "Produk tidak ditemukan atau sudah dinonaktifkan.";
+
         return null;
     }
 
@@ -218,16 +229,24 @@ public class DiscountApprovalService : IDiscountApprovalService
         return row is null ? null : DiscountApprovalMapper.ToDto(row);
     }
 
-    private static async Task MarkDecidedAsync(SqlConnection connection, int id,
-        string status, string decidedBy, string? reason)
+    // Optimistik: hanya berhasil bila VERSION sama dengan yang dilihat klien;
+    // sekaligus mencatat kolom audit UPDATED_AT/BY dan menaikkan VERSION.
+    private static async Task<bool> MarkDecidedAsync(SqlConnection connection, int id,
+        string status, string decidedBy, string? reason, int version, bool isActive = true)
     {
-        await connection.ExecuteAsync("""
+        var rows = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.TRX_DISCOUNT_APPROVAL
             SET    STATUS     = @Status,
                    DECIDED_AT = GETDATE(),
                    DECIDED_BY = @DecidedBy,
-                   REASON     = @Reason
-            WHERE  ID         = @Id;
-            """, new { Id = id, Status = status, DecidedBy = decidedBy, Reason = reason });
+                   REASON     = @Reason,
+                   UPDATED_AT = GETDATE(),
+                   UPDATED_BY = @DecidedBy,
+                   IS_ACTIVE  = @IsActive,
+                   VERSION    = VERSION + 1
+            WHERE  ID         = @Id
+              AND  VERSION    = @Version;
+            """, new { Id = id, Status = status, DecidedBy = decidedBy, Reason = reason, Version = version, IsActive = isActive });
+        return rows > 0;
     }
 }

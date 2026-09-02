@@ -23,4 +23,6 @@ public class DiscountApprovalRow
     public string? DecidedBy { get; set; }
 
     public string? Reason { get; set; }
+
+    public int Version { get; set; }
 }

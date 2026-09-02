@@ -1,16 +1,14 @@
+using System.ComponentModel;
+
 namespace cobaproject.Dtos;
 
-public class ApprovalQueryParams
+public class ApprovalQueryParams : PageRequest
 {
-    public int Page { get; set; } = 1;
+    public ApprovalQueryParams()
+    {
+        PageSize = 10;
+    }
 
-    public int PageSize { get; set; } = 10;
-
-    public string SortBy { get; set; } = "requestedAt";
-
-    public string SortOrder { get; set; } = "desc";
-
+    [Description("Filter status: MENUNGGU, DISETUJUI, atau DITOLAK (kosong = semua).")]
     public string? Status { get; set; }
-
-    public string? Search { get; set; }
 }

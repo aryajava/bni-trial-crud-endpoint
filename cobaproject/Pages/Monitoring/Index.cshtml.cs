@@ -49,7 +49,7 @@ public class IndexModel : PageModel
         ViewData["CrumbRoot"] = "Monitoring";
     }
 
-    public async Task<IActionResult> OnPostApproveAsync(int id)
+    public async Task<IActionResult> OnPostApproveAsync(int id, int version)
     {
         if (!User.IsInRole(UserRolePolicy.Owner))
         {
@@ -57,7 +57,7 @@ public class IndexModel : PageModel
             return RedirectToPage();
         }
 
-        var error = await _approvalService.DecideAsync(id, true, Caller, null);
+        var error = await _approvalService.DecideAsync(id, true, Caller, null, version);
         if (error is not null)
         {
             TempData["ErrorMessage"] = error;
@@ -68,7 +68,7 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostRejectAsync(int id, string? reason)
+    public async Task<IActionResult> OnPostRejectAsync(int id, int version, string? reason)
     {
         if (!User.IsInRole(UserRolePolicy.Owner))
         {
@@ -76,7 +76,7 @@ public class IndexModel : PageModel
             return RedirectToPage();
         }
 
-        var error = await _approvalService.DecideAsync(id, false, Caller, reason);
+        var error = await _approvalService.DecideAsync(id, false, Caller, reason, version);
         if (error is not null)
         {
             TempData["ErrorMessage"] = error;

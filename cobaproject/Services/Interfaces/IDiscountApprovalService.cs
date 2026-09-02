@@ -24,10 +24,12 @@ public interface IDiscountApprovalService
     Task<int> CountPendingAsync();
 
     /// <summary>
-    /// Memutuskan permintaan. Bila nilai diskon produk saat ini sudah tidak sama
-    /// dengan OLD_VALUE (atau produk nonaktif/hilang), permintaan otomatis
-    /// DITOLAK oleh SISTEM tanpa menimpa nilai terbaru. Mengembalikan pesan
-    /// kesalahan, atau null bila sukses.
+    /// Memutuskan permintaan dengan cek optimistik VERSION (klien mengirim versi
+    /// baris yang dilihatnya). Bila versi sudah berubah, permintaan ditolak dengan
+    /// pesan konflik. Bila nilai diskon produk saat ini sudah tidak sama dengan
+    /// OLD_VALUE (atau produk nonaktif/hilang), permintaan otomatis DITOLAK oleh
+    /// SISTEM tanpa menimpa nilai terbaru. Mengembalikan pesan kesalahan, atau
+    /// null bila sukses.
     /// </summary>
-    Task<string?> DecideAsync(int id, bool approve, string decidedBy, string? reason);
+    Task<string?> DecideAsync(int id, bool approve, string decidedBy, string? reason, int version);
 }

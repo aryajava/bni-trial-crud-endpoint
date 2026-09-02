@@ -17,6 +17,7 @@ public static class DiscountApprovalMapper
         Status = row.Status,
         DecidedAt = row.DecidedAt,
         DecidedBy = row.DecidedBy,
-        Reason = row.Reason
+        Reason = row.Reason,
+        Version = row.Version
     };
 }
