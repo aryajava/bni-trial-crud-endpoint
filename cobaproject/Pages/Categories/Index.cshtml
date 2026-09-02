@@ -1,0 +1,121 @@
+@page
+@model cobaproject.Pages.Categories.IndexModel
+@{
+    ViewData["Title"] = "Master Kategori";
+}
+
+<div class="page-header">
+    <h1><span class="material-icons">category</span> Master Kategori</h1>
+</div>
+
+<div class="card card-soft mb-4">
+    <div class="card-body p-3">
+        <form method="post" asp-page-handler="Create">
+            <div asp-validation-summary="All" class="pesan-error mb-2"></div>
+            <div class="d-flex gap-2 align-items-end flex-wrap">
+                <div class="flex-grow-1" style="max-width: 360px;">
+                    <label class="form-label mb-0" asp-for="Create.Name">Nama Kategori Baru</label>
+                    <input asp-for="Create.Name" class="form-control form-control-sm" placeholder="Contoh: Elektronik" />
+                </div>
+                <button class="btn btn-primary btn-sm" type="submit">
+                    <span class="material-icons">add</span> Tambah
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <div class="table-wrap">
+            <table class="table table-data align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="col-no text-center">No</th>
+                        <th>Nama</th>
+                        <th class="td-nomor">Produk Aktif</th>
+                        <th>Status</th>
+                        <th class="col-aksi">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Categories.Count; i++)
+                    {
+                        var c = Model.Categories[i];
+                        <tr class="@(c.IsActive ? "" : "table-secondary")">
+                            <td class="td-nomor text-center">@(i + 1)</td>
+                            <td class="fw-semibold">@c.Name</td>
+                            <td class="td-nomor">@c.ProductCount</td>
+                            <td>
+                                @if (c.IsActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success-emphasis">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Nonaktif</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="field-actions">
+                                    <form method="post" asp-page-handler="Update" class="d-inline-flex gap-1 align-items-center m-0">
+                                        <input type="hidden" name="id" value="@c.Id" />
+                                        <input type="hidden" name="version" value="@c.Version" />
+                                        <input type="text" name="name" value="@c.Name" class="form-control form-control-sm" style="width: 140px;" />
+                                        <button class="btn-icon btn-edit" type="submit" title="Simpan nama">
+                                            <span class="material-icons">save</span>
+                                        </button>
+                                    </form>
+                                    @if (c.IsActive)
+                                    {
+                                        <form method="post" asp-page-handler="Deactivate" class="m-0">
+                                            <input type="hidden" name="id" value="@c.Id" />
+                                            <button type="button" class="btn-icon btn-delete btn-confirm" title="Nonaktifkan kategori"
+                                                    data-confirm="Nonaktifkan kategori '@c.Name'?">
+                                                <span class="material-icons">block</span>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="Activate" class="m-0">
+                                            <input type="hidden" name="id" value="@c.Id" />
+                                            <button class="btn-icon btn-edit" type="submit" title="Aktifkan kembali">
+                                                <span class="material-icons">check_circle</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Categories.Count == 0)
+                    {
+                        <tr><td colspan="5" class="row-empty py-4">Belum ada kategori. Tambahkan di atas.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-confirm').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const form = btn.closest('form');
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: btn.dataset.confirm,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya',
+                    cancelButtonText: 'Batal'
+                }).then(function (result) {
+                    if (result.isConfirmed) form.submit();
+                });
+            });
+        });
+    </script>
+}

@@ -10,11 +10,14 @@ namespace cobaproject.Pages.Products;
 public class CreateModel : PageModel
 {
     private readonly IProductService _productService;
-    public List<string> Categories { get; set; } = [];
+    private readonly ICategoryService _categoryService;
 
-    public CreateModel(IProductService productService)
+    public List<CategoryDto> Categories { get; set; } = [];
+
+    public CreateModel(IProductService productService, ICategoryService categoryService)
     {
         _productService = productService;
+        _categoryService = categoryService;
     }
 
     [BindProperty]
@@ -53,6 +56,6 @@ public class CreateModel : PageModel
 
     private async Task LoadCategoriesAsync()
     {
-        Categories = await _productService.GetCategoriesAsync();
+        Categories = await _categoryService.GetActiveAsync();
     }
 }

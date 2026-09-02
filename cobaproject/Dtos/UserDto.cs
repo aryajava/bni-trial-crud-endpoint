@@ -8,6 +8,8 @@ public class UserDto
     public string? DisplayName { get; set; }
     public string Role { get; set; } = "ADMIN";
     public DateTime? LastLoginAt { get; set; }
+    public int LoginFailedCount { get; set; }
+    public bool IsBlocked { get; set; }
 
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }

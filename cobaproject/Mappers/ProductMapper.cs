@@ -30,6 +30,7 @@ public static class ProductMapper
             Title = entity.Title,
             Price = entity.Price,
             Description = entity.Description,
+            CategoryId = entity.CategoryId,
             Category = entity.Category,
             Image = entity.Image,
             RatingRate = entity.RatingRate,

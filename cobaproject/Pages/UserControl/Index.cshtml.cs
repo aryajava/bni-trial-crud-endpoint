@@ -119,6 +119,25 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostUnblockAsync(int id)
+    {
+        var target = await _userService.GetByIdAsync(id);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        var (success, error) = await _userService.UnblockAsync(id, Caller);
+        if (!success)
+        {
+            TempData["ErrorMessage"] = error ?? "Akun tidak dalam status diblokir.";
+            return RedirectToPage();
+        }
+
+        TempData["SuccessMessage"] = $"Blokir akun \"{target.Display}\" dibuka.";
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPostRegenerateSecretAsync(int id)
     {
         var target = await _userService.GetByIdAsync(id);

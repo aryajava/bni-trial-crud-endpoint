@@ -10,12 +10,14 @@ namespace cobaproject.Pages.Products;
 public class EditModel : PageModel
 {
     private readonly IProductService _productService;
+    private readonly ICategoryService _categoryService;
 
-    public List<string> Categories { get; set; } = [];
+    public List<CategoryDto> Categories { get; set; } = [];
 
-    public EditModel(IProductService productService)
+    public EditModel(IProductService productService, ICategoryService categoryService)
     {
         _productService = productService;
+        _categoryService = categoryService;
     }
 
     public int Id { get; set; }
@@ -75,7 +77,16 @@ public class EditModel : PageModel
 
     private async Task LoadCategoriesAsync()
     {
-        Categories = await _productService.GetCategoriesAsync();
+        Categories = await _categoryService.GetActiveAsync();
+
+        // Kategori produk yang sedang diedit tetap ditampilkan walau sudah
+        // dinonaktifkan di master — agar produk lama bisa disimpan tanpa mengubahnya.
+        if (Request.CategoryId.HasValue && Categories.All(c => c.Id != Request.CategoryId))
+        {
+            var current = await _categoryService.GetByIdAsync(Request.CategoryId.Value);
+            if (current is not null)
+                Categories.Insert(0, current);
+        }
     }
 
     private static UpdateProductRequest CopyFrom(ProductDto product)
@@ -85,7 +96,7 @@ public class EditModel : PageModel
             Title = product.Title,
             Price = product.Price,
             Description = product.Description,
-            Category = product.Category,
+            CategoryId = product.CategoryId,
             Image = product.Image,
             RatingRate = product.RatingRate,
             RatingCount = product.RatingCount,

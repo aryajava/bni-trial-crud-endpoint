@@ -15,8 +15,8 @@ public class CreateProductRequest
     public string? Description { get; set; }
 
     [Required(ErrorMessage = "Kategori wajib dipilih.")]
-    [StringLength(200, ErrorMessage = "Kategori maksimal 200 karakter.")]
-    public string? Category { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Kategori wajib dipilih.")]
+    public int? CategoryId { get; set; }
 
     [StringLength(1000, ErrorMessage = "URL gambar maksimal 1000 karakter.")]
     public string? Image { get; set; }

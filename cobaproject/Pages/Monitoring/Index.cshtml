@@ -65,7 +65,7 @@
         const state = {
             page: 1,
             pageSize: 10,
-            sortBy: 'createdAt',
+            sortBy: '',
             sortOrder: 'desc',
             status: '',
             search: '',
@@ -91,7 +91,7 @@
         function pushUrl() {
             const q = new URLSearchParams();
             if (state.page > 1) q.set('page', state.page);
-            if (state.sortBy !== 'createdAt' || state.sortOrder !== 'desc') {
+            if (state.sortBy && (state.sortBy !== 'createdAt' || state.sortOrder !== 'desc')) {
                 q.set('sortBy', state.sortBy);
                 q.set('sortOrder', state.sortOrder);
             }
@@ -150,17 +150,17 @@
                         '<input type="hidden" name="id" value="' + item.id + '" />' +
                         '<input type="hidden" name="version" value="' + item.version + '" />' +
                         '<input type="hidden" name="reason" class="reason-input" />' +
-                        '<button type="submit" class="btn btn-success btn-sm btn-approve" title="Setujui diskon"><span class="material-icons">check</span> Setujui</button>' +
+                        '<button type="submit" class="btn btn-success btn-sm btn-approve" title="Setujui diskon"><span class="material-icons">check</span></button>' +
                         '</form>' +
                         '<form method="post" action="' + URL_REJECT + '" class="m-0 form-reject">' +
                         '<input type="hidden" name="id" value="' + item.id + '" />' +
                         '<input type="hidden" name="version" value="' + item.version + '" />' +
                         '<input type="hidden" name="reason" class="reason-input" />' +
-                        '<button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon"><span class="material-icons">close</span> Tolak</button>' +
+                        '<button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon"><span class="material-icons">close</span></button>' +
                         '</form>' +
                         '</div>';
                 }
-                return '<tr class="' + (menunggu ? '' : 'table-secondary') + '">' +
+                return '<tr>' +
                     '<td class="td-nomor text-center">' + nomor + '</td>' +
                     (CAN_DECIDE ? '<td>' + keputusan + '</td>' : '') +
                     '<td class="td-id">' + item.productId + '</td>' +
@@ -183,17 +183,16 @@
 
         function renderPagination() {
             const el = $('pagination');
-            const total = state.totalPages;
-            if (total <= 1) { el.innerHTML = ''; return; }
+            const total = Math.max(1, state.totalPages);
             const parts = [];
             const item = (icon, page, disabled, label) =>
                 '<li class="page-item ' + (disabled ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + page + '" title="' + label + '"><span class="material-icons">' + icon + '</span></a></li>';
-            parts.push(item('chevron_left', state.page - 1, state.page === 1, 'Halaman sebelumnya'));
-            for (const p of buildPages(state.page, total)) {
+            parts.push(item('chevron_left', state.page - 1, state.page <= 1, 'Halaman sebelumnya'));
+            for (const p of buildPages(state.page, state.totalPages)) {
                 if (p === '...') parts.push('<li class="page-item disabled"><span class="page-link pg-ellipsis">. . .</span></li>');
                 else parts.push('<li class="page-item ' + (p === state.page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
             }
-            parts.push(item('chevron_right', state.page + 1, state.page === total, 'Halaman berikutnya'));
+            parts.push(item('chevron_right', state.page + 1, state.page >= total, 'Halaman berikutnya'));
             el.innerHTML = parts.join('');
         }
 
@@ -300,7 +299,7 @@
                 const col = btn.dataset.sort;
                 if (state.sortBy === col) {
                     if (state.sortOrder === 'asc') state.sortOrder = 'desc';
-                    else { state.sortBy = 'createdAt'; state.sortOrder = 'desc'; }
+                    else { state.sortBy = ''; state.sortOrder = 'desc'; }
                 } else {
                     state.sortBy = col;
                     state.sortOrder = 'asc';

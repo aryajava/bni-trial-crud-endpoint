@@ -20,5 +20,9 @@ public interface IUserService
     Task<(bool Success, string? Error)> SetActiveAsync(int id, bool isActive, string updatedBy);
     Task<(bool Success, string? Error)> ResetPasswordAsync(int id, string newPassword, string updatedBy);
 
+    Task<(bool Success, string? Error)> ChangePasswordBlockedAsync(string username, string newPassword);
+
+    Task<(bool Success, string? Error)> UnblockAsync(int id, string updatedBy);
+
     Task<int> CountActiveByRoleAsync(string role);
 }

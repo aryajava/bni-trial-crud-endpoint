@@ -4,11 +4,13 @@
     var isDashboardPages = currentPage.StartsWith("/Dashboard", StringComparison.OrdinalIgnoreCase);
     var isProductPages = currentPage.StartsWith("/Products", StringComparison.OrdinalIgnoreCase);
     var isMasterUserPages = currentPage.StartsWith("/Users", StringComparison.OrdinalIgnoreCase);
+    var isCategoryPages = currentPage.StartsWith("/Categories", StringComparison.OrdinalIgnoreCase);
     var isUserControlPages = currentPage.StartsWith("/UserControl", StringComparison.OrdinalIgnoreCase);
     var isMonitoringPages = currentPage.StartsWith("/Monitoring", StringComparison.OrdinalIgnoreCase);
     var crumbRoot = ViewData["CrumbRoot"] as string
         ?? (isDashboardPages ? "Beranda"
             : isMasterUserPages ? "Master User"
+            : isCategoryPages ? "Master Kategori"
             : isUserControlPages ? "User Control"
             : isMonitoringPages ? "Monitoring"
             : "Master Produk");
@@ -210,6 +212,9 @@
                         <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Users/Index">
                             <span class="material-icons">group</span> Master User
                         </a>
+                        <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Categories/Index">
+                            <span class="material-icons">category</span> Master Kategori
+                        </a>
                     }
                     @if (isOwner)
                     {
@@ -242,7 +247,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a asp-page="@(isDashboardPages ? "/Dashboard/Index" : isMasterUserPages ? "/Users/Index" : isUserControlPages ? "/UserControl/Index" : isMonitoringPages ? "/Monitoring/Index" : "/Products/Index")">@crumbRoot</a>
+                <a asp-page="@(isDashboardPages ? "/Dashboard/Index" : isMasterUserPages ? "/Users/Index" : isCategoryPages ? "/Categories/Index" : isUserControlPages ? "/UserControl/Index" : isMonitoringPages ? "/Monitoring/Index" : "/Products/Index")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -297,6 +302,9 @@
                 {
                     <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Users/Index">
                         <span class="material-icons">group</span> Master User
+                    </a>
+                    <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Categories/Index">
+                        <span class="material-icons">category</span> Master Kategori
                     </a>
                 }
                 @if (isOwner)

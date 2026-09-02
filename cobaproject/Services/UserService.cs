@@ -18,6 +18,7 @@ public class UserService : IUserService
 
     private const string SelectColumns = """
         ID, USERNAME, PASSWORD_HASH, DISPLAY_NAME, ROLE, SECRET_KEY, LAST_LOGIN_AT,
+        LOGIN_FAILED_COUNT, IS_BLOCKED,
         IS_ACTIVE, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY, VERSION
         """;
 
@@ -73,26 +74,106 @@ public class UserService : IUserService
         var user = await connection.QuerySingleOrDefaultAsync<MasterUser>($"""
             SELECT {SelectColumns}
             FROM LOSCONSUMER.MASTER_USER
-            WHERE USERNAME = @Username
+            WHERE USERNAME = @Username AND IS_ACTIVE = 1
             """, new { Username = username });
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
+            // Blokir setelah 5× gagal — hanya user yang benar-benar ada yang dihitung.
+            if (user is not null)
+            {
+                var newCount = user.LoginFailedCount + 1;
+                if (newCount >= 5)
+                {
+                    await connection.ExecuteAsync("""
+                        UPDATE LOSCONSUMER.MASTER_USER
+                        SET    LOGIN_FAILED_COUNT = 5,
+                               IS_BLOCKED         = 1,
+                               UPDATED_AT         = GETDATE(),
+                               UPDATED_BY         = @UpdatedBy,
+                               VERSION            = VERSION + 1
+                        WHERE  ID = @Id;
+                        """, new { user.Id, UpdatedBy = "SYSTEM" });
+                    _logger.LogWarning("[AUTH] Akun diblokir setelah 5× gagal | User={Username} | TraceId={TraceId}",
+                        user.Username, TraceId);
+                    return (null, "blocked");
+                }
+
+                await connection.ExecuteAsync("""
+                    UPDATE LOSCONSUMER.MASTER_USER
+                    SET    LOGIN_FAILED_COUNT = @NewCount,
+                           UPDATED_AT         = GETDATE(),
+                           UPDATED_BY         = @UpdatedBy,
+                           VERSION            = VERSION + 1
+                    WHERE  ID = @Id;
+                    """, new { user.Id, NewCount = newCount, UpdatedBy = "SYSTEM" });
+            }
+
             return (null, "invalid");
         }
 
-        if (!user.IsActive)
+        if (user.IsBlocked)
         {
-            return (null, "inactive");
+            return (null, "blocked");
         }
 
         await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
-            SET LAST_LOGIN_AT = GETDATE()
+            SET    LAST_LOGIN_AT    = GETDATE(),
+                   LOGIN_FAILED_COUNT = 0,
+                   UPDATED_AT        = GETDATE(),
+                   UPDATED_BY        = @UpdatedBy,
+                   VERSION           = VERSION + 1
             WHERE ID = @Id
-            """, new { user.Id });
+            """, new { user.Id, UpdatedBy = user.Username });
 
         return (UserMapper.ToDto(user), null);
+    }
+
+    /// <summary>Ganti password untuk akun yang diblokir (jalur keluar lockout).</summary>
+    public async Task<(bool Success, string? Error)> ChangePasswordBlockedAsync(string username, string newPassword)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var user = await connection.QuerySingleOrDefaultAsync<MasterUser>("""
+            SELECT ID, USERNAME, IS_BLOCKED FROM LOSCONSUMER.MASTER_USER
+            WHERE USERNAME = @Username AND IS_ACTIVE = 1;
+            """, new { Username = username });
+
+        if (user is null || !user.IsBlocked)
+            return (false, "Akun tidak ditemukan atau tidak dalam status diblokir.");
+
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET    PASSWORD_HASH     = @PasswordHash,
+                   LOGIN_FAILED_COUNT = 0,
+                   IS_BLOCKED         = 0,
+                   UPDATED_AT         = GETDATE(),
+                   UPDATED_BY         = @UpdatedBy,
+                   VERSION            = VERSION + 1
+            WHERE  ID = @Id;
+            """, new { user.Id, PasswordHash = passwordHash, UpdatedBy = user.Username });
+
+        _logger.LogWarning("[AUTH] Password diubah lewat jalur ganti-password | User={Username} | TraceId={TraceId}",
+            user.Username, TraceId);
+        return (true, null);
+    }
+
+    /// <summary>Pemilik Toko membuka blokir akun secara manual.</summary>
+    public async Task<(bool Success, string? Error)> UnblockAsync(int id, string updatedBy)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var rows = await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET    IS_BLOCKED         = 0,
+                   LOGIN_FAILED_COUNT = 0,
+                   UPDATED_AT         = GETDATE(),
+                   UPDATED_BY         = @UpdatedBy,
+                   VERSION            = VERSION + 1
+            WHERE  ID = @Id AND IS_BLOCKED = 1;
+            """, new { Id = id, UpdatedBy = updatedBy });
+
+        return (rows > 0, null);
     }
 
     public async Task<(UserDto? User, string? SecretKey, string? Error)> CreateAsync(CreateUserRequest request, string createdBy)
@@ -244,7 +325,9 @@ public class UserService : IUserService
         using var connection = new SqlConnection(_connectionString);
         var affected = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
-            SET PASSWORD_HASH = @PasswordHash,
+            SET PASSWORD_HASH     = @PasswordHash,
+                IS_BLOCKED        = 0,
+                LOGIN_FAILED_COUNT = 0,
                 UPDATED_AT = GETDATE(),
                 UPDATED_BY = @UpdatedBy,
                 VERSION = VERSION + 1

@@ -10,6 +10,8 @@ public class MasterUser
     public string Role { get; set; } = "ADMIN";
     public string? SecretKey { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public int LoginFailedCount { get; set; }
+    public bool IsBlocked { get; set; }
 
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }

@@ -25,15 +25,15 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label" asp-for="Request.Category">Kategori</label>
-                    <select asp-for="Request.Category" class="form-select form-select-sm">
+                    <label class="form-label" asp-for="Request.CategoryId">Kategori</label>
+                    <select asp-for="Request.CategoryId" class="form-select form-select-sm">
                         <option value="" disabled>Pilih Kategori</option>
                         @foreach (var category in Model.Categories)
                         {
-                            <option value="@category">@category</option>
+                            <option value="@category.Id">@category.Name</option>
                         }
                     </select>
-                    <span asp-validation-for="Request.Category" class="field-error"></span>
+                    <span asp-validation-for="Request.CategoryId" class="field-error"></span>
                 </div>
 
                 <div class="col-md-6">

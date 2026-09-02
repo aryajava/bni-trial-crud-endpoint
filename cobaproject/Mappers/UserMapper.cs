@@ -14,6 +14,8 @@ public static class UserMapper
             DisplayName = entity.DisplayName,
             Role = entity.Role,
             LastLoginAt = entity.LastLoginAt,
+            LoginFailedCount = entity.LoginFailedCount,
+            IsBlocked = entity.IsBlocked,
             IsActive = entity.IsActive,
             CreatedAt = entity.CreatedAt,
             CreatedBy = entity.CreatedBy,

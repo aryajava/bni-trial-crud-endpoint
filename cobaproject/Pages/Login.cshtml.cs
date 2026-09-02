@@ -41,6 +41,14 @@ public class LoginModel : PageModel
         if (user is null)
         {
             _logger.LogWarning("[AUTH] Login gagal untuk {Username} (alasan {Reason})", Username, error ?? "invalid");
+
+            // Akun diblokir setelah 5× gagal login → wajib ganti password.
+            if (string.Equals(error, "blocked", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["BlockedRedirect"] = true;
+                return RedirectToPage("/ChangePassword", new { username = Username.Trim() });
+            }
+
             ModelState.AddModelError(string.Empty, "Username atau password salah.");
             return Page();
         }

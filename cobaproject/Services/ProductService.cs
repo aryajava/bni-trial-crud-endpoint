@@ -18,36 +18,42 @@ public class ProductService : IProductService
     private readonly ILogger<ProductService> _logger;
 
     private const string SelectColumns = """
-        ID, TITLE, PRICE, DESCRIPTION, CATEGORY, IMAGE,
-        RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, STOCK, IS_ACTIVE, CREATED_AT, CREATED_BY,
-        UPDATED_AT, UPDATED_BY, VERSION
+        P.ID, P.TITLE, P.PRICE, P.DESCRIPTION, C.NAME AS CATEGORY, P.CATEGORY_ID, P.IMAGE,
+        P.RATING_RATE, P.RATING_COUNT, P.DISCOUNT_PERCENT, P.STOCK, P.IS_ACTIVE, P.CREATED_AT, P.CREATED_BY,
+        P.UPDATED_AT, P.UPDATED_BY, P.VERSION
+        """;
+
+    private const string FromProduct = """
+        FROM LOSCONSUMER.MASTER_PRODUCT P
+        LEFT JOIN LOSCONSUMER.MASTER_CATEGORY C ON C.ID = P.CATEGORY_ID
         """;
 
     private const int MaxPageSize = 100;
 
     private const string EffectivePriceSql = """
-        CASE WHEN ISNULL(DISCOUNT_PERCENT, 0) = 0 THEN PRICE
-             ELSE ROUND(PRICE - PRICE * ISNULL(DISCOUNT_PERCENT, 0) / 100.0, -2) END
+        CASE WHEN ISNULL(P.DISCOUNT_PERCENT, 0) = 0 THEN P.PRICE
+             ELSE ROUND(P.PRICE - P.PRICE * ISNULL(P.DISCOUNT_PERCENT, 0) / 100.0, -2) END
         """;
 
     private static readonly Dictionary<string, string> SortColumns = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["id"] = "ID",
-        ["title"] = "TITLE",
+        ["id"] = "P.ID",
+        ["title"] = "P.TITLE",
         ["price"] = $"({EffectivePriceSql})",
-        ["description"] = "DESCRIPTION",
-        ["category"] = "CATEGORY",
-        ["image"] = "IMAGE",
-        ["ratingRate"] = "RATING_RATE",
-        ["ratingCount"] = "RATING_COUNT",
-        ["discountPercent"] = "DISCOUNT_PERCENT",
-        ["stock"] = "STOCK",
-        ["isActive"] = "IS_ACTIVE",
-        ["createdAt"] = "CREATED_AT",
-        ["createdBy"] = "CREATED_BY",
-        ["updatedAt"] = "UPDATED_AT",
-        ["updatedBy"] = "UPDATED_BY",
-        ["version"] = "VERSION",
+        ["description"] = "P.DESCRIPTION",
+        ["category"] = "C.NAME",
+        ["categoryId"] = "P.CATEGORY_ID",
+        ["image"] = "P.IMAGE",
+        ["ratingRate"] = "P.RATING_RATE",
+        ["ratingCount"] = "P.RATING_COUNT",
+        ["discountPercent"] = "P.DISCOUNT_PERCENT",
+        ["stock"] = "P.STOCK",
+        ["isActive"] = "P.IS_ACTIVE",
+        ["createdAt"] = "P.CREATED_AT",
+        ["createdBy"] = "P.CREATED_BY",
+        ["updatedAt"] = "P.UPDATED_AT",
+        ["updatedBy"] = "P.UPDATED_BY",
+        ["version"] = "P.VERSION",
     };
 
     public ProductService(
@@ -79,9 +85,9 @@ public class ProductService : IProductService
         using var connection = new SqlConnection(_connectionString);
         var products = await connection.QueryAsync<MasterProduct>($"""
             SELECT {SelectColumns}
-            FROM LOSCONSUMER.MASTER_PRODUCT
-            WHERE IS_ACTIVE = 1
-            ORDER BY ID
+            {FromProduct}
+            WHERE P.IS_ACTIVE = 1
+            ORDER BY P.ID
             """);
         return products.Select(ProductMapper.ToDto);
     }
@@ -91,39 +97,39 @@ public class ProductService : IProductService
         var page = Math.Max(1, query.Page);
         var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
 
-        var conditions = new List<string> { "IS_ACTIVE = 1" };
+        var conditions = new List<string> { "P.IS_ACTIVE = 1" };
         var parameters = new DynamicParameters();
 
         if (!string.IsNullOrWhiteSpace(query.Search))
             AddContainsCondition(conditions, parameters, "Search", """
-                (TITLE LIKE @Search ESCAPE '\'
-                 OR DESCRIPTION LIKE @Search ESCAPE '\'
-                 OR CATEGORY LIKE @Search ESCAPE '\'
-                 OR IMAGE LIKE @Search ESCAPE '\'
-                 OR CREATED_BY LIKE @Search ESCAPE '\'
-                 OR UPDATED_BY LIKE @Search ESCAPE '\'
-                 OR CAST(PRICE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
-                 OR CAST(RATING_RATE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
-                 OR CAST(RATING_COUNT AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
-                 OR CAST(DISCOUNT_PERCENT AS NVARCHAR(10)) LIKE @Search ESCAPE '\'
-                 OR CAST(STOCK AS NVARCHAR(10)) LIKE @Search ESCAPE '\')
+                (P.TITLE LIKE @Search ESCAPE '\'
+                 OR P.DESCRIPTION LIKE @Search ESCAPE '\'
+                 OR C.NAME LIKE @Search ESCAPE '\'
+                 OR P.IMAGE LIKE @Search ESCAPE '\'
+                 OR P.CREATED_BY LIKE @Search ESCAPE '\'
+                 OR P.UPDATED_BY LIKE @Search ESCAPE '\'
+                 OR CAST(P.PRICE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
+                 OR CAST(P.RATING_RATE AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
+                 OR CAST(P.RATING_COUNT AS NVARCHAR(50)) LIKE @Search ESCAPE '\'
+                 OR CAST(P.DISCOUNT_PERCENT AS NVARCHAR(10)) LIKE @Search ESCAPE '\'
+                 OR CAST(P.STOCK AS NVARCHAR(10)) LIKE @Search ESCAPE '\')
                 """, query.Search);
 
         if (!string.IsNullOrWhiteSpace(query.Title))
-            AddContainsCondition(conditions, parameters, "Title", "TITLE LIKE @Title ESCAPE '\\'", query.Title);
+            AddContainsCondition(conditions, parameters, "Title", "P.TITLE LIKE @Title ESCAPE '\\'", query.Title);
 
         if (!string.IsNullOrWhiteSpace(query.Description))
             AddContainsCondition(conditions, parameters, "Description",
-                "DESCRIPTION LIKE @Description ESCAPE '\\'", query.Description);
+                "P.DESCRIPTION LIKE @Description ESCAPE '\\'", query.Description);
 
         if (!string.IsNullOrWhiteSpace(query.Category))
             AddContainsCondition(conditions, parameters, "Category",
-                "CATEGORY LIKE @Category ESCAPE '\\'", query.Category);
+                "C.NAME LIKE @Category ESCAPE '\\'", query.Category);
 
         AddRangeCondition(conditions, parameters, "Price", $"({EffectivePriceSql})", query.PriceFrom, query.PriceTo);
-        AddRangeCondition(conditions, parameters, "Stock", "STOCK", query.StockFrom, query.StockTo);
-        AddRangeCondition(conditions, parameters, "Created", "CREATED_AT", query.CreatedFrom, query.CreatedTo);
-        AddRangeCondition(conditions, parameters, "Updated", "UPDATED_AT", query.UpdatedFrom, query.UpdatedTo);
+        AddRangeCondition(conditions, parameters, "Stock", "P.STOCK", query.StockFrom, query.StockTo);
+        AddRangeCondition(conditions, parameters, "Created", "P.CREATED_AT", query.CreatedFrom, query.CreatedTo);
+        AddRangeCondition(conditions, parameters, "Updated", "P.UPDATED_AT", query.UpdatedFrom, query.UpdatedTo);
 
         var whereClause = string.Join(" AND ", conditions);
 
@@ -131,13 +137,13 @@ public class ProductService : IProductService
 
         var total = await connection.ExecuteScalarAsync<int>($"""
             SELECT COUNT(*)
-            FROM LOSCONSUMER.MASTER_PRODUCT
+            {FromProduct}
             WHERE {whereClause};
             """, parameters);
 
-        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "ID";
+        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "P.ID";
         var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
-        var tieBreaker = sortColumn == "ID" ? string.Empty : ", ID";
+        var tieBreaker = sortColumn == "P.ID" ? string.Empty : ", P.ID";
 
         var offset = (page - 1) * pageSize;
         parameters.Add("Offset", offset);
@@ -145,7 +151,7 @@ public class ProductService : IProductService
 
         var products = await connection.QueryAsync<MasterProduct>($"""
             SELECT {SelectColumns}
-            FROM LOSCONSUMER.MASTER_PRODUCT
+            {FromProduct}
             WHERE {whereClause}
             ORDER BY {sortColumn} {sortOrder}{tieBreaker}
             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
@@ -195,8 +201,8 @@ public class ProductService : IProductService
         using var connection = new SqlConnection(_connectionString);
         var product = await connection.QueryFirstOrDefaultAsync<MasterProduct>($"""
             SELECT {SelectColumns}
-            FROM LOSCONSUMER.MASTER_PRODUCT
-            WHERE ID = @Id AND IS_ACTIVE = 1
+            {FromProduct}
+            WHERE P.ID = @Id AND P.IS_ACTIVE = 1
             """,
             new { Id = id });
         return product is null ? null : ProductMapper.ToDto(product);
@@ -212,12 +218,12 @@ public class ProductService : IProductService
 
         var sql = """
             INSERT INTO LOSCONSUMER.MASTER_PRODUCT
-                (TITLE, PRICE, DESCRIPTION, CATEGORY, IMAGE,
+                (TITLE, PRICE, DESCRIPTION, CATEGORY_ID, IMAGE,
                  RATING_RATE, RATING_COUNT, DISCOUNT_PERCENT, STOCK, IS_ACTIVE, CREATED_AT, CREATED_BY,
                  UPDATED_AT, UPDATED_BY, VERSION)
             OUTPUT INSERTED.ID
             VALUES
-                (@Title, @Price, @Description, @Category, @Image,
+                (@Title, @Price, @Description, @CategoryId, @Image,
                  @RatingRate, @RatingCount, @DiscountPercent, @Stock, 1, GETDATE(), @CreatedBy,
                  NULL, NULL, 1);
             """;
@@ -227,7 +233,7 @@ public class ProductService : IProductService
             request.Title,
             request.Price,
             request.Description,
-            request.Category,
+            request.CategoryId,
             request.Image,
             request.RatingRate,
             request.RatingCount,
@@ -273,7 +279,7 @@ public class ProductService : IProductService
             SET    TITLE        = @Title,
                    PRICE        = @Price,
                    DESCRIPTION  = @Description,
-                   CATEGORY     = @Category,
+                   CATEGORY_ID  = @CategoryId,
                    IMAGE        = @Image,
                    RATING_RATE  = @RatingRate,
                    RATING_COUNT = @RatingCount,
@@ -292,7 +298,7 @@ public class ProductService : IProductService
             request.Title,
             request.Price,
             request.Description,
-            request.Category,
+            request.CategoryId,
             request.Image,
             request.RatingRate,
             request.RatingCount,
@@ -365,7 +371,7 @@ public class ProductService : IProductService
     {
         using var connection = new SqlConnection(_connectionString);
         var categories = await connection.QueryAsync<string>(
-            "SELECT DISTINCT CATEGORY FROM LOSCONSUMER.MASTER_PRODUCT WHERE IS_ACTIVE = 1;");
+            "SELECT NAME FROM LOSCONSUMER.MASTER_CATEGORY WHERE IS_ACTIVE = 1 ORDER BY NAME;");
         return categories.ToList();
     }
 

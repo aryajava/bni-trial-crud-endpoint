@@ -47,6 +47,10 @@
                                 }
                             </td>
                             <td>
+                                @if (u.IsBlocked)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger-emphasis">Diblokir</span>
+                                }
                                 @if (u.IsActive)
                                 {
                                     <span class="badge bg-success-subtle text-success-emphasis">Aktif</span>
@@ -88,6 +92,15 @@
                                                     <span class="material-icons">check_circle</span>
                                                 </button>
                                             }
+                                        </form>
+                                    }
+                                    @if (u.IsBlocked)
+                                    {
+                                        <form method="post" asp-page-handler="Unblock" class="m-0">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Buka blokir akun">
+                                                <span class="material-icons">lock_open</span>
+                                            </button>
                                         </form>
                                     }
                                     <form method="post" asp-page-handler="ResetPassword" class="m-0 form-reset-pw">
