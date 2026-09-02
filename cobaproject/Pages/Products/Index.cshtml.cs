@@ -16,8 +16,6 @@ public class IndexModel : PageModel
 
     public List<string> Categories { get; set; } = [];
 
-    public DashboardStatsDto Stats { get; set; } = new();
-
     public string ApiKeyHeader { get; }
     public string ApiKey { get; }
 
@@ -34,7 +32,6 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         Categories = await _productService.GetCategoriesAsync();
-        Stats = await _productService.GetDashboardStatsAsync();
         CanDelete = User.IsInRole(UserRolePolicy.Owner);
     }
 }

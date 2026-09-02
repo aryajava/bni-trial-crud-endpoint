@@ -82,6 +82,19 @@ public class DiscountApprovalService : IDiscountApprovalService
             """);
     }
 
+    public async Task<List<DiscountApprovalDto>> GetForUserAsync(string requestedBy)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var rows = await connection.QueryAsync<DiscountApprovalRow>($"""
+            SELECT {SelectColumns}
+            FROM LOSCONSUMER.TRX_DISCOUNT_APPROVAL A
+            JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = A.PRODUCT_ID
+            WHERE A.REQUESTED_BY = @RequestedBy
+            ORDER BY A.REQUESTED_AT DESC;
+            """, new { RequestedBy = requestedBy });
+        return rows.Select(DiscountApprovalMapper.ToDto).ToList();
+    }
+
     public async Task<string?> DecideAsync(int id, bool approve, string decidedBy, string? reason)
     {
         using var connection = new SqlConnection(_connectionString);

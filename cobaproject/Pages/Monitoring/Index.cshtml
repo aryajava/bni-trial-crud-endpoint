@@ -1,19 +1,21 @@
 @page
 @model cobaproject.Pages.Monitoring.IndexModel
 @{
-    ViewData["Title"] = "Persetujuan Diskon";
+    ViewData["Title"] = Model.CanDecide ? "Persetujuan Diskon" : "Permintaan Diskon Saya";
 }
 
 <div class="page-header">
-    <h1><span class="material-icons">fact_check</span> Persetujuan Diskon</h1>
+    <h1><span class="material-icons">@(Model.CanDecide ? "fact_check" : "receipt_long")</span> @ViewData["Title"]</h1>
 </div>
 
-@if (Model.Pending.Count == 0)
+@if (Model.Items.Count == 0)
 {
     <div class="card card-soft">
         <div class="card-body py-5 text-center text-muted">
             <span class="material-icons d-block fs-1 mb-2">task_alt</span>
-            Tidak ada permintaan diskon yang menunggu.
+            @(Model.CanDecide
+                ? "Tidak ada permintaan diskon yang menunggu."
+                : "Anda belum pernah mengajukan permintaan diskon.")
         </div>
     </div>
 }
@@ -27,13 +29,21 @@ else
                         <tr>
                             <th>Produk</th>
                             <th>Permintaan Diskon</th>
-                            <th>Pengaju</th>
+                            <th>Status</th>
                             <th>Diajukan</th>
-                            <th class="col-aksi">Keputusan</th>
+                            @if (!Model.CanDecide)
+                            {
+                                <th>Keputusan</th>
+                            }
+                            @if (Model.CanDecide)
+                            {
+                                <th>Pengaju</th>
+                                <th class="col-aksi">Keputusan</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var r in Model.Pending)
+                        @foreach (var r in Model.Items)
                         {
                             <tr>
                                 <td>
@@ -45,25 +55,62 @@ else
                                     <span class="material-icons arrow-next" style="vertical-align: middle; font-size: 16px;">arrow_forward</span>
                                     <span class="fw-semibold text-primary">@(r.NewValue?.ToString("0.##") + "%" ?? "-")</span>
                                 </td>
-                                <td>@r.RequestedBy</td>
-                                <td class="td-nomor">@r.RequestedAt.ToString("dd MMM yyyy HH:mm")</td>
                                 <td>
-                                    <div class="field-actions">
-                                        <form method="post" asp-page-handler="Approve" class="m-0">
-                                            <input type="hidden" name="id" value="@r.Id" />
-                                            <button type="submit" class="btn btn-success btn-sm" title="Setujui diskon">
-                                                <span class="material-icons">check</span> Setujui
-                                            </button>
-                                        </form>
-                                        <form method="post" asp-page-handler="Reject" class="m-0 form-reject">
-                                            <input type="hidden" name="id" value="@r.Id" />
-                                            <input type="hidden" name="reason" class="reason-input" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon">
-                                                <span class="material-icons">close</span> Tolak
-                                            </button>
-                                        </form>
-                                    </div>
+                                    @switch (r.Status)
+                                    {
+                                        case "MENUNGGU":
+                                            <span class="badge bg-warning-subtle text-warning-emphasis">Menunggu</span>
+                                            break;
+                                        case "DISETUJUI":
+                                            <span class="badge bg-success-subtle text-success-emphasis">Disetujui</span>
+                                            break;
+                                        case "DITOLAK":
+                                            <span class="badge bg-danger-subtle text-danger-emphasis">Ditolak</span>
+                                            break;
+                                    }
                                 </td>
+                                <td class="td-nomor">@r.RequestedAt.ToString("dd MMM yyyy HH:mm")</td>
+                                @if (!Model.CanDecide)
+                                {
+                                    <td>
+                                        @if (r.DecidedAt is not null)
+                                        {
+                                            <div>
+                                                <span>@(r.DecidedBy == "SISTEM" ? "Otomatis" : r.DecidedBy)</span>
+                                                <br /><small class="text-muted">@r.DecidedAt.Value.ToString("dd MMM yyyy HH:mm")</small>
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(r.Reason))
+                                            {
+                                                <small class="text-muted d-block">@r.Reason</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                }
+                                @if (Model.CanDecide)
+                                {
+                                    <td>@r.RequestedBy</td>
+                                    <td>
+                                        <div class="field-actions">
+                                            <form method="post" asp-page-handler="Approve" class="m-0">
+                                                <input type="hidden" name="id" value="@r.Id" />
+                                                <button type="submit" class="btn btn-success btn-sm" title="Setujui diskon">
+                                                    <span class="material-icons">check</span> Setujui
+                                                </button>
+                                            </form>
+                                            <form method="post" asp-page-handler="Reject" class="m-0 form-reject">
+                                                <input type="hidden" name="id" value="@r.Id" />
+                                                <input type="hidden" name="reason" class="reason-input" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon">
+                                                    <span class="material-icons">close</span> Tolak
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                         }
                     </tbody>
@@ -74,26 +121,29 @@ else
 }
 
 @section Scripts {
-    <script>
-        document.querySelectorAll('.form-reject').forEach(function (form) {
-            form.querySelector('.btn-reject').addEventListener('click', function (e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Tolak Permintaan Diskon',
-                    input: 'text',
-                    inputLabel: 'Alasan (opsional)',
-                    inputPlaceholder: 'Contoh: diskon terlalu besar',
-                    showCancelButton: true,
-                    confirmButtonText: 'Tolak',
-                    cancelButtonText: 'Batal',
-                    icon: 'warning'
-                }).then(function (result) {
-                    if (result.isConfirmed) {
-                        form.querySelector('.reason-input').value = (result.value || '').trim();
-                        form.submit();
-                    }
+    @if (Model.CanDecide)
+    {
+        <script>
+            document.querySelectorAll('.form-reject').forEach(function (form) {
+                form.querySelector('.btn-reject').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Tolak Permintaan Diskon',
+                        input: 'text',
+                        inputLabel: 'Alasan (opsional)',
+                        inputPlaceholder: 'Contoh: diskon terlalu besar',
+                        showCancelButton: true,
+                        confirmButtonText: 'Tolak',
+                        cancelButtonText: 'Batal',
+                        icon: 'warning'
+                    }).then(function (result) {
+                        if (result.isConfirmed) {
+                            form.querySelector('.reason-input').value = (result.value || '').trim();
+                            form.submit();
+                        }
+                    });
                 });
             });
-        });
-    </script>
+        </script>
+    }
 }

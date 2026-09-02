@@ -1,19 +1,22 @@
 @using System.Security.Claims
-@inject cobaproject.Services.Interfaces.IDiscountApprovalService ApprovalService
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    var isDashboardPages = currentPage.StartsWith("/Dashboard", StringComparison.OrdinalIgnoreCase);
     var isProductPages = currentPage.StartsWith("/Products", StringComparison.OrdinalIgnoreCase);
     var isMasterUserPages = currentPage.StartsWith("/Users", StringComparison.OrdinalIgnoreCase);
     var isUserControlPages = currentPage.StartsWith("/UserControl", StringComparison.OrdinalIgnoreCase);
     var isMonitoringPages = currentPage.StartsWith("/Monitoring", StringComparison.OrdinalIgnoreCase);
     var crumbRoot = ViewData["CrumbRoot"] as string
-        ?? (isMasterUserPages ? "Master User" : isUserControlPages ? "User Control" : isMonitoringPages ? "Monitoring" : "Master Produk");
+        ?? (isDashboardPages ? "Beranda"
+            : isMasterUserPages ? "Master User"
+            : isUserControlPages ? "User Control"
+            : isMonitoringPages ? "Monitoring"
+            : "Master Produk");
     var signedIn = User.Identity?.IsAuthenticated == true;
     var isOwner = User.IsInRole("OWNER");
     var isAdmin = User.IsInRole("ADMIN");
     var currentRole = User.FindFirstValue(ClaimTypes.Role) ?? UserRolePolicy.Admin;
     var displayName = User.FindFirstValue("DisplayName") ?? User.Identity?.Name ?? "";
-    var pendingApprovals = signedIn && isOwner ? await ApprovalService.CountPendingAsync() : 0;
 }
 <!DOCTYPE html>
 <html lang="id" data-bs-theme="light">
@@ -88,14 +91,6 @@
         }
         .sidebar .nav-link .material-icons { font-size: 20px; color: #6B7280; }
         .sidebar .nav-link:hover { background: var(--bs-body-bg); color: #1F2937; }
-        .sidebar .badge-pending {
-            background: #B91C1C;
-            color: white;
-            border-radius: 999px;
-            padding: 1px 8px;
-            font-size: 11px;
-            margin-left: auto;
-        }
         .sidebar .nav-link.active { background: var(--gk-primary-soft); color: var(--gk-primary-text); font-weight: 600; }
         .sidebar .nav-link.active .material-icons { color: var(--gk-primary); }
         .sidebar-footer { margin-top: auto; border-top: 1px solid #E5EAE8; padding-top: 12px; }
@@ -195,13 +190,17 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar d-none d-lg-flex">
-            <a class="sidebar-brand" asp-page="/Products/Index">
+            <a class="sidebar-brand" asp-page="/Dashboard/Index">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
             <div class="sidebar-nav">
                 @if (signedIn)
                 {
+                    <div class="nav-group-title">Beranda</div>
+                    <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Dashboard/Index">
+                        <span class="material-icons">dashboard</span> Dashboard
+                    </a>
                     <div class="nav-group-title">Master</div>
                     <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Products/Index">
                         <span class="material-icons">inventory_2</span> Master Produk
@@ -218,15 +217,11 @@
                         <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
                             <span class="material-icons">manage_accounts</span> User Control
                         </a>
-                        <div class="nav-group-title">Monitoring</div>
-                        <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
-                            <span class="material-icons">fact_check</span> Persetujuan Diskon
-                            @if (pendingApprovals > 0)
-                            {
-                                <span class="badge badge-pending">@pendingApprovals</span>
-                            }
-                        </a>
                     }
+                    <div class="nav-group-title">Monitoring</div>
+                    <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
+                        <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
+                    </a>
                 }
             </div>
             <div class="sidebar-footer">
@@ -247,7 +242,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a asp-page="@(isMasterUserPages ? "/Users/Index" : isUserControlPages ? "/UserControl/Index" : isMonitoringPages ? "/Monitoring/Index" : "/Products/Index")">@crumbRoot</a>
+                <a asp-page="@(isDashboardPages ? "/Dashboard/Index" : isMasterUserPages ? "/Users/Index" : isUserControlPages ? "/UserControl/Index" : isMonitoringPages ? "/Monitoring/Index" : "/Products/Index")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -281,7 +276,7 @@
 
     <div class="offcanvas offcanvas-start offcanvas-nav" tabindex="-1" id="sidebarMobile">
         <div class="offcanvas-header">
-            <a class="sidebar-brand" asp-page="/Products/Index">
+            <a class="sidebar-brand" asp-page="/Dashboard/Index">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -290,6 +285,10 @@
         <div class="offcanvas-body d-flex flex-column">
             @if (signedIn)
             {
+                <div class="nav-group-title">Beranda</div>
+                <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Dashboard/Index">
+                    <span class="material-icons">dashboard</span> Dashboard
+                </a>
                 <div class="nav-group-title">Master</div>
                 <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Products/Index">
                     <span class="material-icons">inventory_2</span> Master Produk
@@ -306,15 +305,11 @@
                     <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
                         <span class="material-icons">manage_accounts</span> User Control
                     </a>
-                    <div class="nav-group-title">Monitoring</div>
-                    <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
-                        <span class="material-icons">fact_check</span> Persetujuan Diskon
-                        @if (pendingApprovals > 0)
-                        {
-                            <span class="badge badge-pending">@pendingApprovals</span>
-                        }
-                    </a>
                 }
+                <div class="nav-group-title">Monitoring</div>
+                <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
+                    <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
+                </a>
             }
             <div class="mt-auto">
                 <a class="nav-link" href="/swagger" target="_blank">

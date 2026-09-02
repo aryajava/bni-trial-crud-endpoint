@@ -7,12 +7,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace cobaproject.Pages.Monitoring;
 
-[Authorize(Roles = UserRolePolicy.Owner)]
+[Authorize]
 public class IndexModel : PageModel
 {
     private readonly IDiscountApprovalService _approvalService;
 
-    public List<DiscountApprovalDto> Pending { get; set; } = [];
+    public List<DiscountApprovalDto> Items { get; set; } = [];
+
+    /// <summary>OWNER melihat dan memutuskan permintaan; ADMIN hanya melihat miliknya.</summary>
+    public bool CanDecide { get; set; }
 
     private string Caller => User.Identity?.Name
         ?? HttpContext.Items["Caller"]?.ToString()
@@ -25,12 +28,21 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        Pending = await _approvalService.GetPendingAsync();
+        CanDecide = User.IsInRole(UserRolePolicy.Owner);
+        Items = CanDecide
+            ? await _approvalService.GetPendingAsync()
+            : await _approvalService.GetForUserAsync(Caller);
         ViewData["CrumbRoot"] = "Monitoring";
     }
 
     public async Task<IActionResult> OnPostApproveAsync(int id)
     {
+        if (!User.IsInRole(UserRolePolicy.Owner))
+        {
+            TempData["ErrorMessage"] = "Hanya Pemilik Toko yang dapat menyetujui permintaan diskon.";
+            return RedirectToPage();
+        }
+
         var error = await _approvalService.DecideAsync(id, true, Caller, null);
         if (error is not null)
         {
@@ -44,6 +56,12 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostRejectAsync(int id, string? reason)
     {
+        if (!User.IsInRole(UserRolePolicy.Owner))
+        {
+            TempData["ErrorMessage"] = "Hanya Pemilik Toko yang dapat menolak permintaan diskon.";
+            return RedirectToPage();
+        }
+
         var error = await _approvalService.DecideAsync(id, false, Caller, reason);
         if (error is not null)
         {

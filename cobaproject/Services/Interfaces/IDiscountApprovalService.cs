@@ -17,6 +17,9 @@ public interface IDiscountApprovalService
 
     Task<List<DiscountApprovalDto>> GetPendingAsync();
 
+    /// <summary>Semua permintaan yang diajukan <paramref name="requestedBy"/> (terbaru di atas).</summary>
+    Task<List<DiscountApprovalDto>> GetForUserAsync(string requestedBy);
+
     Task<int> CountPendingAsync();
 
     /// <summary>
