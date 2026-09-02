@@ -2,6 +2,8 @@ using System.Security.Claims;
 using cobaproject.Dtos;
 using cobaproject.Helpers;
 using cobaproject.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -21,6 +23,9 @@ public class EditModel : PageModel
     public string TargetUsername { get; set; } = string.Empty;
 
     private string CurrentRole => User.FindFirstValue(ClaimTypes.Role) ?? UserRolePolicy.Admin;
+
+    private int CurrentUserId =>
+        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
     private string Caller => User.Identity?.Name
         ?? HttpContext.Items["Caller"]?.ToString()
@@ -86,6 +91,23 @@ public class EditModel : PageModel
                 Version = user?.Version ?? 0
             };
             return Page();
+        }
+
+        // Kalau akun sendiri yang diedit, claim di cookie (DisplayName dan Role)
+        // ikut di-re-issue agar header/badge berubah tanpa logout-login.
+        if (user is not null && user.Id == CurrentUserId)
+        {
+            var identity = new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim("DisplayName", user.Display)
+            ], CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity));
         }
 
         TempData["SuccessMessage"] = $"User \"{TargetUsername}\" berhasil disimpan.";
