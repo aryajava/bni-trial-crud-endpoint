@@ -1,5 +1,6 @@
 using cobaproject.Configuration;
 using cobaproject.Dtos;
+using cobaproject.Helpers;
 using cobaproject.Mappers;
 using cobaproject.Models;
 using cobaproject.Services.Interfaces;
@@ -15,18 +16,34 @@ public class DiscountApprovalService : IDiscountApprovalService
     public const string Disetujui = "DISETUJUI";
     public const string Ditolak = "DITOLAK";
     private const string System = "SISTEM";
+    private const int MaxPageSize = 100;
 
     private const string SelectColumns = """
         A.ID, A.PRODUCT_ID, P.TITLE, A.OLD_VALUE, A.NEW_VALUE,
         A.REQUESTED_BY, A.REQUESTED_AT, A.STATUS, A.DECIDED_AT, A.DECIDED_BY, A.REASON
         """;
 
-    private readonly string _connectionString;
+    private static readonly Dictionary<string, string> SortColumns = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["id"] = "A.ID",
+        ["title"] = "P.TITLE",
+        ["newValue"] = "A.NEW_VALUE",
+        ["status"] = "A.STATUS",
+        ["requestedAt"] = "A.REQUESTED_AT",
+        ["requestedBy"] = "A.REQUESTED_BY",
+        ["reason"] = "A.REASON",
+    };
 
-    public DiscountApprovalService(IOptions<DatabaseConfig> config)
+    private readonly string _connectionString;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public DiscountApprovalService(IOptions<DatabaseConfig> config, IHttpContextAccessor httpContextAccessor)
     {
         _connectionString = config.Value.DefaultConnection;
+        _httpContextAccessor = httpContextAccessor;
     }
+
+    private HttpContext HttpContext => _httpContextAccessor.HttpContext!;
 
     public async Task<bool> HasPendingAsync(int productId)
     {
@@ -60,18 +77,75 @@ public class DiscountApprovalService : IDiscountApprovalService
         return (request, null);
     }
 
-
-    public async Task<List<DiscountApprovalDto>> GetAllAsync()
+    public async Task<PagedResult<DiscountApprovalDto>> GetPagedAsync(ApprovalQueryParams query)
     {
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        // OWNER melihat semua permintaan; selain itu hanya miliknya sendiri.
+        if (HttpContext.User.IsInRole(UserRolePolicy.Owner) != true)
+        {
+            conditions.Add("A.REQUESTED_BY = @RequestedBy");
+            parameters.Add("RequestedBy", HttpContext.User.Identity?.Name ?? "?");
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Status))
+        {
+            conditions.Add("A.STATUS = @Status");
+            parameters.Add("Status", query.Status.Trim().ToUpperInvariant());
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            conditions.Add("""
+                (P.TITLE LIKE @Search ESCAPE '\'
+                 OR A.REQUESTED_BY LIKE @Search ESCAPE '\')
+                """);
+            parameters.Add("Search", $"%{EscapeLike(query.Search.Trim())}%");
+        }
+
+        var whereClause = conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(" AND ", conditions);
+
         using var connection = new SqlConnection(_connectionString);
+
+        var total = await connection.ExecuteScalarAsync<int>($"""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.TRX_DISCOUNT_APPROVAL A
+            JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = A.PRODUCT_ID
+            {whereClause};
+            """, parameters);
+
+        var sortColumn = SortColumns.TryGetValue(query.SortBy, out var column) ? column : "A.REQUESTED_AT";
+        var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var tieBreaker = sortColumn == "A.ID" ? string.Empty : ", A.ID DESC";
+
+        parameters.Add("Offset", (page - 1) * pageSize);
+        parameters.Add("PageSize", pageSize);
+
         var rows = await connection.QueryAsync<DiscountApprovalRow>($"""
             SELECT {SelectColumns}
             FROM LOSCONSUMER.TRX_DISCOUNT_APPROVAL A
             JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = A.PRODUCT_ID
-            ORDER BY A.REQUESTED_AT DESC;
-            """);
-        return rows.Select(DiscountApprovalMapper.ToDto).ToList();
+            {whereClause}
+            ORDER BY {sortColumn} {sortOrder}{tieBreaker}
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            """, parameters);
+
+        return new PagedResult<DiscountApprovalDto>
+        {
+            Items = rows.Select(DiscountApprovalMapper.ToDto).ToList(),
+            Page = page,
+            PageSize = pageSize,
+            Total = total,
+            TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
+        };
     }
+
+    private static string EscapeLike(string value) =>
+        value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     public async Task<int> CountPendingAsync()
     {
@@ -80,19 +154,6 @@ public class DiscountApprovalService : IDiscountApprovalService
             SELECT COUNT(*) FROM LOSCONSUMER.TRX_DISCOUNT_APPROVAL
             WHERE STATUS = 'MENUNGGU';
             """);
-    }
-
-    public async Task<List<DiscountApprovalDto>> GetForUserAsync(string requestedBy)
-    {
-        using var connection = new SqlConnection(_connectionString);
-        var rows = await connection.QueryAsync<DiscountApprovalRow>($"""
-            SELECT {SelectColumns}
-            FROM LOSCONSUMER.TRX_DISCOUNT_APPROVAL A
-            JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = A.PRODUCT_ID
-            WHERE A.REQUESTED_BY = @RequestedBy
-            ORDER BY A.REQUESTED_AT DESC;
-            """, new { RequestedBy = requestedBy });
-        return rows.Select(DiscountApprovalMapper.ToDto).ToList();
     }
 
     public async Task<string?> DecideAsync(int id, bool approve, string decidedBy, string? reason)

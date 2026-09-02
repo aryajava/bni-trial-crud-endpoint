@@ -15,10 +15,11 @@ public interface IDiscountApprovalService
     Task<(DiscountApprovalDto? Request, string? Error)> RequestAsync(
         int productId, decimal? oldValue, decimal? newValue, string requestedBy);
 
-    Task<List<DiscountApprovalDto>> GetAllAsync();
-
-    /// <summary>Semua permintaan yang diajukan <paramref name="requestedBy"/> (terbaru di atas).</summary>
-    Task<List<DiscountApprovalDto>> GetForUserAsync(string requestedBy);
+    /// <summary>
+    /// Halaman terpaginasi dengan sort/filter. OWNER melihat semua; pemanggil
+    /// selain itu hanya permintaan miliknya (dari claims login).
+    /// </summary>
+    Task<PagedResult<DiscountApprovalDto>> GetPagedAsync(ApprovalQueryParams query);
 
     Task<int> CountPendingAsync();
 

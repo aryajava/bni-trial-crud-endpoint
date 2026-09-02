@@ -1,9 +1,11 @@
-using cobaproject.Dtos;
+using cobaproject.Configuration;
 using cobaproject.Helpers;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
 
 namespace cobaproject.Pages.Monitoring;
 
@@ -11,27 +13,39 @@ namespace cobaproject.Pages.Monitoring;
 public class IndexModel : PageModel
 {
     private readonly IDiscountApprovalService _approvalService;
+    private readonly IUserService _userService;
+    private readonly ApiKeyConfig _apiKeyConfig;
 
-    public List<DiscountApprovalDto> Items { get; set; } = [];
-
-    /// <summary>OWNER melihat dan memutuskan permintaan; ADMIN hanya melihat miliknya.</summary>
+    /// <summary>OWNER melihat semua dan memutuskan; ADMIN hanya melihat miliknya.</summary>
     public bool CanDecide { get; set; }
+
+    public string ApiKeyHeader { get; }
+    public string ApiKey { get; private set; } = string.Empty;
 
     private string Caller => User.Identity?.Name
         ?? HttpContext.Items["Caller"]?.ToString()
         ?? "SCREEN";
 
-    public IndexModel(IDiscountApprovalService approvalService)
+    public IndexModel(IDiscountApprovalService approvalService, IUserService userService,
+        IOptions<ApiKeyConfig> apiKeyConfig)
     {
         _approvalService = approvalService;
+        _userService = userService;
+        _apiKeyConfig = apiKeyConfig.Value;
+        ApiKeyHeader = _apiKeyConfig.HeaderName;
     }
 
     public async Task OnGetAsync()
     {
         CanDecide = User.IsInRole(UserRolePolicy.Owner);
-        Items = CanDecide
-            ? await _approvalService.GetAllAsync()
-            : await _approvalService.GetForUserAsync(Caller);
+
+        // JS memanggil endpoint dengan secret-key user yang login, sehingga
+        // identitas & role asli dikenali API (pola halaman Master Produk).
+        var currentUserId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+        ApiKey = currentUserId > 0
+            ? await _userService.GetSecretKeyAsync(currentUserId) ?? string.Empty
+            : string.Empty;
+
         ViewData["CrumbRoot"] = "Monitoring";
     }
 
