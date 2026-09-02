@@ -45,7 +45,9 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        TempData["SuccessMessage"] = $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}).";
+        TempData["SuccessMessage"] = Request.DiscountPercent.HasValue
+            ? $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}). Diskon menunggu persetujuan Pemilik Toko."
+            : $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}).";
         return RedirectToPage("Index");
     }
 

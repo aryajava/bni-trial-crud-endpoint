@@ -89,6 +89,7 @@ builder.Services.AddScoped<IRequestLogService, RequestLogService>();
 builder.Services.AddScoped<IResponseLogService, ResponseLogService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IDiscountApprovalService, DiscountApprovalService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

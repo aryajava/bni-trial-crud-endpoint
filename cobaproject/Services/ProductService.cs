@@ -1,6 +1,7 @@
 using Dapper;
 using cobaproject.Configuration;
 using cobaproject.Dtos;
+using cobaproject.Helpers;
 using cobaproject.Mappers;
 using cobaproject.Models;
 using cobaproject.Services.Interfaces;
@@ -13,6 +14,7 @@ public class ProductService : IProductService
 {
     private readonly string _connectionString;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IDiscountApprovalService _discountApprovalService;
     private readonly ILogger<ProductService> _logger;
 
     private const string SelectColumns = """
@@ -51,15 +53,26 @@ public class ProductService : IProductService
     public ProductService(
         IOptions<DatabaseConfig> config,
         IHttpContextAccessor httpContextAccessor,
+        IDiscountApprovalService discountApprovalService,
         ILogger<ProductService> logger)
     {
         _connectionString = config.Value.DefaultConnection;
         _httpContextAccessor = httpContextAccessor;
+        _discountApprovalService = discountApprovalService;
         _logger = logger;
     }
 
     private string TraceId =>
         _httpContextAccessor.HttpContext?.Items["TraceId"]?.ToString() ?? Guid.NewGuid().ToString();
+
+    private string Caller =>
+        _httpContextAccessor.HttpContext?.Items["Caller"]?.ToString() ?? "SCREEN";
+
+    // OWNER (cookie atau API key) dan SYSTEM (kunci fallback) menetapkan diskon
+    // langsung tanpa persetujuan; selain itu (ADMIN) wajib konfirmasi Pemilik Toko.
+    private bool CallerIsOwnerOrSystem =>
+        _httpContextAccessor.HttpContext?.User.IsInRole(UserRolePolicy.Owner) == true
+        || string.Equals(Caller, "SYSTEM", StringComparison.OrdinalIgnoreCase);
 
     public async Task<IEnumerable<ProductDto>> GetAllAsync()
     {
@@ -192,6 +205,11 @@ public class ProductService : IProductService
     public async Task<ProductDto?> CreateAsync(CreateProductRequest request, string createdBy)
     {
         using var connection = new SqlConnection(_connectionString);
+
+        // Diskon dari ADMIN tidak langsung disimpan: produk dibuat tanpa diskon,
+        // lalu permintaan persetujuan menyusul (keputusan Q7).
+        var needsApproval = request.DiscountPercent is not null && !CallerIsOwnerOrSystem;
+
         var sql = """
             INSERT INTO LOSCONSUMER.MASTER_PRODUCT
                 (TITLE, PRICE, DESCRIPTION, CATEGORY, IMAGE,
@@ -213,10 +231,19 @@ public class ProductService : IProductService
             request.Image,
             request.RatingRate,
             request.RatingCount,
-            request.DiscountPercent,
+            DiscountPercent = needsApproval ? null : request.DiscountPercent,
             Stock = request.Stock ?? 0,
             CreatedBy = createdBy
         });
+
+        if (needsApproval)
+        {
+            var (_, error) = await _discountApprovalService.RequestAsync(
+                newId, null, request.DiscountPercent, createdBy);
+            if (error is not null)
+                _logger.LogWarning("[TRX_DISCOUNT_APPROVAL] Gagal mengajukan | ProductId={ProductId} | {Error} | TraceId={TraceId}",
+                    newId, error, TraceId);
+        }
 
         _logger.LogInformation(
             "[MASTER_PRODUCT] INSERT | ID={Id} | Title=\"{Title}\" | Version=1 | TraceId={TraceId}",
@@ -225,9 +252,21 @@ public class ProductService : IProductService
         return await GetByIdAsync(newId);
     }
 
-    public async Task<(ProductDto? Product, bool IsConflict)> UpdateAsync(
+    public async Task<(ProductDto? Product, bool IsConflict, string? PendingMessage)> UpdateAsync(
         int id, UpdateProductRequest request, string updatedBy)
     {
+        var current = await GetByIdAsync(id);
+        if (current is null)
+            return (null, false, null);
+
+        // Diskon yang diubah oleh ADMIN tidak langsung disimpan: produk tetap
+        // memakai diskon lama, permintaan persetujuan diajukan (keputusan Q1–Q5).
+        var needsApproval = current.DiscountPercent != request.DiscountPercent
+            && !CallerIsOwnerOrSystem;
+
+        if (needsApproval && await _discountApprovalService.HasPendingAsync(id))
+            return (current, false, "Produk ini masih memiliki permintaan diskon yang menunggu persetujuan.");
+
         using var connection = new SqlConnection(_connectionString);
         var sql = """
             UPDATE LOSCONSUMER.MASTER_PRODUCT
@@ -257,7 +296,7 @@ public class ProductService : IProductService
             request.Image,
             request.RatingRate,
             request.RatingCount,
-            request.DiscountPercent,
+            DiscountPercent = needsApproval ? current.DiscountPercent : request.DiscountPercent,
             Stock = request.Stock ?? 0,
             UpdatedBy = updatedBy,
             Id = id,
@@ -266,15 +305,11 @@ public class ProductService : IProductService
 
         if (rowsAffected == 0)
         {
-            var current = await GetByIdAsync(id);
-            if (current is null)
-                return (null, false);
-
             _logger.LogWarning(
                 "[MASTER_PRODUCT] CONFLICT | ID={Id} | ExpectedVersion={ExpectedVersion} | TraceId={TraceId}",
                 id, request.Version, TraceId);
 
-            return (current, true);
+            return (current, true, null);
         }
 
         var updated = await GetByIdAsync(id);
@@ -282,7 +317,18 @@ public class ProductService : IProductService
             "[MASTER_PRODUCT] UPDATE | ID={Id} | NewVersion={NewVersion} | TraceId={TraceId}",
             id, updated?.Version, TraceId);
 
-        return (updated, false);
+        if (needsApproval)
+        {
+            var (_, error) = await _discountApprovalService.RequestAsync(
+                id, current.DiscountPercent, request.DiscountPercent, updatedBy);
+            if (error is not null)
+                _logger.LogWarning("[TRX_DISCOUNT_APPROVAL] Gagal mengajukan | ProductId={ProductId} | {Error} | TraceId={TraceId}",
+                    id, error, TraceId);
+
+            return (updated, false, "Diskon menunggu persetujuan Pemilik Toko.");
+        }
+
+        return (updated, false, null);
     }
 
     public async Task<bool> SoftDeleteAsync(int id, string updatedBy)

@@ -1,15 +1,19 @@
 @using System.Security.Claims
+@inject cobaproject.Services.Interfaces.IDiscountApprovalService ApprovalService
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
     var isProductPages = currentPage.StartsWith("/Products", StringComparison.OrdinalIgnoreCase);
     var isMasterUserPages = currentPage.StartsWith("/Users", StringComparison.OrdinalIgnoreCase);
     var isUserControlPages = currentPage.StartsWith("/UserControl", StringComparison.OrdinalIgnoreCase);
-    var crumbRoot = ViewData["CrumbRoot"] as string ?? "Master Produk";
+    var isMonitoringPages = currentPage.StartsWith("/Monitoring", StringComparison.OrdinalIgnoreCase);
+    var crumbRoot = ViewData["CrumbRoot"] as string
+        ?? (isMasterUserPages ? "Master User" : isUserControlPages ? "User Control" : isMonitoringPages ? "Monitoring" : "Master Produk");
     var signedIn = User.Identity?.IsAuthenticated == true;
     var isOwner = User.IsInRole("OWNER");
     var isAdmin = User.IsInRole("ADMIN");
     var currentRole = User.FindFirstValue(ClaimTypes.Role) ?? UserRolePolicy.Admin;
     var displayName = User.FindFirstValue("DisplayName") ?? User.Identity?.Name ?? "";
+    var pendingApprovals = signedIn && isOwner ? await ApprovalService.CountPendingAsync() : 0;
 }
 <!DOCTYPE html>
 <html lang="id" data-bs-theme="light">
@@ -84,6 +88,14 @@
         }
         .sidebar .nav-link .material-icons { font-size: 20px; color: #6B7280; }
         .sidebar .nav-link:hover { background: var(--bs-body-bg); color: #1F2937; }
+        .sidebar .badge-pending {
+            background: #B91C1C;
+            color: white;
+            border-radius: 999px;
+            padding: 1px 8px;
+            font-size: 11px;
+            margin-left: auto;
+        }
         .sidebar .nav-link.active { background: var(--gk-primary-soft); color: var(--gk-primary-text); font-weight: 600; }
         .sidebar .nav-link.active .material-icons { color: var(--gk-primary); }
         .sidebar-footer { margin-top: auto; border-top: 1px solid #E5EAE8; padding-top: 12px; }
@@ -206,6 +218,14 @@
                         <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
                             <span class="material-icons">manage_accounts</span> User Control
                         </a>
+                        <div class="nav-group-title">Monitoring</div>
+                        <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
+                            <span class="material-icons">fact_check</span> Persetujuan Diskon
+                            @if (pendingApprovals > 0)
+                            {
+                                <span class="badge badge-pending">@pendingApprovals</span>
+                            }
+                        </a>
                     }
                 }
             </div>
@@ -227,7 +247,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a asp-page="@(isMasterUserPages ? "/Users/Index" : isUserControlPages ? "/UserControl/Index" : "/Products/Index")">@crumbRoot</a>
+                <a asp-page="@(isMasterUserPages ? "/Users/Index" : isUserControlPages ? "/UserControl/Index" : isMonitoringPages ? "/Monitoring/Index" : "/Products/Index")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -285,6 +305,14 @@
                     <div class="nav-group-title">Maintenance</div>
                     <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
                         <span class="material-icons">manage_accounts</span> User Control
+                    </a>
+                    <div class="nav-group-title">Monitoring</div>
+                    <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
+                        <span class="material-icons">fact_check</span> Persetujuan Diskon
+                        @if (pendingApprovals > 0)
+                        {
+                            <span class="badge badge-pending">@pendingApprovals</span>
+                        }
                     </a>
                 }
             }

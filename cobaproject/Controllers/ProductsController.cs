@@ -89,7 +89,7 @@ public class ProductsController : ControllerBase
                 return ResponseHelper.ValidationError(HttpContext, errors);
             }
 
-            var (product, isConflict) = await _productService.UpdateAsync(id, request, Caller);
+            var (product, isConflict, pendingMessage) = await _productService.UpdateAsync(id, request, Caller);
 
             if (product is null)
                 return ResponseHelper.NotFound(HttpContext);
@@ -100,7 +100,10 @@ public class ProductsController : ControllerBase
                     errors: ["Produk telah diubah oleh proses lain (ID " + id + ")."]);
             }
 
-            return ResponseHelper.Success(HttpContext, product);
+            return pendingMessage is null
+                ? ResponseHelper.Success(HttpContext, product)
+                : ResponseHelper.Success(HttpContext, product,
+                    $"Produk \"{product.Title}\" berhasil disimpan. {pendingMessage}");
         }
         catch (Exception ex)
         {

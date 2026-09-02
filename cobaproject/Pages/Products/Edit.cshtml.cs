@@ -52,7 +52,7 @@ public class EditModel : PageModel
             return Page();
         }
 
-        var (product, isConflict) = await _productService.UpdateAsync(id, Request, Caller);
+        var (product, isConflict, pendingMessage) = await _productService.UpdateAsync(id, Request, Caller);
         if (product is null)
         {
             return NotFound();
@@ -67,7 +67,9 @@ public class EditModel : PageModel
             return Page();
         }
 
-        TempData["SuccessMessage"] = $"Produk \"{product.Title}\" berhasil disimpan.";
+        TempData["SuccessMessage"] = pendingMessage is null
+            ? $"Produk \"{product.Title}\" berhasil disimpan."
+            : $"Produk \"{product.Title}\" berhasil disimpan. {pendingMessage}";
         return RedirectToPage("Index");
     }
 

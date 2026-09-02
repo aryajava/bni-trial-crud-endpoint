@@ -8,6 +8,11 @@
         pesanToast = sukses;
         ikonToast = "success";
     }
+    else if (TempData["ErrorMessage"] is string errorToast)
+    {
+        pesanToast = errorToast;
+        ikonToast = "error";
+    }
     else if (TempData["InfoMessage"] is string info)
     {
         pesanToast = info;

@@ -1,0 +1,99 @@
+@page
+@model cobaproject.Pages.Monitoring.IndexModel
+@{
+    ViewData["Title"] = "Persetujuan Diskon";
+}
+
+<div class="page-header">
+    <h1><span class="material-icons">fact_check</span> Persetujuan Diskon</h1>
+</div>
+
+@if (Model.Pending.Count == 0)
+{
+    <div class="card card-soft">
+        <div class="card-body py-5 text-center text-muted">
+            <span class="material-icons d-block fs-1 mb-2">task_alt</span>
+            Tidak ada permintaan diskon yang menunggu.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card card-soft">
+        <div class="card-body p-3">
+            <div class="table-wrap">
+                <table class="table table-data align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th>Permintaan Diskon</th>
+                            <th>Pengaju</th>
+                            <th>Diajukan</th>
+                            <th class="col-aksi">Keputusan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Pending)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold">@r.Title</span>
+                                    <br /><small class="text-muted">ID @r.ProductId</small>
+                                </td>
+                                <td>
+                                    <span class="text-muted text-decoration-line-through">@(r.OldValue?.ToString("0.##") + "%" ?? "-")</span>
+                                    <span class="material-icons arrow-next" style="vertical-align: middle; font-size: 16px;">arrow_forward</span>
+                                    <span class="fw-semibold text-primary">@(r.NewValue?.ToString("0.##") + "%" ?? "-")</span>
+                                </td>
+                                <td>@r.RequestedBy</td>
+                                <td class="td-nomor">@r.RequestedAt.ToString("dd MMM yyyy HH:mm")</td>
+                                <td>
+                                    <div class="field-actions">
+                                        <form method="post" asp-page-handler="Approve" class="m-0">
+                                            <input type="hidden" name="id" value="@r.Id" />
+                                            <button type="submit" class="btn btn-success btn-sm" title="Setujui diskon">
+                                                <span class="material-icons">check</span> Setujui
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-page-handler="Reject" class="m-0 form-reject">
+                                            <input type="hidden" name="id" value="@r.Id" />
+                                            <input type="hidden" name="reason" class="reason-input" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm btn-reject" title="Tolak diskon">
+                                                <span class="material-icons">close</span> Tolak
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.form-reject').forEach(function (form) {
+            form.querySelector('.btn-reject').addEventListener('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Tolak Permintaan Diskon',
+                    input: 'text',
+                    inputLabel: 'Alasan (opsional)',
+                    inputPlaceholder: 'Contoh: diskon terlalu besar',
+                    showCancelButton: true,
+                    confirmButtonText: 'Tolak',
+                    cancelButtonText: 'Batal',
+                    icon: 'warning'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.querySelector('.reason-input').value = (result.value || '').trim();
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -7,7 +7,7 @@ public interface IProductService
     Task<IEnumerable<ProductDto>> GetAllAsync();
     Task<ProductDto?> GetByIdAsync(int id);
     Task<ProductDto?> CreateAsync(CreateProductRequest request, string createdBy);
-    Task<(ProductDto? Product, bool IsConflict)> UpdateAsync(int id, UpdateProductRequest request, string updatedBy);
+    Task<(ProductDto? Product, bool IsConflict, string? PendingMessage)> UpdateAsync(int id, UpdateProductRequest request, string updatedBy);
     Task<bool> SoftDeleteAsync(int id, string updatedBy);
     Task<bool> HardDeleteAsync(int id);
 
