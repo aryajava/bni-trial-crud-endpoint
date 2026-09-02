@@ -8,6 +8,7 @@ using cobaproject.Services.Interfaces;
 using DbUp;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -21,14 +22,39 @@ CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 // PascalCase (RatingRate, IsActive). Tanpa ini, kolom multi-kata ter-baca null.
 Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
+// Semua pesan sistem dalam Bahasa Indonesia: binder, validasi, dan API.
+static void SetMessagesIndonesia(MvcOptions options)
+{
+    var p = options.ModelBindingMessageProvider;
+    p.SetMissingBindRequiredValueAccessor(field => $"Nilai untuk kolom {field} wajib disertakan.");
+    p.SetMissingKeyOrValueAccessor(() => "Nilai wajib disertakan.");
+    p.SetMissingRequestBodyRequiredValueAccessor(() => "Body request wajib disertakan.");
+    p.SetValueMustBeANumberAccessor(field => $"Kolom {field} harus berupa angka.");
+    p.SetValueIsInvalidAccessor(value => $"Nilai '{value}' tidak valid.");
+    p.SetValueMustNotBeNullAccessor(field => $"Kolom {field} wajib diisi.");
+    p.SetAttemptedValueIsInvalidAccessor((value, field) => $"Nilai '{value}' tidak valid untuk {field}.");
+    p.SetNonPropertyAttemptedValueIsInvalidAccessor(value => $"Nilai '{value}' tidak valid.");
+    p.SetNonPropertyUnknownValueIsInvalidAccessor(() => "Nilai yang diberikan tidak valid.");
+    p.SetNonPropertyValueMustBeANumberAccessor(() => "Harus berupa angka.");
+    p.SetUnknownValueIsInvalidAccessor(value => "Nilai yang diberikan tidak valid.");
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
 // Add services to the container.
-builder.Services.AddControllers();
+// SuppressModelStateInvalidFilter: controller menangani ModelState sendiri
+// (pola ResponseHelper.ValidationError), sehingga 400 otomatis ProblemDetails
+// Inggris untuk JSON rusak tidak muncul — semuanya ApiResponse Indonesia.
+// PostConfigure<MvcOptions> memastikan pesan binder Indonesia berlaku untuk
+// controller dan Razor Pages sekaligus.
+builder.Services.AddControllers(options => SetMessagesIndonesia(options));
 builder.Services.AddRazorPages();
+builder.Services.PostConfigure<ApiBehaviorOptions>(options =>
+    options.SuppressModelStateInvalidFilter = true);
+builder.Services.PostConfigure<MvcOptions>(SetMessagesIndonesia);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {

@@ -98,7 +98,7 @@ public class RequestResponseMiddleware
             var responseBody = await new StreamReader(context.Response.Body).ReadToEndAsync();
             context.Response.Body.Seek(0, SeekOrigin.Begin);
 
-            var message = context.Response.StatusCode < 400 ? "Success" : "Failed";
+            var message = context.Response.StatusCode < 400 ? "Berhasil" : "Gagal";
 
             await service.InsertAsync(new ResponseProduct
             {

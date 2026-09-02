@@ -31,7 +31,7 @@ public static class ResponseHelper
         _ => StatusCodes.Status200OK
     };
 
-    public static IResult Success<T>(HttpContext context, T? data, string message = "Success")
+    public static IResult Success<T>(HttpContext context, T? data, string message = "Berhasil")
     {
         var statusCode = GetSuccessStatusCode(context.Request.Method, data);
         if (statusCode == StatusCodes.Status204NoContent)
@@ -45,26 +45,38 @@ public static class ResponseHelper
     public static IResult NotFound(HttpContext context, string message = "Data tidak ditemukan.") =>
         Results.Json(
             Build<object>(context, false, StatusCodes.Status404NotFound, message, null,
-                new List<string> { "Resource not found." }),
+                new List<string> { "Data tidak ditemukan." }),
             statusCode: StatusCodes.Status404NotFound);
 
     public static IResult Conflict(HttpContext context, string message = "Data telah diubah oleh proses lain. Silakan ambil data terbaru.",
         List<string>? errors = null) =>
         Results.Json(
             Build<object>(context, false, StatusCodes.Status409Conflict, message, null,
-                errors ?? new List<string> { "Optimistic concurrency conflict." }),
+                errors ?? new List<string> { "Data telah diubah oleh proses lain." }),
             statusCode: StatusCodes.Status409Conflict);
 
     public static IResult ValidationError(HttpContext context, List<string> errors,
-        string message = "Validasi gagal.") =>
-        Results.Json(
-            Build<object>(context, false, StatusCodes.Status422UnprocessableEntity, message, null, errors),
+        string message = "Validasi gagal.")
+    {
+        // Pesan dari input formatter JSON (mis. "The JSON value could not be
+        // converted ...") diterjemahkan agar seluruh pesan tetap Bahasa Indonesia.
+        var mapped = errors
+            .Select(e => e.Contains("JSON value", StringComparison.OrdinalIgnoreCase)
+                || e.Contains("malformed", StringComparison.OrdinalIgnoreCase)
+                || e.StartsWith("The request body", StringComparison.OrdinalIgnoreCase)
+                ? "Format JSON pada body request tidak valid."
+                : e)
+            .ToList();
+
+        return Results.Json(
+            Build<object>(context, false, StatusCodes.Status422UnprocessableEntity, message, null, mapped),
             statusCode: StatusCodes.Status422UnprocessableEntity);
+    }
 
     public static IResult BadGateway(HttpContext context, string message = "External API tidak dapat diakses.") =>
         Results.Json(
             Build<object>(context, false, StatusCodes.Status502BadGateway, message, null,
-                new List<string> { "External API unavailable." }),
+                new List<string> { "API eksternal tidak dapat diakses." }),
             statusCode: StatusCodes.Status502BadGateway);
 
     public static async Task WriteUnauthorizedAsync(HttpContext context,
@@ -72,7 +84,7 @@ public static class ResponseHelper
         List<string>? errors = null)
     {
         var response = Build<object>(context, false, StatusCodes.Status401Unauthorized, message, null,
-            errors ?? new List<string> { "Missing or invalid API Key." });
+            errors ?? new List<string> { "Kunci API tidak ada atau tidak valid." });
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));

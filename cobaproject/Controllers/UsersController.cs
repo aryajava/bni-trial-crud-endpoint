@@ -90,7 +90,7 @@ public class UsersController : ControllerBase
             if (isConflict)
             {
                 return ResponseHelper.Conflict(HttpContext,
-                    errors: ["Optimistic concurrency conflict on user ID " + id]);
+                    errors: ["User telah diubah oleh proses lain (ID " + id + ")."]);
             }
 
             return ResponseHelper.Success(HttpContext, user);
@@ -120,7 +120,7 @@ public class UsersController : ControllerBase
 
             var (deleted, _) = await _userService.SoftDeleteAsync(id, Caller);
             return deleted
-                ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" berhasil dinonaktifkan.", "Success")
+                ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" berhasil dinonaktifkan.", "Berhasil")
                 : ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
         }
         catch (Exception ex)
@@ -154,7 +154,7 @@ public class UsersController : ControllerBase
 
             var (ok, error) = await _userService.ChangeRoleAsync(id, request.Role, Caller);
             return ok
-                ? ResponseHelper.Success(HttpContext, $"Role user \"{user.Display}\" diubah menjadi {request.Role}.", "Success")
+                ? ResponseHelper.Success(HttpContext, $"Role user \"{user.Display}\" diubah menjadi {UserRolePolicy.DisplayName(request.Role)}.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal mengubah role."]);
         }
         catch (Exception ex)
@@ -188,7 +188,7 @@ public class UsersController : ControllerBase
 
             var (ok, error) = await _userService.SetActiveAsync(id, request.IsActive, Caller);
             return ok
-                ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" {(request.IsActive ? "diaktifkan" : "dinonaktifkan")}.", "Success")
+                ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" {(request.IsActive ? "diaktifkan" : "dinonaktifkan")}.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal mengubah status."]);
         }
         catch (Exception ex)
@@ -215,7 +215,7 @@ public class UsersController : ControllerBase
 
             var (ok, error) = await _userService.ResetPasswordAsync(id, request.NewPassword, Caller);
             return ok
-                ? ResponseHelper.Success(HttpContext, $"Password user \"{user.Display}\" berhasil di-reset.", "Success")
+                ? ResponseHelper.Success(HttpContext, $"Password user \"{user.Display}\" berhasil di-reset.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal reset password."]);
         }
         catch (Exception ex)
@@ -257,7 +257,7 @@ public class UsersController : ControllerBase
 
             var (ok, secretKey, error) = await _userService.RegenerateSecretKeyAsync(id, Caller);
             return ok
-                ? ResponseHelper.Success(HttpContext, new { user.Username, secretKey }, "Success")
+                ? ResponseHelper.Success(HttpContext, new { user.Username, secretKey }, "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal regenerasi secret key."]);
         }
         catch (Exception ex)

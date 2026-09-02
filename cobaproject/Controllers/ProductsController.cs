@@ -97,7 +97,7 @@ public class ProductsController : ControllerBase
             if (isConflict)
             {
                 return ResponseHelper.Conflict(HttpContext,
-                    errors: ["Optimistic concurrency conflict on product ID " + id]);
+                    errors: ["Produk telah diubah oleh proses lain (ID " + id + ")."]);
             }
 
             return ResponseHelper.Success(HttpContext, product);
@@ -122,13 +122,13 @@ public class ProductsController : ControllerBase
             {
                 var deleted = await _productService.HardDeleteAsync(id);
                 return deleted
-                    ? ResponseHelper.Success(HttpContext, $"Produk \"{product.Title}\" berhasil dihapus.", "Success")
+                    ? ResponseHelper.Success(HttpContext, $"Produk \"{product.Title}\" berhasil dihapus.", "Berhasil")
                     : ResponseHelper.NotFound(HttpContext, "Produk tidak ditemukan.");
             }
 
             var softDeleted = await _productService.SoftDeleteAsync(id, Caller);
             return softDeleted
-                ? ResponseHelper.Success(HttpContext, $"Produk \"{product.Title}\" berhasil dihapus.", "Success")
+                ? ResponseHelper.Success(HttpContext, $"Produk \"{product.Title}\" berhasil dihapus.", "Berhasil")
                 : ResponseHelper.NotFound(HttpContext, "Produk tidak ditemukan.");
         }
         catch (Exception ex)
