@@ -7,6 +7,7 @@ using cobaproject.Services;
 using cobaproject.Services.Interfaces;
 using DbUp;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.SqlClient;
 using Serilog;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -67,11 +68,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/Login";
-        options.AccessDeniedPath = "/Login";
+        options.AccessDeniedPath = "/AccessDenied";
         options.Cookie.Name = "GKLaku.Auth";
         options.SlidingExpiration = true;
     });
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiJsonForbidHandler>();
 
 builder.Services.AddHttpClient<IFakeStoreService, FakeStoreService>(client =>
     client.BaseAddress = new Uri(builder.Configuration["FakeStoreApi:BaseUrl"]!));
@@ -118,9 +120,11 @@ if (app.Urls.Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnor
 }
 
 app.UseMiddleware<RequestResponseMiddleware>();
-app.UseMiddleware<ApiKeyMiddleware>();
 
 app.UseAuthentication();
+// ApiKeyMiddleware dijalankan setelah UseAuthentication agar principal API key
+// (dengan role claim) menimpa principal cookie untuk semua permintaan /api/*.
+app.UseMiddleware<ApiKeyMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

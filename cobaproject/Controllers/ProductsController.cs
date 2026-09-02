@@ -1,6 +1,7 @@
 using cobaproject.Dtos;
 using cobaproject.Helpers;
 using cobaproject.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace cobaproject.Controllers;
@@ -108,6 +109,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = UserRolePolicy.Owner)]
     public async Task<IResult> Delete(int id, [FromQuery] string type = "soft")
     {
         try

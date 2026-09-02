@@ -1,4 +1,5 @@
 using cobaproject.Dtos;
+using cobaproject.Helpers;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -6,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace cobaproject.Pages.Products;
 
-[Authorize]
+[Authorize(Roles = UserRolePolicy.Owner)]
 public class DeleteModel : PageModel
 {
     private readonly IProductService _productService;

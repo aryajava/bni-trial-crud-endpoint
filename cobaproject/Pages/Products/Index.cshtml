@@ -152,6 +152,7 @@
     <script>
         const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
         const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKey));
+        const CAN_DELETE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CanDelete));
 
         const state = {
             page: 1,
@@ -265,7 +266,7 @@
                     <td class="col-aksi text-center">
                         <div class="field-actions justify-content-center">
                             <a class="btn-icon btn-edit" href="/Products/Edit/${item.id}" title="Edit"><span class="material-icons">edit</span></a>
-                            <a class="btn-icon btn-delete" href="/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>
+                            ${CAN_DELETE ? `<a class="btn-icon btn-delete" href="/Products/Delete/${item.id}" title="Hapus"><span class="material-icons">delete</span></a>` : ''}
                         </div>
                     </td>
                     <td class="td-id">${item.id}</td>

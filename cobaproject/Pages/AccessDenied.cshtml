@@ -1,0 +1,19 @@
+@page
+@model cobaproject.Pages.AccessDeniedModel
+@{
+    ViewData["Title"] = "Akses Ditolak";
+}
+
+<div class="page-header">
+    <h1><span class="material-icons text-danger">block</span> Akses Ditolak</h1>
+</div>
+
+<div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+    <span class="material-icons">gpp_bad</span>
+    <span>Anda tidak memiliki hak akses untuk halaman ini. Hubungi pemilik akun (OWNER) jika ini keliru.</span>
+</div>
+
+<div class="d-flex gap-2">
+    <a class="btn btn-primary" asp-page="/Index"><span class="material-icons">home</span> Ke Beranda</a>
+    <a class="btn btn-outline-secondary" asp-page="/Products/Index"><span class="material-icons">list</span> Daftar Produk</a>
+</div>

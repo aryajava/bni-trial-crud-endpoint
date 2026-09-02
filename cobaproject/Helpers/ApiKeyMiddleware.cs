@@ -1,6 +1,5 @@
-using System.Text.Json;
+using System.Security.Claims;
 using cobaproject.Configuration;
-using cobaproject.Models;
 using cobaproject.Services.Interfaces;
 using Microsoft.Extensions.Options;
 
@@ -37,9 +36,16 @@ public class ApiKeyMiddleware
         }
 
         // Kunci fallback dari konfigurasi (mis. TEST123) = pemanggil SYSTEM.
+        // SYSTEM diperlakukan sebagai service account level OWNER sehingga
+        // [Authorize(Roles = ...)] berlaku sama untuk API key dan cookie login.
         if (string.Equals(providedKey.ToString(), _config.Key, StringComparison.Ordinal))
         {
             context.Items["Caller"] = "SYSTEM";
+            context.User = new ClaimsPrincipal(new ClaimsIdentity(
+                [
+                    new Claim(ClaimTypes.Name, "SYSTEM"),
+                    new Claim(ClaimTypes.Role, UserRolePolicy.Owner)
+                ], "ApiKey"));
             await _next(context);
             return;
         }
@@ -55,24 +61,14 @@ public class ApiKeyMiddleware
         }
 
         context.Items["Caller"] = user.Username;
+        context.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role ?? UserRolePolicy.Admin)
+            ], "ApiKey"));
         await _next(context);
     }
 
-    private async Task UnauthorizedAsync(HttpContext context)
-    {
-        var response = new ApiResponse<object>
-        {
-            TraceId = context.Items["TraceId"]?.ToString() ?? Guid.NewGuid().ToString(),
-            IsSuccess = false,
-            StatusCode = StatusCodes.Status401Unauthorized,
-            Message = "API Key tidak valid atau tidak disertakan.",
-            Data = null,
-            Errors = new List<string> { "Missing or invalid API Key." },
-            Timestamp = DateTimeOffset.Now
-        };
-
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
-    }
+    private async Task UnauthorizedAsync(HttpContext context) =>
+        await ResponseHelper.WriteUnauthorizedAsync(context);
 }

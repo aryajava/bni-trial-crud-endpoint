@@ -1,3 +1,4 @@
+using System.Text.Json;
 using cobaproject.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,6 +6,8 @@ namespace cobaproject.Helpers;
 
 public static class ResponseHelper
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     private static string GetTraceId(HttpContext context) =>
         context.Items["TraceId"]?.ToString() ?? Guid.NewGuid().ToString();
 
@@ -63,6 +66,28 @@ public static class ResponseHelper
             Build<object>(context, false, StatusCodes.Status502BadGateway, message, null,
                 new List<string> { "External API unavailable." }),
             statusCode: StatusCodes.Status502BadGateway);
+
+    public static async Task WriteUnauthorizedAsync(HttpContext context,
+        string message = "API Key tidak valid atau tidak disertakan.",
+        List<string>? errors = null)
+    {
+        var response = Build<object>(context, false, StatusCodes.Status401Unauthorized, message, null,
+            errors ?? new List<string> { "Missing or invalid API Key." });
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
+    }
+
+    public static async Task WriteForbiddenAsync(HttpContext context,
+        string message = "Akses ditolak. Anda tidak memiliki hak untuk operasi ini.",
+        List<string>? errors = null)
+    {
+        var response = Build<object>(context, false, StatusCodes.Status403Forbidden, message, null,
+            errors ?? new List<string> { "Forbidden: role tidak memenuhi syarat." });
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
+    }
 
     public static IResult Error(HttpContext context, Exception ex,
         string message = "Terjadi kesalahan internal server.") =>

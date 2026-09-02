@@ -1,5 +1,6 @@
 using cobaproject.Configuration;
 using cobaproject.Dtos;
+using cobaproject.Helpers;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
@@ -20,6 +21,8 @@ public class IndexModel : PageModel
     public string ApiKeyHeader { get; }
     public string ApiKey { get; }
 
+    public bool CanDelete { get; set; }
+
     public IndexModel(IProductService productService, IOptions<ApiKeyConfig> apiKeyConfig)
     {
         _productService = productService;
@@ -32,5 +35,6 @@ public class IndexModel : PageModel
     {
         Categories = await _productService.GetCategoriesAsync();
         Stats = await _productService.GetDashboardStatsAsync();
+        CanDelete = User.IsInRole(UserRolePolicy.Owner);
     }
 }
