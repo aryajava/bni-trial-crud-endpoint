@@ -1,32 +1,55 @@
 <script>
     (function () {
-        var display = document.querySelector("input[data-bilangan]");
-        if (!display) {
+        var inputs = document.querySelectorAll("input[data-bilangan]");
+        if (!inputs.length) {
             return;
         }
 
-        var max = display.getAttribute("data-bilangan-max");
-        var maxVal = max === null ? null : parseInt(max, 10);
-
-        function sync(teks) {
-            var digit = teks.replace(/\D/g, "").slice(0, 9);
-            var n = digit === "" ? 0 : parseInt(digit, 10);
-            if (maxVal !== null && n > maxVal) {
-                n = maxVal;
-                digit = String(maxVal);
-            }
-            display.value = digit;
+        function ambilMax(input) {
+            var max = input.getAttribute("data-bilangan-max");
+            return max === null ? null : parseFloat(max);
         }
 
-        display.addEventListener("input", function () {
-            sync(display.value);
-        });
+        function sync(display, teks, maxVal, desimal) {
+            var bersih;
+            if (desimal) {
+                bersih = teks.replace(/,/g, ".").replace(/[^\d.]/g, "");
+                var titik = bersih.indexOf(".");
+                if (titik !== -1) {
+                    bersih = bersih.slice(0, titik + 1)
+                        + bersih.slice(titik + 1).replace(/\./g, "").slice(0, 2);
+                }
+            } else {
+                bersih = teks.replace(/\D/g, "");
+            }
+            bersih = bersih.slice(0, 9);
+            if (maxVal !== null && bersih !== "") {
+                var n = parseFloat(bersih);
+                if (!isNaN(n) && n > maxVal) {
+                    bersih = String(maxVal);
+                }
+            }
+            display.value = bersih;
+        }
 
-        display.addEventListener("keydown", function (e) {
-            if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E" ||
-                e.key === "." || e.key === ",") {
+        function blokir(e) {
+            var key = e.key;
+            if (key === "-" || key === "+" || key === "e" || key === "E") {
+                e.preventDefault();
+                return;
+            }
+            var desimal = e.currentTarget.hasAttribute("data-bilangan-desimal");
+            if ((key === "." || key === ",")
+                && (!desimal || e.currentTarget.value.indexOf(".") !== -1 || e.currentTarget.value.indexOf(",") !== -1)) {
                 e.preventDefault();
             }
+        }
+
+        inputs.forEach(function (display) {
+            display.addEventListener("input", function () {
+                sync(display, display.value, ambilMax(display), display.hasAttribute("data-bilangan-desimal"));
+            });
+            display.addEventListener("keydown", blokir);
         });
     })();
 </script>

@@ -10,7 +10,7 @@ public class ProductDto
     public string? Image { get; set; }
     public decimal? RatingRate { get; set; }
     public int? RatingCount { get; set; }
-    public int? DiscountPercent { get; set; }
+    public decimal? DiscountPercent { get; set; }
     public int Stock { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }

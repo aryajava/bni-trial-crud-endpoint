@@ -44,7 +44,7 @@
                 <div class="col-md-6">
                     <label class="form-label" asp-for="Request.DiscountPercent">Diskon</label>
                     <div class="input-group input-group-sm">
-                        <input asp-for="Request.DiscountPercent" data-bilangan data-bilangan-max="100" inputmode="numeric" class="form-control form-control-sm" />
+                        <input asp-for="Request.DiscountPercent" data-bilangan data-bilangan-desimal data-bilangan-max="100" inputmode="decimal" class="form-control form-control-sm" />
                         <span class="input-group-text bg-light">%</span>
                     </div>
                     <span asp-validation-for="Request.DiscountPercent" class="field-error"></span>

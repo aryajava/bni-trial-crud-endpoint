@@ -27,7 +27,7 @@ public class UpdateProductRequest
     public int? RatingCount { get; set; }
 
     [Range(0, 100, ErrorMessage = "Diskon harus di antara 0 dan 100.")]
-    public int? DiscountPercent { get; set; }
+    public decimal? DiscountPercent { get; set; }
 
     [Required(ErrorMessage = "Stok wajib diisi.")]
     [Range(0, int.MaxValue, ErrorMessage = "Stok tidak boleh negatif.")]
