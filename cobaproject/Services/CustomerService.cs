@@ -368,6 +368,16 @@ public class CustomerService : ICustomerService
         return (affected > 0, null);
     }
 
+    public async Task<bool> VerifyPasswordAsync(int customerId, string password)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var hash = await connection.ExecuteScalarAsync<string>(
+            "SELECT PASSWORD_HASH FROM LOSCONSUMER.MASTER_CUSTOMER WHERE ID = @Id AND IS_ACTIVE = 1;",
+            new { Id = customerId });
+
+        return !string.IsNullOrWhiteSpace(hash) && BCrypt.Net.BCrypt.Verify(password, hash);
+    }
+
     private async Task WriteAuditAsync(SqlConnection connection, int customerId, string action, string actor, string? reason)
     {
         try

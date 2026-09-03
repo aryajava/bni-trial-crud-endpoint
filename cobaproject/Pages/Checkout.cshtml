@@ -37,8 +37,14 @@
                         <input asp-for="Form.Note" class="form-control" placeholder="Contoh: hubungi sebelum kirim" />
                         @Html.ValidationMessageFor(m => m.Form.Note, null, new { @class = "field-error" })
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Password">Konfirmasi Kata Sandi</label>
+                        <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" />
+                        @Html.ValidationMessageFor(m => m.Password, null, new { @class = "field-error" })
+                        <div class="form-text">Masukkan kata sandi untuk membuat pesanan.</div>
+                    </div>
                     <button class="btn btn-primary" type="submit" id="btnKonfirmasi">
-                        <span class="material-icons">check_circle</span> Konfirmasi Pesanan
+                        <span class="material-icons">check_circle</span> Buat Pesanan
                     </button>
                 </form>
             </div>

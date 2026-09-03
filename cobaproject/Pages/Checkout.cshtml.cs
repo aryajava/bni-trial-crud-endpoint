@@ -25,6 +25,10 @@ public class CheckoutModel : PageModel
     public string? StoreError { get; set; }
 
     [BindProperty]
+    [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Kata sandi wajib diisi untuk membuat pesanan.")]
+    public string Password { get; set; } = string.Empty;
+
+    [BindProperty]
     public CheckoutRequest Form { get; set; } = new();
 
     public int CustomerId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
@@ -51,6 +55,14 @@ public class CheckoutModel : PageModel
     {
         if (!ModelState.IsValid)
         {
+            await LoadAsync();
+            return Page();
+        }
+
+        var verified = await _customerService.VerifyPasswordAsync(CustomerId, Password);
+        if (!verified)
+        {
+            ModelState.AddModelError(nameof(Password), "Kata sandi tidak sesuai.");
             await LoadAsync();
             return Page();
         }

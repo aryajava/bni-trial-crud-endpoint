@@ -18,4 +18,5 @@ public interface ICustomerService
     Task<(bool Success, string? Error)> DeactivateAsync(int id, string updatedBy);
     Task<(bool Success, string? Error)> ReactivateAsync(int id, string updatedBy);
     Task<(bool Success, string? Error)> ResetPasswordAsync(int id, string newPassword, string updatedBy);
+    Task<bool> VerifyPasswordAsync(int customerId, string password);
 }
