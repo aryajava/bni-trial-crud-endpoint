@@ -3,13 +3,15 @@
     var apiKey = (string)ViewData["ApiKey"]!;
     var canDecide = ViewData["CanDecide"] is true;
     var onlyMine = ViewData["OnlyMine"] is true;
-    var colspan = canDecide ? 9 : 8;
+    var showPengaju = ViewData["ShowPengaju"] is not false;
+    var colspan = canDecide ? 9 : (showPengaju ? 8 : 7);
 }
 <script>
     const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(apiKeyHeader));
     const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(apiKey));
     const CAN_DECIDE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(canDecide));
     const ONLY_MINE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(onlyMine));
+    const SHOW_PENGAJU = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(showPengaju));
     const COLSPAN = @colspan;
 
     const state = {
@@ -113,7 +115,7 @@
                 '<td>' + diskon + '</td>' +
                 '<td>' + badgeStatus(item.status) + '</td>' +
                 '<td class="td-nomor">' + formatDateTime(item.requestedAt) + '</td>' +
-                '<td>' + esc(item.requestedBy) + '</td>' +
+                (SHOW_PENGAJU ? '<td>' + esc(item.requestedBy) + '</td>' : '') +
                 '<td>' + catatan + '</td>' +
                 '</tr>';
         }).join('');

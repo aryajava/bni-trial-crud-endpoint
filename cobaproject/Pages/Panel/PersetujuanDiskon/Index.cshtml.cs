@@ -27,6 +27,7 @@ public class IndexModel : PageModel
         ViewData["ApiKeyHeader"] = _apiKeyConfig.HeaderName;
         ViewData["ApiKey"] = await ResolveApiKeyAsync();
         ViewData["CanDecide"] = true;
+        ViewData["ShowPengaju"] = true;
     }
 
     private async Task<string> ResolveApiKeyAsync()

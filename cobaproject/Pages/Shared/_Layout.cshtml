@@ -15,7 +15,7 @@
             : isCategoryPages ? "Master Kategori"
             : isUserControlPages ? "User Control"
             : isPersetujuanPages ? "Persetujuan Diskon"
-            : isPermintaanPages ? "Permintaan Diskon Saya"
+            : isPermintaanPages ? "Permintaan Diskon"
             : isSettingsPages ? "Pengaturan"
             : "Master Produk");
     var signedIn = User.Identity?.IsAuthenticated == true;
@@ -233,7 +233,7 @@
                     }
                     <div class="nav-group-title">Monitoring</div>
                     <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
-                        <span class="material-icons">receipt_long</span> Permintaan Diskon Saya
+                        <span class="material-icons">receipt_long</span> Permintaan Diskon
                     </a>
                     @if (isOwner || isSa)
                     {
@@ -346,7 +346,7 @@
                 }
                 <div class="nav-group-title">Monitoring</div>
                 <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
-                    <span class="material-icons">receipt_long</span> Permintaan Diskon Saya
+                    <span class="material-icons">receipt_long</span> Permintaan Diskon
                 </a>
                 @if (isOwner || isSa)
                 {

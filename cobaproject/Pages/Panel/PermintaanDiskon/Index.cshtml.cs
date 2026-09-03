@@ -22,12 +22,13 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        ViewData["Title"] = "Permintaan Diskon Saya";
-        ViewData["CrumbRoot"] = "Permintaan Diskon Saya";
+        ViewData["Title"] = "Permintaan Diskon";
+        ViewData["CrumbRoot"] = "Permintaan Diskon";
         ViewData["ApiKeyHeader"] = _apiKeyConfig.HeaderName;
         ViewData["ApiKey"] = await ResolveApiKeyAsync();
         ViewData["CanDecide"] = false;
         ViewData["OnlyMine"] = true;
+        ViewData["ShowPengaju"] = false;
     }
 
     private async Task<string> ResolveApiKeyAsync()

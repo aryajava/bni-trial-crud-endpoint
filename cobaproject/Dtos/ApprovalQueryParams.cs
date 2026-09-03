@@ -12,6 +12,6 @@ public class ApprovalQueryParams : PageRequest
     [Description("Filter status: MENUNGGU, DISETUJUI, atau DITOLAK (kosong = semua).")]
     public string? Status { get; set; }
 
-    [Description("true = hanya permintaan milik sendiri (wajib bagi halaman Permintaan Diskon Saya).")]
+    [Description("true = hanya permintaan milik sendiri (untuk pemakaian API di masa depan).")]
     public bool? OnlyMine { get; set; }
 }
