@@ -20,11 +20,23 @@ public class UsersController : ControllerBase
     private string Caller =>
         HttpContext.Items["Caller"]?.ToString() ?? "SYSTEM";
 
+    private string? CallerRole => User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
     private bool CanManageTarget(UserDto target)
     {
-        var actorRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        var actorRole = CallerRole;
         return actorRole is not null && UserRolePolicy.CanManage(actorRole, target.Role);
     }
+
+    private static List<string> AssignableRoles(string callerRole) => callerRole switch
+    {
+        UserRolePolicy.Sa => [UserRolePolicy.Sa, UserRolePolicy.Owner, UserRolePolicy.Admin],
+        UserRolePolicy.Owner => [UserRolePolicy.Owner, UserRolePolicy.Admin],
+        _ => [UserRolePolicy.Admin]
+    };
+
+    private IResult RejectManage(string target = "user") =>
+        ResponseHelper.ValidationError(HttpContext, [$"Anda tidak berhak mengelola {target} ini."]);
 
     [HttpGet]
     public async Task<IResult> GetAll()
@@ -80,6 +92,11 @@ public class UsersController : ControllerBase
                 return ResponseHelper.ValidationError(HttpContext, ModelErrors());
             }
 
+            if (!AssignableRoles(CallerRole ?? string.Empty).Contains(request.Role))
+            {
+                return ResponseHelper.ValidationError(HttpContext, ["Anda tidak berhak membuat user dengan role tersebut."]);
+            }
+
             var (user, secretKey, error) = await _userService.CreateAsync(request, Caller);
             return user is null
                 ? ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal membuat user."])
@@ -133,6 +150,11 @@ public class UsersController : ControllerBase
                 return ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
             }
 
+            if (!CanManageTarget(user))
+            {
+                return RejectManage("user");
+            }
+
             if (user.IsActive && await _userService.CountActiveByRoleAsync(user.Role) <= 1)
             {
                 return ResponseHelper.ValidationError(HttpContext,
@@ -166,11 +188,21 @@ public class UsersController : ControllerBase
                 return ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
             }
 
+            if (!CanManageTarget(user))
+            {
+                return RejectManage("user");
+            }
+
             if (user.IsActive && request.Role != user.Role
                 && await _userService.CountActiveByRoleAsync(user.Role) <= 1)
             {
                 return ResponseHelper.ValidationError(HttpContext,
                     [$"Tidak dapat menurunkan user {user.Role} aktif terakhir."]);
+            }
+
+            if (!AssignableRoles(CallerRole ?? string.Empty).Contains(request.Role))
+            {
+                return ResponseHelper.ValidationError(HttpContext, ["Anda tidak berhak memberikan role tersebut."]);
             }
 
             var (ok, error) = await _userService.ChangeRoleAsync(id, request.Role, Caller);
@@ -198,6 +230,11 @@ public class UsersController : ControllerBase
             if (user is null)
             {
                 return ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
+            }
+
+            if (!CanManageTarget(user))
+            {
+                return RejectManage("user");
             }
 
             if (!request.IsActive && user.IsActive
@@ -298,6 +335,11 @@ public class UsersController : ControllerBase
             if (user is null)
             {
                 return ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
+            }
+
+            if (!CanManageTarget(user))
+            {
+                return RejectManage("user");
             }
 
             var (ok, error) = await _userService.ResetPasswordAsync(id, request.NewPassword, Caller);

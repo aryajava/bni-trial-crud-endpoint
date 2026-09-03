@@ -109,7 +109,7 @@ public class RequestResponseMiddleware
                 StatusCode = context.Response.StatusCode,
                 IsSuccess = context.Response.StatusCode < 400,
                 Message = message,
-                ResponseBody = responseBody,
+                ResponseBody = RedactBody(responseBody),
                 ElapsedMs = elapsedMs,
                 RespondedAt = DateTime.Now
             });
@@ -127,16 +127,26 @@ public class RequestResponseMiddleware
 
     private static string RedactBody(string body)
     {
-        try
+        if (string.IsNullOrWhiteSpace(body))
         {
-            using var document = JsonDocument.Parse(body);
-            var root = RedactNode(document.RootElement);
-            return JsonSerializer.Serialize(root);
+            return body;
         }
-        catch (JsonException)
+
+        var trimmed = body.TrimStart();
+        if (trimmed.StartsWith('{') || trimmed.StartsWith('['))
         {
-            return RedactRaw(body);
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+                var root = RedactNode(document.RootElement);
+                return JsonSerializer.Serialize(root);
+            }
+            catch (JsonException)
+            {
+            }
         }
+
+        return RedactRaw(body);
     }
 
     private static object? RedactNode(JsonElement element)
@@ -169,5 +179,5 @@ public class RequestResponseMiddleware
 
     private static string RedactRaw(string body) =>
         System.Text.RegularExpressions.Regex.Replace(body,
-            "(?i)(\"(?:password|secretkey|apikey)\"\\s*:\\s*\")[^\"]*(\")", "$1***$2");
+            "(?i)((?:password|secretkey|apikey)\\s*[=:]\\s*)[^&\\s]*", "$1***");
 }

@@ -196,8 +196,8 @@ public class UserService : IUserService
     {
         var value = await connection.ExecuteScalarAsync<string>("""
             SELECT SETTING_VALUE FROM LOSCONSUMER.APP_SETTING
-            WHERE SETTING_KEY = 'LOGIN_FAIL_THRESHOLD' AND IS_ACTIVE = 1;
-            """);
+            WHERE SETTING_KEY = @Key AND IS_ACTIVE = 1;
+            """, new { Key = SettingService.LoginFailThreshold });
         return int.TryParse(value, out var threshold) ? threshold : 5;
     }
 
@@ -488,6 +488,7 @@ public class UserService : IUserService
         if (affected > 0)
         {
             await _audit.LogAsync("USER", id.ToString(), "RESET_PASSWORD");
+            await _audit.LogAsync("USER", id.ToString(), "UNBLOCKED");
         }
         return (affected > 0, null);
     }

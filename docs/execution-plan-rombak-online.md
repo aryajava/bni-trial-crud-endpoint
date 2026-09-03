@@ -9,21 +9,22 @@
 - [x] `Script0017`: migrasi `CK_MASTER_USER_ROLE` (+'SA'), seed user `sa` (`sa123`, bcrypt), tabel `APP_SETTING` + seed `LOGIN_FAIL_THRESHOLD=5`, `SHIPPING_FEE=0`, `TAX_PERCENT=0`
 - [x] `UserRolePolicy`: `SA`, rank 3, DisplayName "Super Admin", `IsValidRole`, `CanManage` (otomatis via rank)
 - [x] `AllowedRolesAttribute` menerima `SA`
-- [ ] `AllowedRolesFor` halaman Create/Edit user + `UserService.ChangeRoleAsync` + guard last-active-in-role untuk SA + proteksi akun seed `sa`
+- [x] `AllowedRolesFor` halaman Create/Edit user + `UserService.ChangeRoleAsync` + guard last-active-in-role untuk SA + proteksi akun seed `sa`
 - [x] Endpoint grid: `GET /api/categories/paged` + `GET /api/users/paged` (+ `POST /api/users/{id}/block|unblock`, guard rank) — enabler grid client-side semua tabel
 - [ ] Konversi halaman data tabel ke **grid client-side standar** (komponen bersama): Produk ✓ sudah, Monitoring ✓ sudah → Kategori, Master User, User Control, Pelanggan, Pesanan, Audit, (Laporan) — pola fetch `/api/*/paged` + secret key user
-- [ ] Pindah semua halaman staf ke `/Panel/**` (rename Indonesia): Program.cs (LoginPath/AccessDeniedPath), `_Layout`, seluruh referensi path/redirect/fetch
-- [ ] Grup Settings: `PengaturanAplikasi` (SA) — UI ambang blokir → `APP_SETTING`; `PengaturanToko` (OWNER+SA) — UI ongkir & pajak
-- [ ] `Script0018` + rework lockout: tabel `TRX_AUDIT_LOG`; `AuthenticateAsync` membaca rentetan `LOGIN_FAILED` berbasis audit (staf); `Script0019` hapus `LOGIN_FAILED_COUNT`
-- [ ] Redaksi `password`/`secretKey`/`X-Api-Key` di `RequestResponseMiddleware`
+- [x] Pindah semua halaman staf ke `/Panel/**` (rename Indonesia): Program.cs (LoginPath/AccessDeniedPath), `_Layout`, seluruh referensi path/redirect/fetch
+- [x] Grup Settings: `PengaturanAplikasi` (SA) — UI ambang blokir → `APP_SETTING`; `PengaturanToko` (OWNER+SA) — UI ongkir & pajak
+- [x] `Script0018` + rework lockout: tabel `TRX_AUDIT_LOG`; `AuthenticateAsync` membaca rentetan `LOGIN_FAILED` berbasis audit (staf); `Script0019` hapus `LOGIN_FAILED_COUNT`
+- [x] Redaksi `password`/`secretKey`/`X-Api-Key` di `RequestResponseMiddleware` + log HTTP hanya `/api` & `/Panel`
 
 ### 1B. Harga sebelum/sesudah di persetujuan diskon
-- [ ] DTO/service Monitoring: tambah `HargaDasar` & `HargaSetelahDiskon` (rumus sama, hitung saat baca)
-- [ ] UI Monitoring: tampilkan harga sebelum↔sesudah di samping persen
+- [x] DTO/service Monitoring: tambah `HargaDasar`, `HargaSebelumDiskon`, `HargaSetelahDiskon` (rumus sama, hitung saat baca)
+- [x] UI Monitoring: tampilkan harga sebelum↔sesudah di samping persen
 
 ### 1C. Polish
-- [ ] Notif validasi merah di bawah input: `/Panel/Masuk` & `/Panel/GantiKataSandi` (paralel form produk)
-- [ ] Komponen dropdown standar (JS LIKE-search + ikon sort + default asc) → pasang ke semua `<select>`
+- [x] Notif validasi merah di bawah input: `/Panel/Masuk` & `/Panel/GantiKataSandi` (paralel form produk — atribut Required + summary + style di `_LoginLayout`)
+- [x] Komponen dropdown standar (JS LIKE-search + ikon sort + default asc) → terpasang di semua `<select>` (role, kategori, filter status, page size)
+- [ ] Konversi grid client-side: Kategori, Master User, User Control (komponen grid bersama — dilanjutkan di Blok 2 bersama Pelanggan/Pesanan/Audit)
 
 ## Blok 2 — Feature toko online
 

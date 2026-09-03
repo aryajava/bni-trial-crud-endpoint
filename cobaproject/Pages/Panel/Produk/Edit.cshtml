@@ -39,11 +39,10 @@
                             <option value="" disabled>Pilih Kategori</option>
                             @foreach (var category in Model.Categories)
                             {
-                                <option value="@category.Id">@category.Name</option>
+                                <option value="@category.Id" selected="@(category.Id == Model.Form.CategoryId)">@category.Name</option>
                             }
                         </select>
                         @Html.ValidationMessageFor(m => m.Form.CategoryId, null, new { @class = "field-error" })
-                    }
                 </div>
 
                 <div class="col-md-6">
