@@ -1,45 +1,176 @@
+<style>
+    .cari-select { position: relative; min-width: 0; }
+    .cari-select select { display: none; }
+    .cari-select-trigger {
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        text-align: left; background-image: none; color: #1F2937;
+    }
+    .cari-select-trigger .cari-select-tampil {
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px;
+    }
+    .cari-select-trigger .material-icons { font-size: 18px; color: #6B7280; transition: transform .15s ease; }
+    .cari-select.buka .cari-select-trigger { border-color: var(--gk-primary, #4A7BA6); box-shadow: 0 0 0 3px rgba(74, 123, 166, .15); }
+    .cari-select.buka .cari-select-trigger .material-icons { transform: rotate(180deg); }
+    .cari-select-panel {
+        position: absolute; z-index: 1050; top: calc(100% + 4px); left: 0; right: 0;
+        background: #fff; border: 1px solid var(--gk-border, #B8CDE0); border-radius: 8px;
+        box-shadow: 0 12px 32px rgba(31, 41, 55, .15); padding: 8px;
+    }
+    .cari-select-list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 220px; overflow-y: auto; }
+    .cari-select-list li {
+        padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #1F2937;
+    }
+    .cari-select-list li:hover, .cari-select-list li.aktif {
+        background: var(--gk-primary-soft, #E3ECF4); color: var(--gk-primary-text, #2C5A80);
+    }
+    .cari-select-list li mark { background: #FDE68A; color: inherit; padding: 0 1px; border-radius: 2px; }
+    .cari-select-list li.kosong { cursor: default; color: #6B7280; }
+</style>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll("select[data-pencarian]").forEach(function (select) {
-            var field = document.createElement("div");
-            field.className = "input-group input-group-sm mb-1";
-            field.innerHTML = '<span class="input-group-text"><span class="material-icons">search</span></span>' +
-                '<input type="text" class="form-control" placeholder="Ketik untuk mencari…" autocomplete="off" aria-label="Cari pilihan">' +
-                '<span class="input-group-text" title="Urut naik (A–Z)"><span class="material-icons">sort_by_alpha</span></span>';
-
             var wrap = document.createElement("div");
-            wrap.className = "dropdown-cari";
-            wrap.appendChild(field);
+            wrap.className = "cari-select";
             select.parentNode.insertBefore(wrap, select);
             wrap.appendChild(select);
 
-            var input = field.querySelector("input");
-            var options = Array.from(select.options).slice(1);
-            var placeholder = select.options.length > 0 ? select.options[0] : null;
+            var trigger = document.createElement("button");
+            trigger.type = "button";
+            trigger.className = "cari-select-trigger form-select";
 
-            var sorted = options.slice().sort(function (a, b) {
-                return a.text.localeCompare(b.text, "id");
-            });
+            var tampil = document.createElement("span");
+            tampil.className = "cari-select-tampil";
+            var ikon = document.createElement("span");
+            ikon.className = "material-icons";
+            ikon.textContent = "expand_more";
+            trigger.appendChild(tampil);
+            trigger.appendChild(ikon);
 
-            var fragment = document.createDocumentFragment();
-            if (placeholder) { fragment.appendChild(placeholder); }
-            sorted.forEach(function (o) { fragment.appendChild(o); });
-            select.appendChild(fragment);
-            select.dataset.terurut = "asc";
+            var panel = document.createElement("div");
+            panel.className = "cari-select-panel";
+            panel.hidden = true;
+            panel.innerHTML = '<div class="input-group input-group-sm">' +
+                '<span class="input-group-text"><span class="material-icons">search</span></span>' +
+                '<input type="text" class="form-control cari-input" placeholder="Ketik untuk mencari…" autocomplete="off">' +
+                '<span class="input-group-text" title="Urut naik (A–Z)"><span class="material-icons">sort_by_alpha</span></span>' +
+                '</div><ul class="cari-select-list"></ul>';
 
-            function filter() {
-                var q = input.value.trim().toLowerCase();
-                Array.from(select.options).forEach(function (o, i) {
-                    if (i === 0) { o.hidden = false; return; }
-                    o.hidden = q.length > 0 && o.text.toLowerCase().indexOf(q) === -1;
+            wrap.appendChild(trigger);
+            wrap.appendChild(panel);
+
+            var input = panel.querySelector(".cari-input");
+            var list = panel.querySelector(".cari-select-list");
+            var opsi = Array.from(select.options);
+            var ket = opsi.map(function (o, i) { return { index: i, teks: o.text, nilai: o.value }; });
+            var placeholderTeks = (function () {
+                var pertama = opsi[0];
+                return pertama && pertama.value === "" ? pertama.text : "Pilih…";
+            })();
+
+            function urutNaik(a, b) { return a.teks.localeCompare(b.teks, "id"); }
+
+            function daftarUrut() {
+                var ph = [];
+                var sisa = [];
+                ket.slice().sort(urutNaik).forEach(function (k) {
+                    (k.nilai === "" ? ph : sisa).push(k);
                 });
+                return ph.concat(sisa);
             }
 
-            input.addEventListener("input", filter);
-            select.addEventListener("change", function () {
+            function tampilkanTeksTerpilih() {
+                var idx = select.selectedIndex;
+                var kosong = idx < 0 || select.options[idx].value === "";
+                tampil.textContent = kosong ? placeholderTeks : select.options[idx].text;
+                tampil.classList.toggle("text-muted", kosong);
+            }
+
+            function esc(html) {
+                return html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            }
+
+            function renderList(q) {
+                list.innerHTML = "";
+                var qq = (q || "").trim().toLowerCase();
+                var ada = false;
+                daftarUrut().forEach(function (k) {
+                    var posisi = k.teks.toLowerCase().indexOf(qq);
+                    if (qq !== "" && posisi === -1) { return; }
+                    if (k.nilai === "" && select.value !== "") { return; }
+                    ada = true;
+                    var li = document.createElement("li");
+                    if (qq === "") {
+                        li.textContent = k.teks;
+                    } else {
+                        li.innerHTML = esc(k.teks.slice(0, posisi)) +
+                            "<mark>" + esc(k.teks.slice(posisi, posisi + qq.length)) + "</mark>" +
+                            esc(k.teks.slice(posisi + qq.length));
+                    }
+                    li.dataset.index = k.index;
+                    li.addEventListener("click", function () {
+                        select.selectedIndex = Number(li.dataset.index);
+                        select.dispatchEvent(new Event("change", { bubbles: true }));
+                        tutup();
+                    });
+                    list.appendChild(li);
+                });
+                if (!ada) {
+                    var kosong = document.createElement("li");
+                    kosong.className = "kosong";
+                    kosong.textContent = "Tidak ada pilihan yang cocok.";
+                    list.appendChild(kosong);
+                }
+            }
+
+            function buka() {
+                wrap.classList.add("buka");
+                panel.hidden = false;
                 input.value = "";
-                filter();
+                renderList("");
+                input.focus();
+            }
+
+            function tutup() {
+                wrap.classList.remove("buka");
+                panel.hidden = true;
+            }
+
+            trigger.addEventListener("click", function () {
+                if (panel.hidden) { buka(); } else { tutup(); }
             });
+
+            input.addEventListener("input", function () { renderList(input.value); });
+
+            input.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    var li = list.querySelector("li[data-index]");
+                    if (li) {
+                        select.selectedIndex = Number(li.dataset.index);
+                        select.dispatchEvent(new Event("change", { bubbles: true }));
+                        tutup();
+                    }
+                    e.preventDefault();
+                } else if (e.key === "Escape") {
+                    tutup();
+                }
+            });
+
+            document.addEventListener("click", function (e) {
+                if (!wrap.contains(e.target)) { tutup(); }
+            });
+
+            select.addEventListener("change", tampilkanTeksTerpilih);
+
+            var phEl = opsi[0] && opsi[0].value === "" ? opsi[0] : null;
+            var frag = document.createDocumentFragment();
+            if (phEl) { frag.appendChild(phEl); }
+            opsi
+                .filter(function (o) { return o !== phEl; })
+                .sort(function (a, b) { return a.text.localeCompare(b.text, "id"); })
+                .forEach(function (o) { frag.appendChild(o); });
+            select.appendChild(frag);
+
+            tampilkanTeksTerpilih();
         });
     });
 </script>
