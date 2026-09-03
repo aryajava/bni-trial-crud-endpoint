@@ -1,11 +1,18 @@
 @using System.Security.Claims
 @using cobaproject.Helpers
+@using cobaproject.Services.Interfaces
+@inject ICartService CartService
 @{
     var isCustomer = User.Identity?.IsAuthenticated == true
         && string.Equals(User.Identity.AuthenticationType, CustomerAuth.CustomerScheme, StringComparison.OrdinalIgnoreCase);
     var namaAkun = isCustomer
         ? (User.FindFirstValue("DisplayName") ?? User.Identity!.Name ?? "")
         : "";
+    var cartCountServer = 0;
+    if (isCustomer && int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cid))
+    {
+        cartCountServer = CartService.CountAsync(cid).GetAwaiter().GetResult();
+    }
     var title = ViewData["Title"]?.ToString() ?? "Toko GKLaku";
 }
 <!DOCTYPE html>
@@ -61,7 +68,14 @@
             <div class="ms-auto d-flex align-items-center gap-2">
                 <a class="btn btn-outline-secondary btn-sm position-relative" href="/Keranjang" title="Keranjang">
                     <span class="material-icons">shopping_cart</span>
-                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill" id="cartBadge" style="display:none;">0</span>
+                    @if (isCustomer && cartCountServer > 0)
+                    {
+                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">@cartCountServer</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill" id="cartBadge" style="display:none;">0</span>
+                    }
                 </a>
                 @if (isCustomer)
                 {
@@ -99,6 +113,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        const PELANGGAN_MASUK = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(isCustomer));
+
         function bacaKeranjangTamu() {
             try {
                 return JSON.parse(localStorage.getItem('gklaku_cart') || '[]');
@@ -108,9 +124,10 @@
             localStorage.setItem('gklaku_cart', JSON.stringify(items));
         }
         function hitungTamu() {
-            return bacaKeranjangTamu().reduce(function (t, i) { return t + (Number(i.qty) || 0); }, 0);
+            return bacaKeranjangTamu().length;
         }
         function muatBadge() {
+            if (PELANGGAN_MASUK) return;
             var n = hitungTamu();
             var b = document.getElementById('cartBadge');
             if (b) { b.style.display = n > 0 ? '' : 'none'; b.textContent = n; }
