@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace cobaproject.Pages.Categories;
 
-[Authorize(Roles = "ADMIN,OWNER")]
+[Authorize(Roles = "ADMIN,OWNER,SA")]
 public class IndexModel : PageModel
 {
     private readonly ICategoryService _categoryService;

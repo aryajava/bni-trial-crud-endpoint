@@ -136,7 +136,7 @@ public class CategoryController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = UserRolePolicy.Owner)]
+    [Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
     public async Task<IResult> Delete(int id)
     {
         try

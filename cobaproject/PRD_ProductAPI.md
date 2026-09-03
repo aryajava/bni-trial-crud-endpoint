@@ -40,7 +40,7 @@ Semua keputusan bisnis ditulis permanen (audit trail dua sisi, tabel DB, bukan f
 | Path | Akses |
 |---|---|
 | `/Panel` (Dashboard) | ADMIN+OWNER+SA |
-| `/Panel/Produk`, `/Panel/Kategori` | ADMIN+OWNER+SA (delete: OWNER) |
+| `/Panel/Produk`, `/Panel/Kategori` | ADMIN+OWNER+SA (delete: OWNER+SA) |
 | `/Panel/Monitoring` (persetujuan diskon) | semua staf; putuskan: OWNER |
 | `/Panel/MasterUser` | OWNER+SA |
 | `/Panel/UserControl` | OWNER+SA |
@@ -151,7 +151,7 @@ Migrasi: dbup `Scripts/Script00XX_*.sql` — lanjutan dari 16 skrip yang ada; co
 | GET/POST/PUT/DELETE | `/api/products` (`/paged`, `/{id}`) | CRUD produk; DELETE `?type=soft\|hard` (OWNER) |
 | GET | `/api/products/public*` | FakeStore API |
 | GET/POST | `/api/discount-approvals` (`/paged`, `/{id}/approve\|reject`) | Persetujuan diskon (keputusan: OWNER) |
-| GET/POST/PUT/DELETE | `/api/categories` (`/paged`, `/active`, `/{id}`) | Kategori (delete: OWNER) |
+| GET/POST/PUT/DELETE | `/api/categories` (`/paged`, `/active`, `/{id}`) | Kategori (delete: OWNER+SA) |
 | GET/POST/PUT/DELETE | `/api/users` (`/paged`, `/{id}`, role/active/reset-password/secret-key) | User pengurus |
 | POST | `/api/users/{id}/block` · `/unblock` | Blokir/buka (OWNER+SA, guard rank) |
 

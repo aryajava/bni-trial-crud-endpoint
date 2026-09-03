@@ -117,7 +117,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = UserRolePolicy.Owner)]
+    [Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
     public async Task<IResult> Delete(int id, [FromQuery] string type = "soft")
     {
         try

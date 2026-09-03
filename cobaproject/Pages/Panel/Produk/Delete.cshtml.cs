@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace cobaproject.Pages.Products;
 
-[Authorize(Roles = UserRolePolicy.Owner)]
+[Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
 public class DeleteModel : PageModel
 {
     private readonly IProductService _productService;

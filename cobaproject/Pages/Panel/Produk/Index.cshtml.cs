@@ -32,6 +32,6 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         Categories = await _productService.GetCategoriesAsync();
-        CanDelete = User.IsInRole(UserRolePolicy.Owner);
+        CanDelete = User.IsInRole(UserRolePolicy.Owner) || User.IsInRole(UserRolePolicy.Sa);
     }
 }
