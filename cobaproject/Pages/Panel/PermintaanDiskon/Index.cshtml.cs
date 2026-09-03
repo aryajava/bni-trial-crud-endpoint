@@ -28,7 +28,6 @@ public class IndexModel : PageModel
         ViewData["ApiKey"] = await ResolveApiKeyAsync();
         ViewData["CanDecide"] = false;
         ViewData["OnlyMine"] = true;
-        ViewData["ShowPengaju"] = false;
     }
 
     private async Task<string> ResolveApiKeyAsync()
