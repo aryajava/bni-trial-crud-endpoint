@@ -19,7 +19,7 @@ public class DiscountApprovalService : IDiscountApprovalService
     private const int MaxPageSize = 100;
 
     private const string SelectColumns = """
-        A.ID, A.PRODUCT_ID, P.TITLE, A.OLD_VALUE, A.NEW_VALUE,
+        A.ID, A.PRODUCT_ID, P.TITLE, P.PRICE, A.OLD_VALUE, A.NEW_VALUE,
         A.REQUESTED_BY, A.REQUESTED_AT, A.STATUS, A.DECIDED_AT, A.DECIDED_BY, A.REASON,
         A.VERSION
         """;

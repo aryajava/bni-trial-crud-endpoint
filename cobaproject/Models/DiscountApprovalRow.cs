@@ -8,6 +8,8 @@ public class DiscountApprovalRow
 
     public string Title { get; set; } = string.Empty;
 
+    public decimal Price { get; set; }
+
     public decimal? OldValue { get; set; }
 
     public decimal? NewValue { get; set; }

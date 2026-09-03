@@ -10,6 +10,9 @@ public static class DiscountApprovalMapper
         Id = row.Id,
         ProductId = row.ProductId,
         Title = row.Title,
+        HargaDasar = row.Price,
+        HargaSebelumDiskon = EffectivePrice(row.Price, row.OldValue),
+        HargaSetelahDiskon = EffectivePrice(row.Price, row.NewValue),
         OldValue = row.OldValue,
         NewValue = row.NewValue,
         RequestedBy = row.RequestedBy,
@@ -20,4 +23,9 @@ public static class DiscountApprovalMapper
         Reason = row.Reason,
         Version = row.Version
     };
+
+    private static decimal EffectivePrice(decimal price, decimal? discountPercent) =>
+        discountPercent is null or 0
+            ? price
+            : Math.Round(price - price * discountPercent.Value / 100m, -2, MidpointRounding.AwayFromZero);
 }

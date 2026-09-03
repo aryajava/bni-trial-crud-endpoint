@@ -8,6 +8,12 @@ public class DiscountApprovalDto
 
     public string Title { get; set; } = string.Empty;
 
+    public decimal HargaDasar { get; set; }
+
+    public decimal HargaSebelumDiskon { get; set; }
+
+    public decimal HargaSetelahDiskon { get; set; }
+
     public decimal? OldValue { get; set; }
 
     public decimal? NewValue { get; set; }

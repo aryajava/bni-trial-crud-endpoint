@@ -116,6 +116,10 @@
             return '<span class="badge bg-danger-subtle text-danger-emphasis">Ditolak</span>';
         }
 
+        function formatRupiah(nilai) {
+            return 'Rp ' + Math.round(nilai || 0).toLocaleString('id-ID');
+        }
+
         function formatDateTime(iso) {
             if (!iso) return '-';
             const d = new Date(iso);
@@ -135,7 +139,8 @@
                 const menunggu = item.status === 'MENUNGGU';
                 const diskon = '<span class="text-muted text-decoration-line-through">' + (item.oldValue != null ? item.oldValue + '%' : '-') + '</span>' +
                     '<span class="material-icons arrow-next" style="vertical-align: middle; font-size: 16px;">arrow_forward</span>' +
-                    '<span class="fw-semibold text-primary">' + (item.newValue != null ? item.newValue + '%' : '-') + '</span>';
+                    '<span class="fw-semibold text-primary">' + (item.newValue != null ? item.newValue + '%' : '-') + '</span>' +
+                    '<small class="text-muted d-block">' + formatRupiah(item.hargaSebelumDiskon) + ' → ' + formatRupiah(item.hargaSetelahDiskon) + '</small>';
                 const catatan = item.reason
                     ? esc(item.reason) + (!CAN_DECIDE && item.decidedAt
                         ? '<small class="text-muted d-block">(oleh ' + (item.decidedBy === 'SISTEM' ? 'otomatis' : esc(item.decidedBy)) + ', ' + formatDateTime(item.decidedAt) + ')</small>'
