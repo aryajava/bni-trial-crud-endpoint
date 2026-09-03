@@ -136,11 +136,19 @@ public class CustomerService : ICustomerService
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         using var connection = new SqlConnection(_connectionString);
-        var id = await connection.ExecuteScalarAsync<int>("""
-            INSERT INTO LOSCONSUMER.MASTER_CUSTOMER (EMAIL, PASSWORD_HASH, NAME, CREATED_AT, CREATED_BY, VERSION)
-            OUTPUT INSERTED.ID
-            VALUES (@Email, @PasswordHash, @Name, GETDATE(), @Email, 1);
-            """, new { Email = email, PasswordHash = passwordHash, Name = request.Name.Trim() });
+        int id;
+        try
+        {
+            id = await connection.ExecuteScalarAsync<int>("""
+                INSERT INTO LOSCONSUMER.MASTER_CUSTOMER (EMAIL, PASSWORD_HASH, NAME, CREATED_AT, CREATED_BY, VERSION)
+                OUTPUT INSERTED.ID
+                VALUES (@Email, @PasswordHash, @Name, GETDATE(), @Email, 1);
+                """, new { Email = email, PasswordHash = passwordHash, Name = request.Name.Trim() });
+        }
+        catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601)
+        {
+            return (null, "Email sudah terdaftar.");
+        }
 
         await WriteAuditAsync(connection, id, "REGISTER", email, null);
 

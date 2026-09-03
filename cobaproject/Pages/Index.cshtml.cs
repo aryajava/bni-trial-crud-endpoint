@@ -51,6 +51,4 @@ public class IndexModel : PageModel
     }
 
     public decimal HargaEfektif(ProductDto p) => Harga.Efektif(p.Price, p.DiscountPercent);
-
-    public int CartCount => 0;
 }

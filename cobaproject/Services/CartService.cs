@@ -76,7 +76,6 @@ public class CartService : ICartService
             new { CustomerId = customerId, ProductId = productId });
 
         var combined = Math.Clamp(existing + target, 1, (int)product.STOCK);
-        var name = existing > 0 ? "UPDATE" : "INSERT";
         if (existing > 0)
         {
             await connection.ExecuteAsync("""
@@ -112,6 +111,12 @@ public class CartService : ICartService
         var stock = await connection.ExecuteScalarAsync<int>("""
             SELECT ISNULL(STOCK, 0) FROM LOSCONSUMER.MASTER_PRODUCT WHERE ID = @Id;
             """, new { Id = productId });
+
+        if (stock <= 0)
+        {
+            await RemoveAsync(customerId, productId);
+            return;
+        }
 
         var qty = Math.Clamp(quantity, 1, stock);
         await connection.ExecuteAsync("""
