@@ -1,0 +1,259 @@
+@page
+@model cobaproject.Pages.Pesanan.IndexModel
+@{
+    ViewData["Title"] = "Pesanan";
+}
+
+<div class="page-header">
+    <h1><span class="material-icons">receipt_long</span> Pesanan</h1>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="statusSelect">Status</label>
+        <select id="statusSelect" data-pencarian class="form-select form-select-sm" style="width: 170px;">
+            <option value="">Semua Status</option>
+            <option value="DIPROSES">Diproses</option>
+            <option value="DIKIRIM">Dikirim</option>
+            <option value="DITERIMA">Diterima</option>
+            <option value="DIBATALKAN">Dibatalkan</option>
+        </select>
+    </div>
+    <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 320px;">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="searchInput">Cari</label>
+        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Email / nama pelanggan / total..." autocomplete="off" />
+    </div>
+</div>
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <div class="table-wrap">
+            <table class="table table-data align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="col-no text-center">No</th>
+                        <th><button type="button" class="th-sort" data-sort="id">ID <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="customerName">Pelanggan <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th>Alamat Kirim</th>
+                        <th><button type="button" class="th-sort" data-sort="totalAmount">Total <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="status">Status <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="createdAt">Dibuat <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th class="col-aksi">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="orderRows"></tbody>
+            </table>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <div id="pageInfo" class="text-muted small"></div>
+            <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
+        const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKey));
+
+        const state = { page: 1, pageSize: 20, sortBy: '', sortOrder: 'desc', status: '', search: '', totalPages: 0 };
+        const $ = (id) => document.getElementById(id);
+
+        function esc(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function formatRp(n) { return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID'); }
+        function formatTgl(iso) {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            return isNaN(d.getTime()) ? '-' : d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+        function badgeStatus(status) {
+            const map = {
+                'DIPROSES': 'bg-warning-subtle text-warning-emphasis',
+                'DIKIRIM': 'bg-info-subtle text-info-emphasis',
+                'DITERIMA': 'bg-success-subtle text-success-emphasis',
+                'DIBATALKAN': 'bg-danger-subtle text-danger-emphasis'
+            };
+            return '<span class="badge ' + (map[status] || 'bg-secondary-subtle text-secondary-emphasis') + '">' + esc(status) + '</span>';
+        }
+
+        function buildQuery() {
+            const q = new URLSearchParams();
+            q.set('page', state.page);
+            q.set('pageSize', state.pageSize);
+            if (state.sortBy) { q.set('sortBy', state.sortBy); q.set('sortOrder', state.sortOrder); }
+            if (state.status) q.set('status', state.status);
+            if (state.search.trim()) q.set('search', state.search.trim());
+            return q.toString();
+        }
+
+        function renderRows(items) {
+            const tbody = $('orderRows');
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="8"><span class="material-icons">inbox</span> Tidak ada data.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = items.map((o, idx) => {
+                const nomor = ((state.page - 1) * state.pageSize) + idx + 1;
+                let aksi = '<button class="btn btn-outline-info btn-sm btn-detail" data-id="' + o.id + '" title="Detail"><span class="material-icons">visibility</span></button>';
+                if (o.status === 'DIPROSES') {
+                    aksi += ' <button class="btn btn-success btn-sm btn-kirim" data-id="' + o.id + '" title="Tandai dikirim"><span class="material-icons">local_shipping</span></button>';
+                }
+                if (o.status === 'DIPROSES' || o.status === 'DIKIRIM') {
+                    aksi += ' <button class="btn btn-outline-danger btn-sm btn-batal" data-id="' + o.id + '" title="Batalkan"><span class="material-icons">close</span></button>';
+                }
+                return '<tr>' +
+                    '<td class="td-nomor text-center">' + nomor + '</td>' +
+                    '<td class="td-id">' + o.id + '</td>' +
+                    '<td class="fw-semibold">' + esc(o.customerName) + '<small class="text-muted d-block">' + esc(o.customerEmail) + '</small></td>' +
+                    '<td><small class="text-muted">' + esc(o.shipAddress || '-') + '</small></td>' +
+                    '<td class="td-nomor fw-semibold">' + formatRp(o.totalAmount) + '</td>' +
+                    '<td>' + badgeStatus(o.status) + '</td>' +
+                    '<td class="td-nomor">' + formatTgl(o.createdAt) + '</td>' +
+                    '<td><div class="field-actions">' + aksi + '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function buildPages(current, total) {
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+            const c = [1, total];
+            for (let i = current - 2; i <= current + 2; i++) if (i >= 1 && i <= total) c.push(i);
+            return [...new Set(c)].sort((a, b) => a - b);
+        }
+
+        function renderPagination() {
+            const total = Math.max(1, state.totalPages);
+            const parts = [];
+            parts.push('<li class="page-item ' + (state.page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page - 1) + '"><span class="material-icons">chevron_left</span></a></li>');
+            for (const p of buildPages(state.page, state.totalPages)) {
+                parts.push('<li class="page-item ' + (p === state.page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            parts.push('<li class="page-item ' + (state.page >= total ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page + 1) + '"><span class="material-icons">chevron_right</span></a></li>');
+            $('pagination').innerHTML = parts.join('');
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.th-sort').forEach((btn) => {
+                const active = btn.dataset.sort === state.sortBy;
+                btn.classList.toggle('active', active);
+                const ic = btn.querySelector('.sort-ic');
+                if (ic) ic.textContent = active ? (state.sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'swap_vert';
+            });
+        }
+
+        async function loadData() {
+            const tbody = $('orderRows');
+            tbody.innerHTML = '<tr class="row-loading"><td colspan="8"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
+            try {
+                const res = await fetch('/api/orders/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
+                const json = await res.json().catch(() => null);
+                if (!res.ok || !json.isSuccess) throw new Error((json && json.message) || ('HTTP ' + res.status));
+                renderRows(json.data.items);
+                state.totalPages = json.data.totalPages || 0;
+                $('pageInfo').textContent = json.data.total === 0
+                    ? 'Hal 0 dari 0 (0 data)'
+                    : 'Hal ' + json.data.page + ' dari ' + json.data.totalPages + ' (' + json.data.total + ' data)';
+                renderPagination();
+            } catch (err) {
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="8">Gagal memuat data: ' + esc(err.message) + '</td></tr>';
+            } finally {
+                updateSortIndicators();
+            }
+        }
+
+        async function aksi(method, url, body, pesanSukses) {
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { [API_KEY_HEADER]: API_KEY, 'Content-Type': 'application/json' },
+                    body: body ? JSON.stringify(body) : undefined
+                });
+                const json = await res.json().catch(() => null);
+                if (!res.ok || !json.isSuccess) throw new Error((json && json.errors && json.errors[0]) || (json && json.message) || ('HTTP ' + res.status));
+                Swal.fire({ toast: true, position: "top-end", icon: "success", title: pesanSukses || json.message, showConfirmButton: false, timer: 2500 });
+                loadData();
+            } catch (err) {
+                Swal.fire({ toast: true, position: "top-end", icon: "error", title: err.message, showConfirmButton: false, timer: 4000 });
+            }
+        }
+
+        async function tampilDetail(id) {
+            try {
+                const res = await fetch('/api/orders/' + id, { headers: { [API_KEY_HEADER]: API_KEY } });
+                const json = await res.json().catch(() => null);
+                if (!res.ok || !json.isSuccess || !json.data) throw new Error((json && json.message) || 'Gagal memuat detail.');
+                const o = json.data;
+                const baris = o.items.map((i) =>
+                    '<tr><td>' + esc(i.title) + ' x' + i.quantity + '</td><td class="td-nomor">' + formatRp(i.subtotal) + '</td></tr>').join('');
+                Swal.fire({
+                    title: 'Detail Pesanan #' + o.id,
+                    html: '<div class="text-start small">' +
+                        '<div><strong>' + esc(o.customerName) + '</strong> — ' + esc(o.customerEmail) + '</div>' +
+                        '<div class="text-muted mb-2">' + esc(o.shipAddress || '') + '</div>' +
+                        '<table class="table table-sm mb-2">' + baris + '</table>' +
+                        '<div class="d-flex justify-content-between"><span>Subtotal</span><span>' + formatRp(o.subtotal) + '</span></div>' +
+                        '<div class="d-flex justify-content-between"><span>Ongkir</span><span>' + formatRp(o.shippingFee) + '</span></div>' +
+                        '<div class="d-flex justify-content-between"><span>Pajak</span><span>' + formatRp(o.taxAmount) + '</span></div>' +
+                        '<div class="d-flex justify-content-between fw-bold"><span>Total</span><span>' + formatRp(o.totalAmount) + '</span></div>' +
+                        '</div>',
+                    confirmButtonText: 'Tutup'
+                });
+            } catch (err) {
+                Swal.fire({ toast: true, position: "top-end", icon: "error", title: err.message, showConfirmButton: false, timer: 4000 });
+            }
+        }
+
+        let searchTimer = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            $('searchInput').addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => { state.search = $('searchInput').value; state.page = 1; loadData(); }, 350);
+            });
+            $('statusSelect').addEventListener('change', (e) => { state.status = e.target.value; state.page = 1; loadData(); });
+            document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
+                const col = btn.dataset.sort;
+                if (state.sortBy === col) {
+                    if (state.sortOrder === 'asc') state.sortOrder = 'desc';
+                    else { state.sortBy = ''; state.sortOrder = 'desc'; }
+                } else { state.sortBy = col; state.sortOrder = 'asc'; }
+                state.page = 1;
+                loadData();
+            }));
+            $('pagination').addEventListener('click', (e) => {
+                const link = e.target.closest('.page-link');
+                if (!link || link.closest('.disabled')) return;
+                e.preventDefault();
+                const page = Number(link.dataset.page);
+                if (page >= 1 && page <= state.totalPages && page !== state.page) {
+                    state.page = page;
+                    loadData();
+                }
+            });
+            $('orderRows').addEventListener('click', (e) => {
+                const t = e.target.closest('button');
+                if (!t) return;
+                if (t.classList.contains('btn-detail')) {
+                    tampilDetail(t.dataset.id);
+                } else if (t.classList.contains('btn-kirim')) {
+                    aksi('POST', '/api/orders/' + t.dataset.id + '/ship', null, 'Pesanan #' + t.dataset.id + ' ditandai dikirim.');
+                } else if (t.classList.contains('btn-batal')) {
+                    Swal.fire({
+                        title: 'Batalkan Pesanan #' + t.dataset.id + '?',
+                        input: 'text',
+                        inputLabel: 'Alasan (wajib)',
+                        inputValidator: (v) => (!v || !v.trim() ? 'Alasan wajib diisi.' : undefined),
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, batalkan',
+                        cancelButtonText: 'Tidak'
+                    }).then((r) => {
+                        if (r.isConfirmed) aksi('POST', '/api/orders/' + t.dataset.id + '/cancel', { reason: r.value.trim() });
+                    });
+                }
+            });
+            loadData();
+        });
+    </script>
+}

@@ -9,6 +9,10 @@
     var isUserControlPages = currentPage.StartsWith("/Panel/UserControl", StringComparison.OrdinalIgnoreCase);
     var isPersetujuanPages = currentPage.StartsWith("/Panel/PersetujuanDiskon", StringComparison.OrdinalIgnoreCase);
     var isPermintaanPages = currentPage.StartsWith("/Panel/PermintaanDiskon", StringComparison.OrdinalIgnoreCase);
+    var isPesananPages = currentPage.StartsWith("/Panel/Pesanan", StringComparison.OrdinalIgnoreCase);
+    var isPelangganPages = currentPage.StartsWith("/Panel/Pelanggan", StringComparison.OrdinalIgnoreCase);
+    var isLaporanPages = currentPage.StartsWith("/Panel/LaporanPenjualan", StringComparison.OrdinalIgnoreCase);
+    var isAuditPages = currentPage.StartsWith("/Panel/Settings/Audit", StringComparison.OrdinalIgnoreCase);
 
     var breadcrumbTrail = new List<(string Label, string? Url)>();
     if (!isDashboardPages)
@@ -44,6 +48,21 @@
             breadcrumbTrail.Add(("Monitoring", null));
             breadcrumbTrail.Add(("Permintaan Diskon", "/Panel/PermintaanDiskon"));
         }
+        else if (isPesananPages)
+        {
+            breadcrumbTrail.Add(("Operasional", null));
+            breadcrumbTrail.Add(("Pesanan", "/Panel/Pesanan"));
+        }
+        else if (isPelangganPages)
+        {
+            breadcrumbTrail.Add(("Operasional", null));
+            breadcrumbTrail.Add(("Pelanggan", "/Panel/Pelanggan"));
+        }
+        else if (isLaporanPages)
+        {
+            breadcrumbTrail.Add(("Monitoring", null));
+            breadcrumbTrail.Add(("Laporan Penjualan", "/Panel/LaporanPenjualan"));
+        }
         else if (isPersetujuanPages)
         {
             breadcrumbTrail.Add(("Monitoring", null));
@@ -58,6 +77,11 @@
         {
             breadcrumbTrail.Add(("Pengaturan", null));
             breadcrumbTrail.Add(("Pengaturan Toko", "/Panel/Settings/PengaturanToko"));
+        }
+        else if (isAuditPages)
+        {
+            breadcrumbTrail.Add(("Pengaturan", null));
+            breadcrumbTrail.Add(("Audit Log", "/Panel/Settings/Audit"));
         }
     }
     var signedIn = User.Identity?.IsAuthenticated == true;
@@ -268,6 +292,16 @@
                             <span class="material-icons">category</span> Master Kategori
                         </a>
                     }
+                    <div class="nav-group-title">Operasional</div>
+                    <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
+                        <span class="material-icons">receipt_long</span> Pesanan
+                    </a>
+                    @if (isOwner || isSa)
+                    {
+                        <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
+                            <span class="material-icons">people</span> Pelanggan
+                        </a>
+                    }
                     @if (isOwner || isSa)
                     {
                         <div class="nav-group-title">Maintenance</div>
@@ -287,6 +321,12 @@
                     }
                     @if (isOwner || isSa)
                     {
+                        <a class="nav-link @(isLaporanPages ? "active" : "")" href="/Panel/LaporanPenjualan">
+                            <span class="material-icons">trending_up</span> Laporan Penjualan
+                        </a>
+                    }
+                    @if (isOwner || isSa)
+                    {
                         <div class="nav-group-title">Settings</div>
                         @if (isSa)
                         {
@@ -296,6 +336,9 @@
                         }
                         <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
                             <span class="material-icons">store</span> Pengaturan Toko
+                        </a>
+                        <a class="nav-link @(isAuditPages ? "active" : "")" href="/Panel/Settings/Audit">
+                            <span class="material-icons">security</span> Audit Log
                         </a>
                     }
                 }
@@ -398,6 +441,16 @@
                         <span class="material-icons">category</span> Master Kategori
                     </a>
                 }
+                <div class="nav-group-title">Operasional</div>
+                <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
+                    <span class="material-icons">receipt_long</span> Pesanan
+                </a>
+                @if (isOwner || isSa)
+                {
+                    <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
+                        <span class="material-icons">people</span> Pelanggan
+                    </a>
+                }
                 @if (isOwner || isSa)
                 {
                     <div class="nav-group-title">Maintenance</div>
@@ -414,6 +467,9 @@
                     <a class="nav-link @(isPersetujuanPages ? "active" : "")" href="/Panel/PersetujuanDiskon">
                         <span class="material-icons">fact_check</span> Persetujuan Diskon
                     </a>
+                    <a class="nav-link @(isLaporanPages ? "active" : "")" href="/Panel/LaporanPenjualan">
+                        <span class="material-icons">trending_up</span> Laporan Penjualan
+                    </a>
                 }
                 @if (isOwner || isSa)
                 {
@@ -427,6 +483,12 @@
                     <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
                         <span class="material-icons">store</span> Pengaturan Toko
                     </a>
+                    @if (isSa)
+                    {
+                        <a class="nav-link @(isAuditPages ? "active" : "")" href="/Panel/Settings/Audit">
+                            <span class="material-icons">security</span> Audit Log
+                        </a>
+                    }
                 }
             }
             <div class="mt-auto">

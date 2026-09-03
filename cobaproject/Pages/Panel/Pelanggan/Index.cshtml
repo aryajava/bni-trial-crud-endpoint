@@ -1,0 +1,251 @@
+@page
+@model cobaproject.Pages.Pelanggan.IndexModel
+@{
+    ViewData["Title"] = "Pelanggan";
+}
+
+<div class="page-header">
+    <h1><span class="material-icons">people</span> Pelanggan</h1>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="statusSelect">Status</label>
+        <select id="statusSelect" data-pencarian class="form-select form-select-sm" style="width: 150px;">
+            <option value="">Semua Status</option>
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Nonaktif</option>
+        </select>
+    </div>
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="blockedSelect">Blokir</label>
+        <select id="blockedSelect" data-pencarian class="form-select form-select-sm" style="width: 130px;">
+            <option value="">Semua</option>
+            <option value="1">Diblokir</option>
+            <option value="0">Tidak Diblokir</option>
+        </select>
+    </div>
+    <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 320px;">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="searchInput">Cari</label>
+        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Email / nama / no. HP..." autocomplete="off" />
+    </div>
+</div>
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <div class="table-wrap">
+            <table class="table table-data align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="col-no text-center">No</th>
+                        <th><button type="button" class="th-sort" data-sort="email">Email <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="name">Nama <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th>No. HP</th>
+                        <th>Status</th>
+                        <th><button type="button" class="th-sort" data-sort="createdAt">Terdaftar <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th class="col-aksi">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="customerRows"></tbody>
+            </table>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <div id="pageInfo" class="text-muted small"></div>
+            <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
+        const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKey));
+        const IS_SA = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.IsSa));
+
+        const state = { page: 1, pageSize: 20, sortBy: '', sortOrder: 'desc', status: '', blocked: '', search: '', totalPages: 0 };
+        const $ = (id) => document.getElementById(id);
+
+        function esc(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function buildQuery() {
+            const q = new URLSearchParams();
+            q.set('page', state.page);
+            q.set('pageSize', state.pageSize);
+            if (state.sortBy) { q.set('sortBy', state.sortBy); q.set('sortOrder', state.sortOrder); }
+            if (state.status === 'aktif') q.set('active', 'true');
+            if (state.status === 'nonaktif') q.set('active', 'false');
+            if (state.blocked !== '') q.set('blocked', state.blocked);
+            if (state.search.trim()) q.set('search', state.search.trim());
+            return q.toString();
+        }
+
+        function badgeStatus(c) {
+            let html = '';
+            if (c.isBlocked) html += '<span class="badge bg-danger-subtle text-danger-emphasis">Diblokir</span> ';
+            if (c.isActive) html += '<span class="badge bg-success-subtle text-success-emphasis">Aktif</span>';
+            else html += '<span class="badge bg-secondary-subtle text-secondary-emphasis">Nonaktif</span>';
+            return html;
+        }
+
+        function formatTgl(iso) {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            return isNaN(d.getTime()) ? '-' : d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function renderRows(items) {
+            const tbody = $('customerRows');
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="7"><span class="material-icons">inbox</span> Tidak ada data.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = items.map((c, idx) => {
+                const nomor = ((state.page - 1) * state.pageSize) + idx + 1;
+                let aksi = '';
+                if (!c.isBlocked && c.isActive) {
+                    aksi += '<button class="btn btn-outline-danger btn-sm btn-block" data-id="' + c.id + '" data-nama="' + esc(c.display) + '" title="Blokir"><span class="material-icons">block</span></button> ';
+                }
+                if (c.isBlocked && c.isActive) {
+                    aksi += '<button class="btn btn-outline-success btn-sm btn-unblock" data-id="' + c.id + '" data-nama="' + esc(c.display) + '" title="Buka blokir"><span class="material-icons">lock_open</span></button> ';
+                }
+                aksi += '<button class="btn btn-outline-warning btn-sm btn-reset" data-id="' + c.id + '" data-nama="' + esc(c.display) + '" title="Reset kata sandi"><span class="material-icons">lock_reset</span></button>';
+                if (IS_SA) {
+                    if (c.isActive) {
+                        aksi += ' <button class="btn btn-outline-secondary btn-sm btn-deactivate" data-id="' + c.id + '" data-nama="' + esc(c.display) + '" title="Nonaktifkan akun (SA)"><span class="material-icons">person_off</span></button>';
+                    } else {
+                        aksi += ' <button class="btn btn-outline-info btn-sm btn-reactivate" data-id="' + c.id + '" title="Aktifkan kembali (SA)"><span class="material-icons">person_add</span></button>';
+                    }
+                }
+                return '<tr>' +
+                    '<td class="td-nomor text-center">' + nomor + '</td>' +
+                    '<td class="fw-semibold">' + esc(c.email) + '</td>' +
+                    '<td>' + esc(c.name || '-') + '</td>' +
+                    '<td>' + esc(c.phone || '-') + '</td>' +
+                    '<td>' + badgeStatus(c) + '</td>' +
+                    '<td class="td-nomor">' + formatTgl(c.createdAt) + '</td>' +
+                    '<td><div class="field-actions">' + aksi + '</div></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function buildPages(current, total) {
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+            const c = [1, total];
+            for (let i = current - 2; i <= current + 2; i++) if (i >= 1 && i <= total) c.push(i);
+            return [...new Set(c)].sort((a, b) => a - b);
+        }
+
+        function renderPagination() {
+            const total = Math.max(1, state.totalPages);
+            const parts = [];
+            parts.push('<li class="page-item ' + (state.page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page - 1) + '"><span class="material-icons">chevron_left</span></a></li>');
+            for (const p of buildPages(state.page, state.totalPages)) {
+                parts.push('<li class="page-item ' + (p === state.page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            parts.push('<li class="page-item ' + (state.page >= total ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page + 1) + '"><span class="material-icons">chevron_right</span></a></li>');
+            $('pagination').innerHTML = parts.join('');
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.th-sort').forEach((btn) => {
+                const active = btn.dataset.sort === state.sortBy;
+                btn.classList.toggle('active', active);
+                const ic = btn.querySelector('.sort-ic');
+                if (ic) ic.textContent = active ? (state.sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'swap_vert';
+            });
+        }
+
+        async function loadData() {
+            const tbody = $('customerRows');
+            tbody.innerHTML = '<tr class="row-loading"><td colspan="7"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
+            try {
+                const res = await fetch('/api/customers/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
+                const json = await res.json().catch(() => null);
+                if (!res.ok || !json.isSuccess) throw new Error((json && json.message) || ('HTTP ' + res.status));
+                renderRows(json.data.items);
+                state.totalPages = json.data.totalPages || 0;
+                $('pageInfo').textContent = json.data.total === 0
+                    ? 'Hal 0 dari 0 (0 data)'
+                    : 'Hal ' + json.data.page + ' dari ' + json.data.totalPages + ' (' + json.data.total + ' data)';
+                renderPagination();
+            } catch (err) {
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="7">Gagal memuat data: ' + esc(err.message) + '</td></tr>';
+            } finally {
+                updateSortIndicators();
+            }
+        }
+
+        async function aksi(method, url, body, pesanSukses) {
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { [API_KEY_HEADER]: API_KEY, 'Content-Type': 'application/json' },
+                    body: body ? JSON.stringify(body) : undefined
+                });
+                const json = await res.json().catch(() => null);
+                if (!res.ok || !json.isSuccess) throw new Error((json && json.errors && json.errors[0]) || (json && json.message) || ('HTTP ' + res.status));
+                Swal.fire({ toast: true, position: "top-end", icon: "success", title: pesanSukses || json.message, showConfirmButton: false, timer: 2500 });
+                loadData();
+            } catch (err) {
+                Swal.fire({ toast: true, position: "top-end", icon: "error", title: err.message, showConfirmButton: false, timer: 4000 });
+            }
+        }
+
+        let searchTimer = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            $('searchInput').addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => { state.search = $('searchInput').value; state.page = 1; loadData(); }, 350);
+            });
+            $('statusSelect').addEventListener('change', (e) => { state.status = e.target.value; state.page = 1; loadData(); });
+            $('blockedSelect').addEventListener('change', (e) => { state.blocked = e.target.value; state.page = 1; loadData(); });
+            document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
+                const col = btn.dataset.sort;
+                if (state.sortBy === col) {
+                    if (state.sortOrder === 'asc') state.sortOrder = 'desc';
+                    else { state.sortBy = ''; state.sortOrder = 'desc'; }
+                } else { state.sortBy = col; state.sortOrder = 'asc'; }
+                state.page = 1;
+                loadData();
+            }));
+            $('pagination').addEventListener('click', (e) => {
+                const link = e.target.closest('.page-link');
+                if (!link || link.closest('.disabled')) return;
+                e.preventDefault();
+                const page = Number(link.dataset.page);
+                if (page >= 1 && page <= state.totalPages && page !== state.page) {
+                    state.page = page;
+                    loadData();
+                }
+            });
+            $('customerRows').addEventListener('click', (e) => {
+                const t = e.target.closest('button');
+                if (!t) return;
+                if (t.classList.contains('btn-block')) {
+                    Swal.fire({ title: 'Blokir ' + t.dataset.nama + '?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, blokir', cancelButtonText: 'Batal' })
+                        .then((r) => { if (r.isConfirmed) aksi('POST', '/api/customers/' + t.dataset.id + '/block'); });
+                } else if (t.classList.contains('btn-unblock')) {
+                    aksi('POST', '/api/customers/' + t.dataset.id + '/unblock');
+                } else if (t.classList.contains('btn-reset')) {
+                    Swal.fire({
+                        title: 'Reset Kata Sandi — ' + t.dataset.nama,
+                        input: 'password',
+                        inputLabel: 'Kata sandi baru',
+                        inputValidator: (v) => (!v || v.length < 6 ? 'Minimal 6 karakter.' : undefined),
+                        confirmButtonText: 'Reset',
+                        cancelButtonText: 'Batal',
+                        showCancelButton: true
+                    }).then((r) => { if (r.isConfirmed) aksi('POST', '/api/customers/' + t.dataset.id + '/reset-password', { newPassword: r.value }); });
+                } else if (t.classList.contains('btn-deactivate')) {
+                    Swal.fire({ title: 'Nonaktifkan akun ' + t.dataset.nama + '?', text: 'Akun tak bisa masuk; pemulihan hanya oleh SA.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, nonaktifkan', cancelButtonText: 'Batal' })
+                        .then((r) => { if (r.isConfirmed) aksi('POST', '/api/customers/' + t.dataset.id + '/deactivate'); });
+                } else if (t.classList.contains('btn-reactivate')) {
+                    aksi('POST', '/api/customers/' + t.dataset.id + '/reactivate');
+                }
+            });
+            loadData();
+        });
+    </script>
+}

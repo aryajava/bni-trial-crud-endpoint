@@ -380,6 +380,17 @@ public class OrderService : IOrderService
         return new SalesReportDto { Label = label, Top = top, Bottom = bottom };
     }
 
+    public async Task<(int Pending, int Today)> GetDashboardOrderStatsAsync()
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var stats = await connection.QuerySingleAsync<dynamic>("""
+            SELECT
+                (SELECT COUNT(*) FROM LOSCONSUMER.TRX_ORDER WHERE STATUS = 'DIPROSES') AS Pending,
+                (SELECT COUNT(*) FROM LOSCONSUMER.TRX_ORDER WHERE CAST(CREATED_AT AS DATE) = CAST(GETDATE() AS DATE)) AS Today;
+            """);
+        return ((int)stats.Pending, (int)stats.Today);
+    }
+
     private static string EscapeLike(string value) =>
         value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 

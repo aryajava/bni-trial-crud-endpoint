@@ -1,0 +1,208 @@
+@page
+@model cobaproject.Pages.Settings.AuditModel
+@{
+    ViewData["Title"] = "Audit Log";
+}
+
+<div class="page-header">
+    <h1><span class="material-icons">security</span> Audit Log</h1>
+    <p class="text-muted small mb-0">Jejak aksi pengurus (siapa, kapan, nilai sebelum-sesudah) — baca-saja.</p>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="entitySelect">Entitas</label>
+        <select id="entitySelect" data-pencarian class="form-select form-select-sm" style="width: 180px;">
+            <option value="">Semua Entitas</option>
+            <option value="PRODUCT">PRODUCT</option>
+            <option value="CATEGORY">CATEGORY</option>
+            <option value="USER">USER</option>
+            <option value="DISCOUNT_APPROVAL">DISCOUNT_APPROVAL</option>
+            <option value="ORDER">ORDER</option>
+            <option value="SETTING">SETTING</option>
+        </select>
+    </div>
+    <div class="d-flex flex-column gap-1">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="actionSelect">Aksi</label>
+        <select id="actionSelect" data-pencarian class="form-select form-select-sm" style="width: 180px;">
+            <option value="">Semua Aksi</option>
+            <option value="CREATE">CREATE</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="DELETE">DELETE</option>
+            <option value="APPROVE">APPROVE</option>
+            <option value="REJECT">REJECT</option>
+            <option value="LOGIN">LOGIN</option>
+            <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+            <option value="BLOCK">BLOCK</option>
+            <option value="UNBLOCK">UNBLOCK</option>
+            <option value="RESET_PASSWORD">RESET_PASSWORD</option>
+            <option value="CHANGE_ROLE">CHANGE_ROLE</option>
+            <option value="SETTING_CHANGED">SETTING_CHANGED</option>
+            <option value="ORDER_SHIPPED">ORDER_SHIPPED</option>
+            <option value="ORDER_CANCELLED">ORDER_CANCELLED</option>
+        </select>
+    </div>
+    <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 320px;">
+        <label class="cluster-label text-secondary fw-semibold mb-0" for="searchInput">Cari</label>
+        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Pelaku / alasan..." autocomplete="off" />
+    </div>
+</div>
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <div class="table-wrap">
+            <table class="table table-data align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th><button type="button" class="th-sort" data-sort="id">ID <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="entity">Entitas <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th>ID Record</th>
+                        <th><button type="button" class="th-sort" data-sort="action">Aksi <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="actor">Pelaku <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th><button type="button" class="th-sort" data-sort="actedAt">Waktu <span class="material-icons sort-ic">swap_vert</span></button></th>
+                        <th>Alasan</th>
+                    </tr>
+                </thead>
+                <tbody id="auditRows"></tbody>
+            </table>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <div id="pageInfo" class="text-muted small"></div>
+            <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
+        const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKey));
+
+        const state = { page: 1, pageSize: 20, sortBy: '', sortOrder: 'desc', entity: '', action: '', search: '', totalPages: 0 };
+        const $ = (id) => document.getElementById(id);
+
+        function esc(s) {
+            return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        function formatTgl(iso) {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            return isNaN(d.getTime()) ? '-' : d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        function badgeAksi(action) {
+            const ringan = ['LOGIN', 'LOGIN_FAILED'];
+            const bahaya = ['DELETE', 'REJECT', 'BLOCK', 'RESET_PASSWORD', 'CHANGE_ROLE', 'ORDER_CANCELLED'];
+            let kelas = 'bg-primary-subtle text-primary-emphasis';
+            if (ringan.includes(action)) kelas = 'bg-secondary-subtle text-secondary-emphasis';
+            if (action === 'CREATE') kelas = 'bg-success-subtle text-success-emphasis';
+            if (bahaya.includes(action)) kelas = 'bg-danger-subtle text-danger-emphasis';
+            return '<span class="badge ' + kelas + '">' + esc(action) + '</span>';
+        }
+
+        function buildQuery() {
+            const q = new URLSearchParams();
+            q.set('page', state.page);
+            q.set('pageSize', state.pageSize);
+            if (state.sortBy) { q.set('sortBy', state.sortBy); q.set('sortOrder', state.sortOrder); }
+            if (state.entity) q.set('entity', state.entity);
+            if (state.action) q.set('action', state.action);
+            if (state.search.trim()) q.set('search', state.search.trim());
+            return q.toString();
+        }
+
+        function renderRows(items) {
+            const tbody = $('auditRows');
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="7"><span class="material-icons">inbox</span> Tidak ada data.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = items.map((a) =>
+                '<tr>' +
+                '<td class="td-id">' + a.id + '</td>' +
+                '<td class="fw-semibold">' + esc(a.entity) + '</td>' +
+                '<td class="td-nomor">' + esc(a.entityId || '-') + '</td>' +
+                '<td>' + badgeAksi(a.action) + '</td>' +
+                '<td>' + esc(a.actor) + '</td>' +
+                '<td class="td-nomor">' + formatTgl(a.actedAt) + '</td>' +
+                '<td class="text-muted"><small>' + esc(a.reason || '-') + '</small></td>' +
+                '</tr>').join('');
+        }
+
+        function buildPages(current, total) {
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+            const c = [1, total];
+            for (let i = current - 2; i <= current + 2; i++) if (i >= 1 && i <= total) c.push(i);
+            return [...new Set(c)].sort((a, b) => a - b);
+        }
+
+        function renderPagination() {
+            const total = Math.max(1, state.totalPages);
+            const parts = [];
+            parts.push('<li class="page-item ' + (state.page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page - 1) + '"><span class="material-icons">chevron_left</span></a></li>');
+            for (const p of buildPages(state.page, state.totalPages)) {
+                parts.push('<li class="page-item ' + (p === state.page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            parts.push('<li class="page-item ' + (state.page >= total ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page + 1) + '"><span class="material-icons">chevron_right</span></a></li>');
+            $('pagination').innerHTML = parts.join('');
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.th-sort').forEach((btn) => {
+                const active = btn.dataset.sort === state.sortBy;
+                btn.classList.toggle('active', active);
+                const ic = btn.querySelector('.sort-ic');
+                if (ic) ic.textContent = active ? (state.sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'swap_vert';
+            });
+        }
+
+        async function loadData() {
+            const tbody = $('auditRows');
+            tbody.innerHTML = '<tr class="row-loading"><td colspan="7"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
+            try {
+                const res = await fetch('/api/audit-logs/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
+                const json = await res.json().catch(() => null);
+                if (!res.ok || !json.isSuccess) throw new Error((json && json.message) || ('HTTP ' + res.status));
+                renderRows(json.data.items);
+                state.totalPages = json.data.totalPages || 0;
+                $('pageInfo').textContent = json.data.total === 0
+                    ? 'Hal 0 dari 0 (0 data)'
+                    : 'Hal ' + json.data.page + ' dari ' + json.data.totalPages + ' (' + json.data.total + ' data)';
+                renderPagination();
+            } catch (err) {
+                tbody.innerHTML = '<tr class="row-empty"><td colspan="7">Gagal memuat data: ' + esc(err.message) + '</td></tr>';
+            } finally {
+                updateSortIndicators();
+            }
+        }
+
+        let searchTimer = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            $('searchInput').addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => { state.search = $('searchInput').value; state.page = 1; loadData(); }, 350);
+            });
+            $('entitySelect').addEventListener('change', (e) => { state.entity = e.target.value; state.page = 1; loadData(); });
+            $('actionSelect').addEventListener('change', (e) => { state.action = e.target.value; state.page = 1; loadData(); });
+            document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
+                const col = btn.dataset.sort;
+                if (state.sortBy === col) {
+                    if (state.sortOrder === 'asc') state.sortOrder = 'desc';
+                    else { state.sortBy = ''; state.sortOrder = 'desc'; }
+                } else { state.sortBy = col; state.sortOrder = 'asc'; }
+                state.page = 1;
+                loadData();
+            }));
+            $('pagination').addEventListener('click', (e) => {
+                const link = e.target.closest('.page-link');
+                if (!link || link.closest('.disabled')) return;
+                e.preventDefault();
+                const page = Number(link.dataset.page);
+                if (page >= 1 && page <= state.totalPages && page !== state.page) {
+                    state.page = page;
+                    loadData();
+                }
+            });
+            loadData();
+        });
+    </script>
+}

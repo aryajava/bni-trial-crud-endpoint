@@ -1,0 +1,94 @@
+@page
+@model cobaproject.Pages.LaporanPenjualan.IndexModel
+@{
+    ViewData["Title"] = "Laporan Penjualan";
+}
+
+<div class="page-header d-flex flex-wrap align-items-center gap-2">
+    <h1 class="mb-0"><span class="material-icons">trending_up</span> Laporan Penjualan</h1>
+    <form method="get" class="ms-auto d-flex align-items-center gap-2">
+        <label class="text-secondary small fw-semibold mb-0" for="periodeSelect">Periode</label>
+        <select id="periodeSelect" name="periode" data-pencarian class="form-select form-select-sm" style="width: 180px;" onchange="this.form.submit()">
+            <option value="7" selected="@(Model.Periode == 7)">7 Hari Terakhir</option>
+            <option value="30" selected="@(Model.Periode == 30)">30 Hari Terakhir</option>
+            <option value="0" selected="@(Model.Periode == 0)">Sepanjang Masa</option>
+        </select>
+    </form>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card card-soft">
+            <div class="card-body p-3">
+                <h2 class="h5 mb-2"><span class="material-icons text-success">arrow_upward</span> Produk Terlaris</h2>
+                <div class="table-wrap">
+                    <table class="table table-data align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="col-no">Peringkat</th>
+                                <th>Produk</th>
+                                <th class="td-nomor">Qty Terjual</th>
+                                <th class="td-nomor">Pendapatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Report.Top.Count; i++)
+                            {
+                                var r = Model.Report.Top[i];
+                                <tr>
+                                    <td class="td-nomor text-center">@(i + 1)</td>
+                                    <td class="fw-semibold">@r.Title</td>
+                                    <td class="td-nomor">@r.TotalQuantity</td>
+                                    <td class="td-nomor">Rp @r.Revenue.ToString("N0")</td>
+                                </tr>
+                            }
+                            @if (Model.Report.Top.Count == 0)
+                            {
+                                <tr><td colspan="4" class="row-empty">Belum ada penjualan pada periode ini.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card card-soft">
+            <div class="card-body p-3">
+                <h2 class="h5 mb-2"><span class="material-icons text-danger">arrow_downward</span> Produk Jarang Terjual</h2>
+                <div class="table-wrap">
+                    <table class="table table-data align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="col-no">Peringkat</th>
+                                <th>Produk</th>
+                                <th class="td-nomor">Qty Terjual</th>
+                                <th class="td-nomor">Pendapatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Report.Bottom.Count; i++)
+                            {
+                                var r = Model.Report.Bottom[i];
+                                <tr>
+                                    <td class="td-nomor text-center">@(i + 1)</td>
+                                    <td class="fw-semibold">@r.Title</td>
+                                    <td class="td-nomor">@r.TotalQuantity</td>
+                                    <td class="td-nomor">Rp @r.Revenue.ToString("N0")</td>
+                                </tr>
+                            }
+                            @if (Model.Report.Bottom.Count == 0)
+                            {
+                                <tr><td colspan="4" class="row-empty">Belum ada penjualan pada periode ini.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ToastScriptsPartial" />
+}

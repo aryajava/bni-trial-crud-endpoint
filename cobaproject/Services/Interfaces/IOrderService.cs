@@ -12,4 +12,5 @@ public interface IOrderService
     Task<(bool Success, string? Error)> CancelAsync(long id, string reason, string updatedBy, bool isStaff);
     Task<(bool Success, string? Error)> ReceiveAsync(long id, string updatedBy);
     Task<SalesReportDto> GetSalesReportAsync(int? days);
+    Task<(int Pending, int Today)> GetDashboardOrderStatsAsync();
 }
