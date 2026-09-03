@@ -29,24 +29,24 @@
 ## Blok 2 — Feature toko online
 
 ### 2A. Infrastruktur pelanggan
-- [ ] `Script0020`: `MASTER_CUSTOMER` + `TRX_CUSTOMER_AUDIT_TRAIL`; cookie/skema auth pelanggan terpisah; lockout berbasis audit untuk pelanggan
-- [ ] `/Masuk`, `/Daftar` (nama, email, sandi min 6), `/Keluar`; blokir → `/GantiKataSandi` (pemulihan)
+- [x] `Script0020`: `MASTER_CUSTOMER` + `TRX_CUSTOMER_AUDIT_TRAIL`; cookie/skema auth pelanggan terpisah; lockout berbasis audit untuk pelanggan
+- [x] `/Masuk`, `/Daftar` (nama, email, sandi min 6), `/Keluar`; blokir → `/GantiKataSandi` (pemulihan)
 
 ### 2B. Area publik
-- [ ] Layout toko + `/` katalog (search LIKE, filter kategori, "Habis"), `/Produk/{id}`
-- [ ] Keranjang: JS localStorage (tamu) + `TRX_CART_ITEM` (login); merge otomatis saat login; `/Keranjang`
-- [ ] `/Profil` (edit + Hapus Akun) · `/PesananSaya`
+- [x] Layout toko + `/` katalog (search LIKE, filter kategori, "Habis"), `/Produk/Detail/{id}`
+- [x] Keranjang: JS localStorage (tamu) + `TRX_CART_ITEM` (login); merge otomatis saat masuk `/Keranjang`; `/Keranjang`
+- [x] `/Profil` (edit + Hapus Akun) · `/PesananSaya` (terima/batal, stok kembali saat batal)
 
 ### 2C. Checkout & pesanan
-- [ ] `Script0021`: `TRX_ORDER`, `TRX_ORDER_ITEM` (+status who/when, snapshot harga/ongkir/pajak)
-- [ ] `/Checkout` (wajib login; data pengiriman → profil; ringkasan + Konfirmasi; stok atomik; DIPROSES)
-- [ ] `/Panel/Pesanan` (list/filter/detail; DIPROSES→DIKIRIM; batalkan + alasan) · `/Panel/Pelanggan` (blokir/buka/deaktifkan)
-- [ ] Transisi `/PesananSaya`: DITERIMA, batalkan (sblm DIKIRIM); stok kembali saat batal
+- [x] `Script0021`: `TRX_ORDER`, `TRX_ORDER_ITEM` (+status who/when, snapshot harga/ongkir/pajak)
+- [x] `/Checkout` (wajib login; data pengiriman → profil; ringkasan + Konfirmasi; stok atomik; DIPROSES)
+- [x] `/Panel/Pesanan` (grid client-side; detail; DIPROSES→DIKIRIM; batalkan + alasan) · `/Panel/Pelanggan` (grid; blokir/buka, deaktif/aktifkan-S, reset sandi)
 
 ### 2D. Audit & analitik
-- [ ] Audit service helper: tulis `TRX_AUDIT_LOG` di semua service yang bermutasi + event pelanggan di `TRX_CUSTOMER_AUDIT_TRAIL`
-- [ ] `/Panel/Settings/Audit` (grid pola Monitoring, baca-saja, filter)
-- [ ] `/Panel/LaporanPenjualan` (terlaris & jarang terjual, filter 7/30/hari/sepanjang masa) + KPI Dashboard
+- [x] Event pelanggan di `TRX_CUSTOMER_AUDIT_TRAIL` (REGISTER/LOGIN/LOGIN_FAILED/PROFILE_UPDATED/PASSWORD_CHANGED/BLOCKED/UNBLOCKED/DEACTIVATED/REACTIVATED/RESET_PASSWORD)
+- [x] `/Panel/Settings/Audit` (grid baca-saja SA: entitas/aksi/cari/time filter)
+- [x] `/Panel/LaporanPenjualan` (terlaris & jarang terjual, 7/30 hari/sepanjang masa) + KPI Dashboard (pesanan hari ini & menunggu proses)
 
 ### 2E. Penutup
-- [ ] Sinkron PRD/addendum, uji alur end-to-end (daftar→beli→kirim→terima→batal), build + smoke test
+- [ ] Sinkron PRD/addendum ✅ (kecuali §11 ditandai selesai), uji alur end-to-end di mesin Windows, build + smoke test
+- [ ] Sisa tertunda dari Blok 1: konversi grid client-side Kategori/MasterUser/UserControl + Produk grid pakai secret key user (Q49)

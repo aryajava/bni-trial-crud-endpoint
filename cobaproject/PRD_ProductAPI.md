@@ -156,7 +156,7 @@ Migrasi: dbup `Scripts/Script00XX_*.sql` — lanjutan dari 16 skrip yang ada; co
 | GET/POST/PUT/DELETE | `/api/users` (`/paged`, `/{id}`, role/active/reset-password/secret-key) | User pengurus |
 | POST | `/api/users/{id}/block` · `/unblock` | Blokir/buka (OWNER+SA, guard rank) |
 
-**Endpoint masa depan** (dibangun bersama bloknya): `/api/customers` (paged, block/unblock, reset-sandi, hapus-lunak/aktifkan — Blok 2A) · `/api/orders` (paged, `{id}/ship`, `{id}/cancel` — Blok 2C) · `/api/audit-logs/paged` (Blok 2D) · `/api/settings` (get, `{key}` put; threshold→SA, ongkir/pajak→OWNER+SA — menyusul setelah TRX_AUDIT_LOG) · `/api/reports/sales` (Laporan Penjualan — Blok 2D).
+**Endpoint masa depan** (dibangun bersama bloknya): ~~...~~ **Sudah dibuat (Blok 2)**: `GET /api/customers/paged` + `POST {id}/block|unblock` (OWNER+SA) + `{id}/deactivate|reactivate` (SA) + `{id}/reset-password` (OWNER+SA) · `GET /api/orders/paged` + `{id}` + `{id}/ship` + `{id}/cancel` (staff) · `GET /api/audit-logs/paged` (SA) · `GET /api/reports/sales` (OWNER+SA).
 
 Auth API: `X-Api-Key` (fallback `TEST123` → SYSTEM/OWNER; selain itu `SECRET_KEY` per user). Bypass: `/swagger`, `/openapi`, `/favicon.ico`. Halaman grid memakai **secret key user yang login** (pola Monitoring — lihat ADR-0004).
 
