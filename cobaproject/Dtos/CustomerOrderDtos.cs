@@ -80,6 +80,8 @@ public class CartItemDto
     public decimal EffectivePrice { get; set; }
     public int Stock { get; set; }
     public int Quantity { get; set; }
+    public bool IsAvailable { get; set; } = true;
+    public bool QtyAdjusted { get; set; }
     public decimal Subtotal => EffectivePrice * Quantity;
 }
 
@@ -146,6 +148,9 @@ public class CheckoutRequest
 
     [System.ComponentModel.DataAnnotations.StringLength(500, ErrorMessage = "Catatan maksimal 500 karakter.")]
     public string? Note { get; set; }
+
+    /// <summary>Daftar ProductId terpilih (koma-pisah); kosong = semua item tersedia.</summary>
+    public string? SelectedIds { get; set; }
 }
 
 public class CancelOrderRequest

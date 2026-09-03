@@ -13,6 +13,7 @@ public class KeranjangModel : PageModel
     private readonly IProductService _productService;
 
     public List<CartItemDto> Items { get; set; } = [];
+    public List<CartItemDto> UnavailableItems { get; set; } = [];
 
     public bool IsCustomer =>
         User.Identity?.IsAuthenticated == true
@@ -30,7 +31,9 @@ public class KeranjangModel : PageModel
     {
         if (IsCustomer)
         {
-            Items = await _cartService.GetAsync(CustomerId);
+            var all = await _cartService.GetAsync(CustomerId);
+            Items = all.Where(i => i.IsAvailable).ToList();
+            UnavailableItems = all.Where(i => !i.IsAvailable).ToList();
         }
         ViewData["Title"] = "Keranjang";
     }
@@ -99,6 +102,18 @@ public class KeranjangModel : PageModel
 
         await _cartService.RemoveAsync(CustomerId, productId);
         TempData["SuccessMessage"] = "Produk dihapus dari keranjang.";
+        return Redirect("/Keranjang");
+    }
+
+    public async Task<IActionResult> OnPostClearAsync()
+    {
+        if (!IsCustomer)
+        {
+            return Redirect("/Masuk?ReturnUrl=/Keranjang");
+        }
+
+        await _cartService.ClearAsync(CustomerId);
+        TempData["SuccessMessage"] = "Keranjang dikosongkan.";
         return Redirect("/Keranjang");
     }
 

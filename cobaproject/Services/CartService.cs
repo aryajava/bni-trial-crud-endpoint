@@ -21,10 +21,10 @@ public class CartService : ICartService
     {
         using var connection = new SqlConnection(_connectionString);
         var rows = await connection.QueryAsync<dynamic>("""
-            SELECT P.ID, P.TITLE, P.PRICE, P.DISCOUNT_PERCENT, P.STOCK, K.QUANTITY
+            SELECT P.ID, P.TITLE, P.PRICE, P.DISCOUNT_PERCENT, P.STOCK, P.IS_ACTIVE, K.QUANTITY
             FROM LOSCONSUMER.TRX_CART_ITEM K
             JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = K.PRODUCT_ID
-            WHERE K.CUSTOMER_ID = @CustomerId AND P.IS_ACTIVE = 1
+            WHERE K.CUSTOMER_ID = @CustomerId
             ORDER BY K.ID;
             """, new { CustomerId = customerId });
 
@@ -32,30 +32,9 @@ public class CartService : ICartService
         foreach (var r in rows)
         {
             var stock = (int)r.STOCK;
+            var active = (bool)r.IS_ACTIVE;
             var qty = (int)r.QUANTITY;
-
-            // Qty keranjang otomatis menyesuaikan sisa stok: berlebih → dikunci ke stok,
-            // produk habis → dihapus dari keranjang.
-            if (stock <= 0)
-            {
-                await connection.ExecuteAsync("""
-                    DELETE FROM LOSCONSUMER.TRX_CART_ITEM
-                    WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
-                    """, new { CustomerId = customerId, ProductId = (int)r.ID });
-                continue;
-            }
-
-            if (qty > stock)
-            {
-                await connection.ExecuteAsync("""
-                    UPDATE LOSCONSUMER.TRX_CART_ITEM
-                    SET QUANTITY = @Quantity
-                    WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
-                    """, new { Quantity = stock, CustomerId = customerId, ProductId = (int)r.ID });
-                qty = stock;
-            }
-
-            result.Add(new CartItemDto
+            var item = new CartItemDto
             {
                 ProductId = (int)r.ID,
                 Title = (string)r.TITLE,
@@ -63,8 +42,24 @@ public class CartService : ICartService
                 DiscountPercent = r.DISCOUNT_PERCENT as decimal?,
                 EffectivePrice = Harga.Efektif((decimal)r.PRICE, r.DISCOUNT_PERCENT as decimal?),
                 Stock = stock,
-                Quantity = qty
-            });
+                Quantity = qty,
+                IsAvailable = active && stock > 0
+            };
+
+            // Qty keranjang otomatis menyesuaikan sisa stok — hanya untuk item tersedia.
+            // Item tidak tersedia TETAP di keranjang (bagian "Item Tidak Tersedia").
+            if (item.IsAvailable && qty > stock)
+            {
+                await connection.ExecuteAsync("""
+                    UPDATE LOSCONSUMER.TRX_CART_ITEM
+                    SET QUANTITY = @Quantity
+                    WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
+                    """, new { Quantity = stock, CustomerId = customerId, ProductId = (int)r.ID });
+                item.Quantity = stock;
+                item.QtyAdjusted = true;
+            }
+
+            result.Add(item);
         }
 
         return result;
@@ -74,9 +69,10 @@ public class CartService : ICartService
     {
         using var connection = new SqlConnection(_connectionString);
         var count = await connection.ExecuteScalarAsync<int>("""
-            SELECT ISNULL(SUM(QUANTITY), 0)
-            FROM LOSCONSUMER.TRX_CART_ITEM
-            WHERE CUSTOMER_ID = @CustomerId;
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.TRX_CART_ITEM K
+            JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = K.PRODUCT_ID
+            WHERE K.CUSTOMER_ID = @CustomerId AND P.IS_ACTIVE = 1 AND P.STOCK > 0;
             """, new { CustomerId = customerId });
         return count;
     }

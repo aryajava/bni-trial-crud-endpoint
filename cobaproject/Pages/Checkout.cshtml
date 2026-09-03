@@ -50,10 +50,16 @@
                 <h2 class="h5 mb-3">Ringkasan Pesanan</h2>
                 @if (Model.Items.Count == 0)
                 {
-                    <p class="text-muted small">Keranjang kosong. <a href="/Keranjang">Cek keranjang</a>.</p>
+                    <p class="text-muted small">Tidak ada item untuk dipesan. <a href="/Keranjang">Cek keranjang</a>.</p>
                 }
                 else
                 {
+                    @if (Model.ExcludedCount > 0)
+                    {
+                        <div class="alert alert-warning py-2 small mb-3">
+                            @Model.ExcludedCount item tidak dipilih / tidak tersedia — tetap tersimpan di keranjang.
+                        </div>
+                    }
                     <div class="mb-3">
                         @foreach (var item in Model.Items)
                         {

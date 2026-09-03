@@ -22,11 +22,15 @@ public class CheckoutModel : PageModel
     public decimal ShippingFee { get; set; }
     public decimal TaxAmount { get; set; }
     public decimal Total { get; set; }
+    public int ExcludedCount { get; set; }
     public string? StoreError { get; set; }
 
     [BindProperty]
     [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Kata sandi wajib diisi untuk membuat pesanan.")]
     public string Password { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string? SelectedIds { get; set; }
 
     [BindProperty]
     public CheckoutRequest Form { get; set; } = new();
@@ -45,8 +49,9 @@ public class CheckoutModel : PageModel
         _settingService = settingService;
     }
 
-    public async Task OnGetAsync()
+    public async Task OnGetAsync(string? ids)
     {
+        SelectedIds = ids;
         await LoadAsync();
         ViewData["Title"] = "Checkout";
     }
@@ -67,6 +72,7 @@ public class CheckoutModel : PageModel
             return Page();
         }
 
+        Form.SelectedIds ??= SelectedIds;
         var (order, error) = await _orderService.CheckoutAsync(CustomerId, Form, User.Identity!.Name!);
         if (order is null)
         {
@@ -88,7 +94,20 @@ public class CheckoutModel : PageModel
 
     private async Task LoadAsync()
     {
-        Items = await _cartService.GetAsync(CustomerId);
+        var all = await _cartService.GetAsync(CustomerId);
+        var available = all.Where(i => i.IsAvailable).ToList();
+
+        var selected = (SelectedIds ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(int.Parse)
+            .Distinct()
+            .ToHashSet();
+        Items = selected.Count > 0
+            ? available.Where(i => selected.Contains(i.ProductId)).ToList()
+            : available;
+
+        ExcludedCount = available.Count - Items.Count + all.Count(i => !i.IsAvailable);
+
         if (Items.Count == 0)
         {
             return;

@@ -44,10 +44,24 @@ public class OrderService : IOrderService
     public async Task<(OrderDetailDto? Order, string? Error)> CheckoutAsync(
         int customerId, CheckoutRequest request, string createdBy)
     {
-        var items = await _cartService.GetAsync(customerId);
+        var items = (await _cartService.GetAsync(customerId)).Where(i => i.IsAvailable).ToList();
         if (items.Count == 0)
         {
-            return (null, "Keranjang kosong.");
+            return (null, "Keranjang tidak memiliki item yang tersedia.");
+        }
+
+        var selectedIds = (request.SelectedIds ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(int.Parse)
+            .Distinct()
+            .ToHashSet();
+        if (selectedIds.Count > 0)
+        {
+            items = items.Where(i => selectedIds.Contains(i.ProductId)).ToList();
+            if (items.Count == 0)
+            {
+                return (null, "Tidak ada item terpilih yang tersedia untuk dipesan.");
+            }
         }
 
         var subtotal = Math.Round(items.Sum(i => i.Subtotal), 2);
@@ -126,9 +140,10 @@ public class OrderService : IOrderService
             }
         }
 
-        await connection.ExecuteAsync(
-            "DELETE FROM LOSCONSUMER.TRX_CART_ITEM WHERE CUSTOMER_ID = @CustomerId;",
-            new { CustomerId = customerId }, transaction);
+        await connection.ExecuteAsync("""
+            DELETE FROM LOSCONSUMER.TRX_CART_ITEM
+            WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID IN @ProductIds;
+            """, new { CustomerId = customerId, ProductIds = items.Select(i => i.ProductId).ToList() }, transaction);
 
         await transaction.CommitAsync();
 
