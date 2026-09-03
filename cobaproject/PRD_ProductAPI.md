@@ -96,7 +96,7 @@ Global di `APP_SETTING` (`SHIPPING_FEE` Rp tetap, `TAX_PERCENT` %): diubah OWNER
 
 ## 6. Persetujuan Diskon
 
-Alur **tanpa bypass**: perubahan persen diskon oleh peran apa pun (termasuk OWNER dan SA) selalu menjadi permintaan `MENUNGGU`; produk memakai diskon lama sampai diputuskan. Keputusan serta daftar lengkap permintaan oleh **OWNER atau SA**; ADMIN hanya melihat miliknya sendiri ("Permintaan Diskon Saya"). Satu `MENUNGGU` per produk. Yang berubah: halaman Monitoring menampilkan **Harga Dasar & Harga Setelah Diskon** sebelum↔sesudah, dihitung saat dibaca (rumus yang sama: diskon dari `PRICE`, pembulatan ke 100). `PRICE` tidak pernah berubah oleh diskon.
+Alur **tanpa bypass**: perubahan persen diskon oleh peran apa pun (termasuk OWNER dan SA) selalu menjadi permintaan `MENUNGGU`; produk memakai diskon lama sampai diputuskan. OWNER dan SA melihat **semua** permintaan di kedua halaman (Permintaan & Persetujuan Diskon) dan dapat memutuskan; ADMIN hanya melihat miliknya sendiri. Satu `MENUNGGU` per produk. Yang berubah: halaman Monitoring menampilkan **Harga Dasar & Harga Setelah Diskon** sebelum↔sesudah, dihitung saat dibaca (rumus yang sama: diskon dari `PRICE`, pembulatan ke 100). `PRICE` tidak pernah berubah oleh diskon.
 
 ---
 
