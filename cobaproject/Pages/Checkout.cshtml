@@ -37,12 +37,6 @@
                         <input asp-for="Form.Note" class="form-control" placeholder="Contoh: hubungi sebelum kirim" />
                         @Html.ValidationMessageFor(m => m.Form.Note, null, new { @class = "field-error" })
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" asp-for="Password">Konfirmasi Kata Sandi</label>
-                        <input asp-for="Password" type="password" class="form-control" autocomplete="current-password" />
-                        @Html.ValidationMessageFor(m => m.Password, null, new { @class = "field-error" })
-                        <div class="form-text">Masukkan kata sandi untuk membuat pesanan.</div>
-                    </div>
                     <button class="btn btn-primary" type="submit" id="btnKonfirmasi">
                         <span class="material-icons">check_circle</span> Buat Pesanan
                     </button>
@@ -84,9 +78,34 @@
 @section Scripts {
     <script>
         document.getElementById('btnKonfirmasi').addEventListener('click', function (e) {
+            e.preventDefault();
             var btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+            Swal.fire({
+                title: 'Buat Pesanan?',
+                text: 'Periksa kembali alamat pengiriman dan ringkasan pesanan.',
+                input: 'password',
+                inputLabel: 'Konfirmasi Kata Sandi',
+                inputPlaceholder: 'Masukkan kata sandi',
+                inputValidator: function (v) {
+                    if (!v) { return 'Kata sandi wajib diisi.'; }
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Buat Pesanan',
+                cancelButtonText: 'Batal',
+                icon: 'question'
+            }).then(function (result) {
+                if (result.isConfirmed && result.value) {
+                    var form = btn.closest('form');
+                    var hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'Password';
+                    hidden.value = result.value;
+                    form.appendChild(hidden);
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Membuat pesanan...';
+                    form.submit();
+                }
+            });
         });
     </script>
 }
