@@ -164,16 +164,27 @@ app.UseMiddleware<RequestResponseMiddleware>();
 
 app.UseAuthentication();
 // UseAuthentication hanya memvalidasi scheme default (cookie staf). Cookie
-// pelanggan (GKLaku.Customer) perlu di-autentikasi eksplisit — fallback di
-// sini membuat halaman publik mengenali pelanggan yang sudah masuk.
+// pelanggan (GKLaku.Customer) perlu di-autentikasi eksplisit: jika principal
+// saat ini BUKAN pelanggan (termasuk saat cookie staf ikut terbawa), coba
+// cookie pelanggan — dan utamakan di area publik; /Panel dan /api tetap milik
+// principal staf/API key.
 app.Use(async (context, next) =>
 {
-    if (context.User.Identity?.IsAuthenticated != true)
+    var currentIsCustomer = context.User.Identity?.IsAuthenticated == true
+        && string.Equals(context.User.Identity?.AuthenticationType, CustomerAuth.CustomerScheme, StringComparison.OrdinalIgnoreCase);
+
+    if (!currentIsCustomer)
     {
         var result = await context.AuthenticateAsync(CustomerAuth.CustomerScheme);
         if (result.Succeeded && result.Principal is not null)
         {
-            context.User = result.Principal;
+            var path = context.Request.Path;
+            var isStaffArea = path.StartsWithSegments("/Panel", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
+            if (!isStaffArea)
+            {
+                context.User = result.Principal;
+            }
         }
     }
     await next();
