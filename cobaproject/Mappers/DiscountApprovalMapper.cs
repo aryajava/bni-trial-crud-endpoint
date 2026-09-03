@@ -27,5 +27,5 @@ public static class DiscountApprovalMapper
     private static decimal EffectivePrice(decimal price, decimal? discountPercent) =>
         discountPercent is null or 0
             ? price
-            : Math.Round(price - price * discountPercent.Value / 100m, -2, MidpointRounding.AwayFromZero);
+            : Math.Round((price - price * discountPercent.Value / 100m) / 100m, 0, MidpointRounding.AwayFromZero) * 100m;
 }
