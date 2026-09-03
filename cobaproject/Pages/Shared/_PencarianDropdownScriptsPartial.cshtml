@@ -25,6 +25,10 @@
     }
     .cari-select-list li mark { background: #FDE68A; color: inherit; padding: 0 1px; border-radius: 2px; }
     .cari-select-list li.kosong { cursor: default; color: #6B7280; }
+    .cari-sort { cursor: pointer; user-select: none; color: #6B7280; }
+    .cari-sort .material-icons { transition: transform .15s ease; }
+    .cari-sort.desc { color: var(--gk-primary-text, #2C5A80); }
+    .cari-sort.desc .material-icons { transform: rotate(180deg); }
 </style>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -52,7 +56,7 @@
             panel.innerHTML = '<div class="input-group input-group-sm">' +
                 '<span class="input-group-text"><span class="material-icons">search</span></span>' +
                 '<input type="text" class="form-control cari-input" placeholder="Ketik untuk mencari…" autocomplete="off">' +
-                '<span class="input-group-text" title="Urut naik (A–Z)"><span class="material-icons">sort</span></span>' +
+                '<span class="input-group-text cari-sort" title="Urut A–Z" role="button"><span class="material-icons">sort</span></span>' +
                 '</div><ul class="cari-select-list"></ul>';
 
             wrap.appendChild(trigger);
@@ -60,6 +64,8 @@
 
             var input = panel.querySelector(".cari-input");
             var list = panel.querySelector(".cari-select-list");
+            var sortEl = panel.querySelector(".cari-sort");
+            var urutan = "asc";
             var opsi = Array.from(select.options);
             var ket = opsi.map(function (o, i) { return { index: i, teks: o.text, nilai: o.value }; });
             var placeholderTeks = (function () {
@@ -72,11 +78,20 @@
             function daftarUrut() {
                 var ph = [];
                 var sisa = [];
-                ket.slice().sort(urutNaik).forEach(function (k) {
+                var urut = ket.slice().sort(urutNaik);
+                if (urutan === "desc") { urut.reverse(); }
+                urut.forEach(function (k) {
                     (k.nilai === "" ? ph : sisa).push(k);
                 });
                 return ph.concat(sisa);
             }
+
+            sortEl.addEventListener("click", function () {
+                urutan = urutan === "asc" ? "desc" : "asc";
+                sortEl.classList.toggle("desc", urutan === "desc");
+                sortEl.title = urutan === "asc" ? "Urut A–Z" : "Urut Z–A";
+                renderList(input.value);
+            });
 
             function tampilkanTeksTerpilih() {
                 var idx = select.selectedIndex;
