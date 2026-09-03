@@ -49,7 +49,7 @@ public class CreateModel : PageModel
         }
 
         TempData["SuccessMessage"] = Form.DiscountPercent.HasValue
-            ? $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}). Diskon menunggu persetujuan Pemilik Toko."
+            ? $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}). Diskon menunggu persetujuan."
             : $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}).";
         return RedirectToPage("Index");
     }

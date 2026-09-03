@@ -77,13 +77,6 @@ public class ProductService : IProductService
     private string Caller =>
         _httpContextAccessor.HttpContext?.Items["Caller"]?.ToString() ?? "SCREEN";
 
-    // OWNER (cookie atau API key) dan SYSTEM (kunci fallback) menetapkan diskon
-    // langsung tanpa persetujuan; selain itu (ADMIN) wajib konfirmasi Pemilik Toko.
-    private bool CallerIsOwnerOrSystem =>
-        _httpContextAccessor.HttpContext?.User.IsInRole(UserRolePolicy.Owner) == true
-        || _httpContextAccessor.HttpContext?.User.IsInRole(UserRolePolicy.Sa) == true
-        || string.Equals(Caller, "SYSTEM", StringComparison.OrdinalIgnoreCase);
-
     public async Task<IEnumerable<ProductDto>> GetAllAsync()
     {
         using var connection = new SqlConnection(_connectionString);
@@ -217,9 +210,9 @@ public class ProductService : IProductService
     {
         using var connection = new SqlConnection(_connectionString);
 
-        // Diskon dari ADMIN tidak langsung disimpan: produk dibuat tanpa diskon,
-        // lalu permintaan persetujuan menyusul (keputusan Q7).
-        var needsApproval = request.DiscountPercent is not null && !CallerIsOwnerOrSystem;
+        // Semua perubahan diskon lewat alur persetujuan — tidak ada bypass peran.
+        // Produk dibuat tanpa diskon, lalu permintaan persetujuan menyusul.
+        var needsApproval = request.DiscountPercent is not null;
 
         var sql = """
             INSERT INTO LOSCONSUMER.MASTER_PRODUCT
@@ -272,10 +265,9 @@ public class ProductService : IProductService
         if (current is null)
             return (null, false, null, false);
 
-        // Diskon yang diubah oleh ADMIN tidak langsung disimpan: produk tetap
-        // memakai diskon lama, permintaan persetujuan diajukan (keputusan Q1–Q5).
-        var needsApproval = current.DiscountPercent != request.DiscountPercent
-            && !CallerIsOwnerOrSystem;
+        // Diskon yang diubah tidak langsung disimpan: produk tetap memakai diskon
+        // lama, permintaan persetujuan diajukan — berlaku untuk semua peran.
+        var needsApproval = current.DiscountPercent != request.DiscountPercent;
 
         if (needsApproval && await _discountApprovalService.HasPendingAsync(id))
             return (current, false, "Produk ini masih memiliki permintaan diskon yang menunggu persetujuan.", false);
@@ -342,7 +334,7 @@ public class ProductService : IProductService
                 return (updated, false, error, false);
             }
 
-            return (updated, false, "Diskon menunggu persetujuan Pemilik Toko.", true);
+            return (updated, false, "Diskon menunggu persetujuan.", true);
         }
 
         return (updated, false, null, true);

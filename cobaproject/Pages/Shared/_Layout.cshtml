@@ -231,7 +231,7 @@
                     }
                     <div class="nav-group-title">Monitoring</div>
                     <a class="nav-link @(isMonitoringPages ? "active" : "")" href="/Panel/Monitoring">
-                        <span class="material-icons">fact_check</span> @(isOwner || isSa ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
+                        <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
                     </a>
                     @if (isOwner || isSa)
                     {
@@ -338,7 +338,7 @@
                 }
                 <div class="nav-group-title">Monitoring</div>
                 <a class="nav-link @(isMonitoringPages ? "active" : "")" href="/Panel/Monitoring">
-                    <span class="material-icons">fact_check</span> @(isOwner || isSa ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
+                    <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
                 </a>
                 @if (isOwner || isSa)
                 {
