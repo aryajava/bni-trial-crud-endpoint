@@ -6,14 +6,16 @@
     var isMasterUserPages = currentPage.StartsWith("/Panel/MasterUser", StringComparison.OrdinalIgnoreCase);
     var isCategoryPages = currentPage.StartsWith("/Panel/Kategori", StringComparison.OrdinalIgnoreCase);
     var isUserControlPages = currentPage.StartsWith("/Panel/UserControl", StringComparison.OrdinalIgnoreCase);
-    var isMonitoringPages = currentPage.StartsWith("/Panel/Monitoring", StringComparison.OrdinalIgnoreCase);
+    var isPersetujuanPages = currentPage.StartsWith("/Panel/PersetujuanDiskon", StringComparison.OrdinalIgnoreCase);
+    var isPermintaanPages = currentPage.StartsWith("/Panel/PermintaanDiskon", StringComparison.OrdinalIgnoreCase);
     var isSettingsPages = currentPage.StartsWith("/Panel/Settings", StringComparison.OrdinalIgnoreCase);
     var crumbRoot = ViewData["CrumbRoot"] as string
         ?? (isDashboardPages ? "Beranda"
             : isMasterUserPages ? "Master User"
             : isCategoryPages ? "Master Kategori"
             : isUserControlPages ? "User Control"
-            : isMonitoringPages ? "Monitoring"
+            : isPersetujuanPages ? "Persetujuan Diskon"
+            : isPermintaanPages ? "Permintaan Diskon Saya"
             : isSettingsPages ? "Pengaturan"
             : "Master Produk");
     var signedIn = User.Identity?.IsAuthenticated == true;
@@ -230,9 +232,15 @@
                         </a>
                     }
                     <div class="nav-group-title">Monitoring</div>
-                    <a class="nav-link @(isMonitoringPages ? "active" : "")" href="/Panel/Monitoring">
-                        <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
+                    <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
+                        <span class="material-icons">receipt_long</span> Permintaan Diskon Saya
                     </a>
+                    @if (isOwner || isSa)
+                    {
+                        <a class="nav-link @(isPersetujuanPages ? "active" : "")" href="/Panel/PersetujuanDiskon">
+                            <span class="material-icons">fact_check</span> Persetujuan Diskon
+                        </a>
+                    }
                     @if (isOwner || isSa)
                     {
                         <div class="nav-group-title">Settings</div>
@@ -266,7 +274,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a href="@(isDashboardPages ? "/Panel" : isMasterUserPages ? "/Panel/MasterUser" : isCategoryPages ? "/Panel/Kategori" : isUserControlPages ? "/Panel/UserControl" : isMonitoringPages ? "/Panel/Monitoring" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk")">@crumbRoot</a>
+                <a href="@(isDashboardPages ? "/Panel" : isMasterUserPages ? "/Panel/MasterUser" : isCategoryPages ? "/Panel/Kategori" : isUserControlPages ? "/Panel/UserControl" : isPermintaanPages ? "/Panel/PermintaanDiskon" : isPersetujuanPages ? "/Panel/PersetujuanDiskon" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -337,9 +345,15 @@
                     </a>
                 }
                 <div class="nav-group-title">Monitoring</div>
-                <a class="nav-link @(isMonitoringPages ? "active" : "")" href="/Panel/Monitoring">
-                    <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
+                <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
+                    <span class="material-icons">receipt_long</span> Permintaan Diskon Saya
                 </a>
+                @if (isOwner || isSa)
+                {
+                    <a class="nav-link @(isPersetujuanPages ? "active" : "")" href="/Panel/PersetujuanDiskon">
+                        <span class="material-icons">fact_check</span> Persetujuan Diskon
+                    </a>
+                }
                 @if (isOwner || isSa)
                 {
                     <div class="nav-group-title">Settings</div>

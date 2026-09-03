@@ -1,0 +1,297 @@
+@{
+    var apiKeyHeader = (string)ViewData["ApiKeyHeader"]!;
+    var apiKey = (string)ViewData["ApiKey"]!;
+    var canDecide = ViewData["CanDecide"] is true;
+    var onlyMine = ViewData["OnlyMine"] is true;
+    var colspan = canDecide ? 9 : 8;
+}
+<script>
+    const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(apiKeyHeader));
+    const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(apiKey));
+    const CAN_DECIDE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(canDecide));
+    const ONLY_MINE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(onlyMine));
+    const COLSPAN = @colspan;
+
+    const state = {
+        page: 1,
+        pageSize: 10,
+        sortBy: '',
+        sortOrder: 'desc',
+        status: '',
+        search: '',
+        totalPages: 0
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function esc(s) {
+        return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function restoreFromUrl() {
+        const q = new URLSearchParams(location.search);
+        const page = Number(q.get('page'));
+        if (page >= 1) state.page = page;
+        if (q.get('sortBy')) state.sortBy = q.get('sortBy');
+        if (q.get('sortOrder') === 'asc' || q.get('sortOrder') === 'desc') state.sortOrder = q.get('sortOrder');
+        if (q.get('status')) { state.status = q.get('status'); $('statusSelect').value = state.status; }
+        if (q.get('search')) { state.search = q.get('search'); $('searchInput').value = state.search; }
+    }
+
+    function pushUrl() {
+        const q = new URLSearchParams();
+        if (state.page > 1) q.set('page', state.page);
+        if (state.sortBy && (state.sortBy !== 'createdAt' || state.sortOrder !== 'desc')) {
+            q.set('sortBy', state.sortBy);
+            q.set('sortOrder', state.sortOrder);
+        }
+        if (state.status) q.set('status', state.status);
+        if (state.search) q.set('search', state.search);
+        const us = q.toString();
+        history.replaceState(null, '', us ? '?' + us : location.pathname);
+    }
+
+    function buildQuery() {
+        const q = new URLSearchParams();
+        q.set('page', state.page);
+        q.set('pageSize', state.pageSize);
+        q.set('sortBy', state.sortBy);
+        q.set('sortOrder', state.sortOrder);
+        if (state.status) q.set('status', state.status);
+        if (state.search.trim()) q.set('search', state.search.trim());
+        if (ONLY_MINE) q.set('onlyMine', 'true');
+        return q.toString();
+    }
+
+    function badgeStatus(status) {
+        if (status === 'MENUNGGU') return '<span class="badge bg-warning-subtle text-warning-emphasis">Menunggu</span>';
+        if (status === 'DISETUJUI') return '<span class="badge bg-success-subtle text-success-emphasis">Disetujui</span>';
+        return '<span class="badge bg-danger-subtle text-danger-emphasis">Ditolak</span>';
+    }
+
+    function formatRupiah(nilai) {
+        return 'Rp ' + Math.round(nilai || 0).toLocaleString('id-ID');
+    }
+
+    function formatDateTime(iso) {
+        if (!iso) return '-';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '-';
+        return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderRows(items) {
+        const tbody = $('approvalRows');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr class="row-empty"><td colspan="' + COLSPAN + '"><span class="material-icons">inbox</span> Tidak ada data yang cocok dengan kriteria.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map((item, idx) => {
+            const nomor = ((state.page - 1) * state.pageSize) + idx + 1;
+            const menunggu = item.status === 'MENUNGGU';
+            const diskon = '<span class="text-muted text-decoration-line-through">' + (item.oldValue != null ? item.oldValue + '%' : '-') + '</span>' +
+                '<span class="material-icons arrow-next" style="vertical-align: middle; font-size: 16px;">arrow_forward</span>' +
+                '<span class="fw-semibold text-primary">' + (item.newValue != null ? item.newValue + '%' : '-') + '</span>' +
+                '<small class="text-muted d-block">' + formatRupiah(item.hargaSebelumDiskon) + ' → ' + formatRupiah(item.hargaSetelahDiskon) + '</small>';
+            const catatan = item.reason
+                ? esc(item.reason) + (!CAN_DECIDE && item.decidedAt
+                    ? '<small class="text-muted d-block">(oleh ' + (item.decidedBy === 'SISTEM' ? 'otomatis' : esc(item.decidedBy)) + ', ' + formatDateTime(item.decidedAt) + ')</small>'
+                    : '')
+                : '<span class="text-muted">—</span>';
+            let keputusan = '<span class="text-muted">—</span>';
+            if (CAN_DECIDE && menunggu) {
+                keputusan = '<div class="field-actions justify-content-center">' +
+                    '<button type="button" class="btn btn-success btn-sm btn-approve" data-id="' + item.id + '" data-version="' + item.version + '" title="Setujui diskon"><span class="material-icons">check</span></button>' +
+                    '<button type="button" class="btn btn-outline-danger btn-sm btn-reject" data-id="' + item.id + '" data-version="' + item.version + '" title="Tolak diskon"><span class="material-icons">close</span></button>' +
+                    '</div>';
+            }
+            return '<tr>' +
+                '<td class="td-nomor text-center">' + nomor + '</td>' +
+                (CAN_DECIDE ? '<td>' + keputusan + '</td>' : '') +
+                '<td class="td-id">' + item.productId + '</td>' +
+                '<td class="fw-semibold">' + esc(item.title) + '</td>' +
+                '<td>' + diskon + '</td>' +
+                '<td>' + badgeStatus(item.status) + '</td>' +
+                '<td class="td-nomor">' + formatDateTime(item.requestedAt) + '</td>' +
+                '<td>' + esc(item.requestedBy) + '</td>' +
+                '<td>' + catatan + '</td>' +
+                '</tr>';
+        }).join('');
+    }
+
+    function buildPages(current, total) {
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+        const candidates = [1, total];
+        for (let i = current - 2; i <= current + 2; i++) if (i >= 1 && i <= total) candidates.push(i);
+        return [...new Set(candidates)].sort((a, b) => a - b);
+    }
+
+    function renderPagination() {
+        const el = $('pagination');
+        const total = Math.max(1, state.totalPages);
+        const parts = [];
+        const item = (icon, page, disabled, label) =>
+            '<li class="page-item ' + (disabled ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + page + '" title="' + label + '"><span class="material-icons">' + icon + '</span></a></li>';
+        parts.push(item('chevron_left', state.page - 1, state.page <= 1, 'Halaman sebelumnya'));
+        for (const p of buildPages(state.page, state.totalPages)) {
+            if (p === '...') parts.push('<li class="page-item disabled"><span class="page-link pg-ellipsis">. . .</span></li>');
+            else parts.push('<li class="page-item ' + (p === state.page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+        }
+        parts.push(item('chevron_right', state.page + 1, state.page >= total, 'Halaman berikutnya'));
+        el.innerHTML = parts.join('');
+    }
+
+    function setPageMeta(page, total, totalPages) {
+        state.page = page;
+        state.totalPages = totalPages;
+        $('pageInfo').textContent = total === 0
+            ? 'Hal 0 dari 0 (0 data)'
+            : 'Hal ' + page + ' dari ' + totalPages + ' (' + total + ' data)';
+        renderPagination();
+    }
+
+    function updateSortIndicators() {
+        document.querySelectorAll('.th-sort').forEach((btn) => {
+            const active = btn.dataset.sort === state.sortBy;
+            btn.classList.toggle('active', active);
+            const ic = btn.querySelector('.sort-ic');
+            if (!ic) return;
+            if (active) ic.textContent = state.sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward';
+            else ic.textContent = 'swap_vert';
+        });
+    }
+
+    async function loadData() {
+        const tbody = $('approvalRows');
+        tbody.innerHTML = '<tr class="row-loading"><td colspan="' + COLSPAN + '"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
+        try {
+            const res = await fetch('/api/discount-approvals?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
+            const json = await res.json().catch(() => null);
+            if (!res.ok) {
+                throw new Error((json && json.message) ? json.message : ('HTTP ' + res.status));
+            }
+            if (!json.isSuccess) throw new Error(json.message || 'Gagal memuat data.');
+            renderRows(json.data.items);
+            setPageMeta(json.data.page, json.data.total, json.data.totalPages);
+        } catch (err) {
+            tbody.innerHTML = '<tr class="row-empty"><td colspan="' + COLSPAN + '">Gagal memuat data: ' + esc(err.message) + '</td></tr>';
+            setPageMeta(1, 0, 0);
+        } finally {
+            updateSortIndicators();
+            pushUrl();
+        }
+    }
+
+    async function postDecision(id, version, approve, reason) {
+        const url = '/api/discount-approvals/' + id + (approve ? '/approve' : '/reject');
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    [API_KEY_HEADER]: API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ version: version, reason: reason || '' })
+            });
+            const json = await res.json().catch(() => null);
+            if (!res.ok) {
+                throw new Error((json && json.message) ? json.message : ('HTTP ' + res.status));
+            }
+            Swal.fire({ toast: true, position: "top-end", icon: "success",
+                title: json.message || 'Keputusan tersimpan.', showConfirmButton: false, timer: 2500 });
+            loadData();
+        } catch (err) {
+            Swal.fire({ toast: true, position: "top-end", icon: "error",
+                title: err.message, showConfirmButton: false, timer: 4000 });
+        }
+    }
+
+    function onApproveClick(btn) {
+        Swal.fire({
+            title: 'Setujui Permintaan Diskon',
+            input: 'text',
+            inputLabel: 'Catatan (opsional)',
+            inputValue: 'Disetujui',
+            showCancelButton: true,
+            confirmButtonText: 'Setujui',
+            cancelButtonText: 'Batal',
+            icon: 'success'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                postDecision(btn.dataset.id, btn.dataset.version, true, (result.value || '').trim());
+            }
+        });
+    }
+
+    function onRejectClick(btn) {
+        Swal.fire({
+            title: 'Tolak Permintaan Diskon',
+            input: 'text',
+            inputLabel: 'Alasan (wajib diisi)',
+            inputPlaceholder: 'Contoh: diskon terlalu besar',
+            inputValidator: function (value) {
+                if (!value || !value.trim()) {
+                    return 'Alasan penolakan wajib diisi.';
+                }
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Tolak',
+            cancelButtonText: 'Batal',
+            icon: 'warning'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                postDecision(btn.dataset.id, btn.dataset.version, false, (result.value || '').trim());
+            }
+        });
+    }
+
+    let searchTimer = null;
+    document.addEventListener('DOMContentLoaded', () => {
+        restoreFromUrl();
+
+        $('searchInput').addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                state.search = $('searchInput').value;
+                state.page = 1;
+                loadData();
+            }, 350);
+        });
+        $('statusSelect').addEventListener('change', (e) => {
+            state.status = e.target.value;
+            state.page = 1;
+            loadData();
+        });
+        document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
+            const col = btn.dataset.sort;
+            if (state.sortBy === col) {
+                if (state.sortOrder === 'asc') state.sortOrder = 'desc';
+                else { state.sortBy = ''; state.sortOrder = 'desc'; }
+            } else {
+                state.sortBy = col;
+                state.sortOrder = 'asc';
+            }
+            state.page = 1;
+            loadData();
+        }));
+        $('pagination').addEventListener('click', (e) => {
+            const link = e.target.closest('.page-link');
+            if (!link || link.closest('.disabled')) return;
+            e.preventDefault();
+            const page = Number(link.dataset.page);
+            if (page >= 1 && page <= state.totalPages && page !== state.page) {
+                state.page = page;
+                loadData();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        $('approvalRows').addEventListener('click', (e) => {
+            const approve = e.target.closest('.btn-approve');
+            if (approve) { e.preventDefault(); onApproveClick(approve); return; }
+            const reject = e.target.closest('.btn-reject');
+            if (reject) { e.preventDefault(); onRejectClick(reject); }
+        });
+
+        loadData();
+    });
+</script>
