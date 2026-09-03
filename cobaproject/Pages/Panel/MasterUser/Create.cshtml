@@ -35,7 +35,7 @@
 
             <div class="mb-3">
                 <label class="form-label" asp-for="Form.Role">Role</label>
-                <select asp-for="Form.Role" class="form-select">
+                <select asp-for="Form.Role" data-pencarian class="form-select">
                     @foreach (var role in Model.AllowedRoles)
                     {
                         <option value="@role">@role</option>

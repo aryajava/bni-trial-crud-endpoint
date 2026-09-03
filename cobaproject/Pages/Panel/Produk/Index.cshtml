@@ -19,7 +19,7 @@
 <div class="filter-inline d-flex flex-wrap align-items-end gap-2 mb-3">
     <div class="d-flex flex-column gap-1">
         <label class="cluster-label text-secondary fw-semibold mb-0" for="categorySelect">Kategori</label>
-        <select id="categorySelect" class="form-select form-select-sm">
+        <select id="categorySelect" data-pencarian class="form-select form-select-sm">
             <option value="">Semua Kategori</option>
             @foreach (var c in Model.Categories)
             {
@@ -89,7 +89,7 @@
     </div>
     <div class="card-body border-top d-flex align-items-center justify-content-between gap-3 flex-wrap py-2 px-3">
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <select id="pageSizeSelect" class="form-select form-select-sm w-auto">
+            <select id="pageSizeSelect" data-pencarian class="form-select form-select-sm w-auto">
                 <option value="20" selected>20</option>
                 <option value="50">50</option>
                 <option value="100">100</option>

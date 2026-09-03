@@ -67,7 +67,7 @@
                                     {
                                         <form method="post" asp-page-handler="ChangeRole" class="d-inline-flex gap-1 align-items-center m-0">
                                             <input type="hidden" name="id" value="@u.Id" />
-                                            <select name="role" class="form-select form-select-sm" style="width: 130px;">
+                                            <select name="role" data-pencarian class="form-select form-select-sm" style="width: 130px;">
                                                 @foreach (var role in Model.AvailableRoles)
                                                 {
                                                     <option value="@role" selected="@(u.Role == role)">@UserRolePolicy.DisplayName(role)</option>

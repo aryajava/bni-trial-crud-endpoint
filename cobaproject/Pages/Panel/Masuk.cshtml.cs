@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
@@ -14,10 +15,12 @@ public class LoginModel : PageModel
     private readonly IUserService _userService;
     private readonly ILogger<LoginModel> _logger;
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
+    [Required(ErrorMessage = "Username wajib diisi.")]
     public string Username { get; set; } = string.Empty;
 
     [BindProperty]
+    [Required(ErrorMessage = "Password wajib diisi.")]
     public string Password { get; set; } = string.Empty;
 
     public LoginModel(IUserService userService, ILogger<LoginModel> logger)

@@ -1,0 +1,45 @@
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("select[data-pencarian]").forEach(function (select) {
+            var field = document.createElement("div");
+            field.className = "input-group input-group-sm mb-1";
+            field.innerHTML = '<span class="input-group-text"><span class="material-icons">search</span></span>' +
+                '<input type="text" class="form-control" placeholder="Ketik untuk mencari…" autocomplete="off" aria-label="Cari pilihan">' +
+                '<span class="input-group-text" title="Urut naik (A–Z)"><span class="material-icons">sort_by_alpha</span></span>';
+
+            var wrap = document.createElement("div");
+            wrap.className = "dropdown-cari";
+            wrap.appendChild(field);
+            select.parentNode.insertBefore(wrap, select);
+            wrap.appendChild(select);
+
+            var input = field.querySelector("input");
+            var options = Array.from(select.options).slice(1);
+            var placeholder = select.options.length > 0 ? select.options[0] : null;
+
+            var sorted = options.slice().sort(function (a, b) {
+                return a.text.localeCompare(b.text, "id");
+            });
+
+            var fragment = document.createDocumentFragment();
+            if (placeholder) { fragment.appendChild(placeholder); }
+            sorted.forEach(function (o) { fragment.appendChild(o); });
+            select.appendChild(fragment);
+            select.dataset.terurut = "asc";
+
+            function filter() {
+                var q = input.value.trim().toLowerCase();
+                Array.from(select.options).forEach(function (o, i) {
+                    if (i === 0) { o.hidden = false; return; }
+                    o.hidden = q.length > 0 && o.text.toLowerCase().indexOf(q) === -1;
+                });
+            }
+
+            input.addEventListener("input", filter);
+            select.addEventListener("change", function () {
+                input.value = "";
+                filter();
+            });
+        });
+    });
+</script>
