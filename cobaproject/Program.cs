@@ -89,6 +89,9 @@ builder.Services.AddScoped<IRequestLogService, RequestLogService>();
 builder.Services.AddScoped<IResponseLogService, ResponseLogService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<ISettingService, SettingService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -100,6 +103,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Panel/Masuk";
         options.AccessDeniedPath = "/Panel/Ditolak";
         options.Cookie.Name = "GKLaku.Auth";
+        options.SlidingExpiration = true;
+    })
+    .AddCookie(CustomerAuth.CustomerScheme, options =>
+    {
+        options.LoginPath = "/Masuk";
+        options.AccessDeniedPath = "/Ditolak";
+        options.Cookie.Name = "GKLaku.Customer";
         options.SlidingExpiration = true;
     });
 builder.Services.AddAuthorization();
