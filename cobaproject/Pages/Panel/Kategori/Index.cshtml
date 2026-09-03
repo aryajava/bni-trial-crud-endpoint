@@ -11,11 +11,12 @@
 <div class="card card-soft mb-4">
     <div class="card-body p-3">
         <form method="post" asp-page-handler="Create">
-            <div asp-validation-summary="All" class="pesan-error mb-2"></div>
+            <div asp-validation-summary="ModelOnly" class="pesan-error mb-2"></div>
             <div class="d-flex gap-2 align-items-end flex-wrap">
                 <div class="flex-grow-1" style="max-width: 360px;">
                     <label class="form-label mb-0" asp-for="Create.Name">Nama Kategori Baru</label>
                     <input asp-for="Create.Name" class="form-control form-control-sm" placeholder="Contoh: Elektronik" />
+                    @Html.ValidationMessageFor(m => m.Create.Name, null, new { @class = "field-error" })
                 </div>
                 <button class="btn btn-primary btn-sm" type="submit">
                     <span class="material-icons">add</span> Tambah
