@@ -10,102 +10,234 @@
     <div class="card-body">
         <h1 class="h4 mb-3"><span class="material-icons">shopping_cart</span> Keranjang</h1>
 
-        @if (Model.Items.Count == 0)
+        @if (Model.IsCustomer)
         {
-            <div class="text-center text-muted py-4">
-                <span class="material-icons" style="font-size:48px;">remove_shopping_cart</span>
-                <p class="mt-2 mb-2">Keranjang kosong.</p>
-                <a class="btn btn-primary btn-sm" href="/">Belanja Sekarang</a>
-            </div>
+            @if (Model.Items.Count == 0)
+            {
+                <div class="text-center text-muted py-4">
+                    <span class="material-icons" style="font-size:48px;">remove_shopping_cart</span>
+                    <p class="mt-2 mb-2">Keranjang kosong.</p>
+                    <a class="btn btn-primary btn-sm" href="/">Belanja Sekarang</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th class="td-nomor">Harga Satuan</th>
+                                <th class="text-center" style="width:130px;">Jumlah</th>
+                                <th class="td-nomor">Subtotal</th>
+                                <th class="col-aksi"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.Title
+                                        @if (item.Quantity > item.Stock)
+                                        {
+                                            <div class="text-danger small">Stok tersisa @item.Stock</div>
+                                        }
+                                    </td>
+                                    <td class="td-nomor">
+                                        @if (item.DiscountPercent is > 0)
+                                        {
+                                            <span class="text-muted text-decoration-line-through small me-1">@item.Price.ToString("N0")</span>
+                                            <span class="text-primary fw-semibold">@item.EffectivePrice.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@item.EffectivePrice.ToString("N0")</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form method="post" asp-page-handler="UpdateQty" class="d-flex gap-1 justify-content-center">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <input type="number" name="qty" value="@item.Quantity" min="1" max="@item.Stock" class="form-control form-control-sm" style="width:80px;" data-bilangan />
+                                            <button class="btn btn-outline-primary btn-sm" type="submit" title="Perbarui"><span class="material-icons">refresh</span></button>
+                                        </form>
+                                    </td>
+                                    <td class="td-nomor fw-semibold">Rp @item.Subtotal.ToString("N0")</td>
+                                    <td>
+                                        <form method="post" asp-page-handler="Remove">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><span class="material-icons">delete</span></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                    <div class="fs-5 fw-bold">Total: <span class="text-primary">Rp @total.ToString("N0")</span></div>
+                    <a class="btn btn-primary" href="/Checkout"><span class="material-icons">check_circle</span> Konfirmasi Pesanan</a>
+                </div>
+                <div class="text-muted small mt-1">Ongkir dan pajak ditentukan saat checkout.</div>
+            }
         }
         else
         {
-            <div class="table-wrap">
-                <table class="table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Produk</th>
-                            <th class="td-nomor">Harga Satuan</th>
-                            <th class="text-center" style="width:130px;">Jumlah</th>
-                            <th class="td-nomor">Subtotal</th>
-                            <th class="col-aksi"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Items)
-                        {
+            <div id="guestCartView">
+                <div class="text-center text-muted py-4 d-none" id="guestCartEmpty">
+                    <span class="material-icons" style="font-size:48px;">remove_shopping_cart</span>
+                    <p class="mt-2 mb-2">Keranjang kosong.</p>
+                    <a class="btn btn-primary btn-sm" href="/">Belanja Sekarang</a>
+                </div>
+                <div class="table-wrap d-none" id="guestCartBody">
+                    <table class="table align-middle mb-0">
+                        <thead>
                             <tr>
-                                <td class="fw-semibold">@item.Title
-                                    @if (item.Quantity > item.Stock)
-                                    {
-                                        <div class="text-danger small">Stok tersisa @item.Stock</div>
-                                    }
-                                </td>
-                                <td class="td-nomor">
-                                    @if (item.DiscountPercent is > 0)
-                                    {
-                                        <span class="text-muted text-decoration-line-through small me-1">@item.Price.ToString("N0")</span>
-                                        <span class="text-primary fw-semibold">@item.EffectivePrice.ToString("N0")</span>
-                                    }
-                                    else
-                                    {
-                                        <span>@item.EffectivePrice.ToString("N0")</span>
-                                    }
-                                </td>
-                                <td>
-                                    <form method="post" asp-page-handler="UpdateQty" class="d-flex gap-1 justify-content-center">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="productId" value="@item.ProductId" />
-                                        <input type="number" name="qty" value="@item.Quantity" min="1" max="@item.Stock" class="form-control form-control-sm" style="width:80px;" data-bilangan />
-                                        <button class="btn btn-outline-primary btn-sm" type="submit" title="Perbarui"><span class="material-icons">refresh</span></button>
-                                    </form>
-                                </td>
-                                <td class="td-nomor fw-semibold">Rp @item.Subtotal.ToString("N0")</td>
-                                <td>
-                                    <form method="post" asp-page-handler="Remove">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="productId" value="@item.ProductId" />
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><span class="material-icons">delete</span></button>
-                                    </form>
-                                </td>
+                                <th>Produk</th>
+                                <th class="td-nomor">Harga Satuan</th>
+                                <th class="text-center" style="width:110px;">Jumlah</th>
+                                <th class="td-nomor">Subtotal</th>
+                                <th class="col-aksi"></th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody id="guestCartRows"></tbody>
+                    </table>
+                </div>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 d-none" id="guestCartFooter">
+                    <div class="fs-5 fw-bold">Total: <span class="text-primary" id="guestCartTotal">Rp 0</span></div>
+                    <div class="text-end">
+                        <div class="mb-1">
+                            <a class="btn btn-primary" id="btnGuestKonfirmasi" href="/Daftar?ReturnUrl=/Keranjang">
+                                <span class="material-icons">check_circle</span> Konfirmasi Pesanan
+                            </a>
+                        </div>
+                        <div class="small text-muted">
+                            Perlu akun untuk melanjutkan. <a href="/Masuk?ReturnUrl=/Keranjang">Sudah punya akun? Masuk</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-                <div class="fs-5 fw-bold">Total: <span class="text-primary">Rp @total.ToString("N0")</span></div>
-                <a class="btn btn-primary" href="/Checkout"><span class="material-icons">check_circle</span> Konfirmasi Pesanan</a>
-            </div>
-            <div class="text-muted small mt-1">Ongkir dan pajak ditentukan saat checkout.</div>
+            <div class="text-muted small mt-2 d-none" id="guestCartCatatan">Ongkir dan pajak ditentukan saat checkout.</div>
         }
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var tamu = bacaKeranjangTamu();
-            if (tamu && tamu.length > 0) {
-                var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-                if (tokenInput) {
-                    var f = document.createElement('form');
-                    f.method = 'post';
-                    f.action = '/Keranjang?handler=Merge';
-                    f.appendChild(tokenInput.cloneNode(true));
-                    var mk = function (name, value) {
-                        var input = document.createElement('input');
-                        input.type = 'hidden'; input.name = name; input.value = value;
-                        f.appendChild(input);
-                    };
-                    tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); });
-                    document.body.appendChild(f);
-                    f.submit();
-                }
+    @if (!Model.IsCustomer)
+    {
+        <script>
+            var GUEST_KERANJANG_KEY = 'gklaku_cart';
+
+            function bacaGuest() {
+                try { return JSON.parse(localStorage.getItem(GUEST_KERANJANG_KEY) || '[]'); } catch (e) { return []; }
             }
-            localStorage.removeItem('gklaku_cart');
-            muatBadge();
-        });
-    </script>
+            function simpanGuest(items) {
+                localStorage.setItem(GUEST_KERANJANG_KEY, JSON.stringify(items));
+            }
+            function formatRp(n) { return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID'); }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var empty = document.getElementById('guestCartEmpty');
+                var body = document.getElementById('guestCartBody');
+                var footer = document.getElementById('guestCartFooter');
+                var rowsEl = document.getElementById('guestCartRows');
+
+                function render() {
+                    var items = bacaGuest();
+                    if (items.length === 0) {
+                        empty.classList.remove('d-none');
+                        body.classList.add('d-none');
+                        footer.classList.add('d-none');
+                        muatBadge();
+                        return;
+                    }
+
+                    var ids = items.map(function (i) { return i.productId; }).join(',');
+                    fetch('/Keranjang?handler=PreviewData&ids=' + encodeURIComponent(ids))
+                        .then(function (res) { return res.json(); })
+                        .then(function (produk) {
+                            var total = 0;
+                            rowsEl.innerHTML = '';
+                            produk.forEach(function (p) {
+                                var item = items.find(function (i) { return i.productId === p.productId; });
+                                if (!item) return;
+                                var qty = Math.min(Math.max(1, Number(item.qty) || 1), p.stock);
+                                item.qty = qty;
+                                var subtotal = p.effectivePrice * qty;
+                                total += subtotal;
+                                var harga = p.discountPercent > 0
+                                    ? '<span class="text-muted text-decoration-line-through small me-1">' + formatRp(p.price) + '</span><span class="text-primary fw-semibold">' + formatRp(p.effectivePrice) + '</span>'
+                                    : formatRp(p.effectivePrice);
+                                rowsEl.insertAdjacentHTML('beforeend', '<tr>' +
+                                    '<td class="fw-semibold">' + String(p.title).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</td>' +
+                                    '<td class="td-nomor">' + harga + '</td>' +
+                                    '<td class="text-center"><span class="d-inline-flex align-items-center gap-1">' +
+                                    '<button class="btn btn-sm btn-outline-secondary btn-qty" data-id="' + p.productId + '" data-delta="-1">-</button>' +
+                                    '<span class="qty-nomor" data-id="' + p.productId + '">' + qty + '</span>' +
+                                    '<button class="btn btn-sm btn-outline-secondary btn-qty" data-id="' + p.productId + '" data-delta="1">+</button>' +
+                                    '</span></td>' +
+                                    '<td class="td-nomor fw-semibold qty-subtotal" data-id="' + p.productId + '">' + formatRp(subtotal) + '</td>' +
+                                    '<td><button class="btn btn-sm btn-outline-danger btn-hapus" data-id="' + p.productId + '" title="Hapus"><span class="material-icons">delete</span></button></td>' +
+                                    '</tr>');
+                            });
+                            simpanGuest(items);
+                            document.getElementById('guestCartTotal').textContent = formatRp(total);
+                            empty.classList.add('d-none');
+                            body.classList.remove('d-none');
+                            footer.classList.remove('d-none');
+                            muatBadge();
+                        });
+                }
+
+                rowsEl.addEventListener('click', function (e) {
+                    var qtyBtn = e.target.closest('.btn-qty');
+                    var hapus = e.target.closest('.btn-hapus');
+                    if (qtyBtn) {
+                        var items = bacaGuest();
+                        var item = items.find(function (i) { return i.productId === Number(qtyBtn.dataset.id); });
+                        if (item) {
+                            item.qty = Math.max(1, (Number(item.qty) || 1) + Number(qtyBtn.dataset.delta));
+                            simpanGuest(items);
+                            render();
+                        }
+                    } else if (hapus) {
+                        var items = bacaGuest();
+                        simpanGuest(items.filter(function (i) { return i.productId !== Number(hapus.dataset.id); }));
+                        render();
+                    }
+                });
+
+                render();
+            });
+        </script>
+    }
+    else
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var tamu = bacaKeranjangTamu();
+                if (tamu && tamu.length > 0) {
+                    var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                    if (tokenInput) {
+                        var f = document.createElement('form');
+                        f.method = 'post';
+                        f.action = '/Keranjang?handler=Merge';
+                        f.appendChild(tokenInput.cloneNode(true));
+                        var mk = function (name, value) {
+                            var input = document.createElement('input');
+                            input.type = 'hidden'; input.name = name; input.value = value;
+                            f.appendChild(input);
+                        };
+                        tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); });
+                        document.body.appendChild(f);
+                        f.submit();
+                    }
+                }
+                localStorage.removeItem('gklaku_cart');
+                muatBadge();
+            });
+        </script>
+    }
 }
