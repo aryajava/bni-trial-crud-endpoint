@@ -1,5 +1,128 @@
 @page
 @model cobaproject.Pages.IndexModel
+@using cobaproject.Helpers
 @{
-    ViewData["Title"] = "Beranda";
+    ViewData["Title"] = "Belanja";
+    Layout = "_TokoLayout";
+    var currentUrl = Url.Page("Index");
+}
+
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <div class="d-flex flex-wrap gap-1">
+        <a class="btn btn-sm @(string.IsNullOrEmpty(Model.Category) ? "btn-primary" : "btn-outline-secondary")" href="/">Semua</a>
+        @foreach (var c in Model.Categories)
+        {
+            <a class="btn btn-sm @(Model.Category == c.Name ? "btn-primary" : "btn-outline-secondary")"
+               href="/?kategori=@Uri.EscapeDataString(c.Name)&q=@Uri.EscapeDataString(Model.Search ?? "")">@c.Name</a>
+        }
+    </div>
+    <div class="ms-auto text-muted small">@Model.Products.Total produk</div>
+</div>
+
+<div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
+    @foreach (var p in Model.Products.Items)
+    {
+        var habis = p.Stock <= 0;
+        var harga = Model.HargaEfektif(p);
+        <div class="col">
+            <div class="card card-produk">
+                <div class="img-wrap position-relative">
+                    @if (p.DiscountPercent is > 0)
+                    {
+                        <span class="badge badge-diskon">-@p.DiscountPercent%</span>
+                    }
+                    @if (habis)
+                    {
+                        <span class="badge bg-secondary badge-habis">Habis</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(p.Image))
+                    {
+                        <img src="@p.Image" alt="@p.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="material-icons text-secondary" style="font-size:64px;">inventory_2</span>
+                    }
+                </div>
+                <div class="card-body">
+                    <a href="/Produk/Detail/@p.Id" class="text-decoration-none text-body">
+                        <div class="fw-semibold mb-1" style="min-height: 40px;">@p.Title</div>
+                    </a>
+                    <div class="mb-2">
+                        @if (p.DiscountPercent is > 0)
+                        {
+                            <div><span class="harga-asli">@p.Price.ToString("N0")</span></div>
+                        }
+                        <span class="harga-efektif">Rp @harga.ToString("N0")</span>
+                    </div>
+                    @if (habis)
+                    {
+                        <button class="btn btn-outline-secondary btn-sm w-100" disabled>Stok Habis</button>
+                    }
+                    else if (Model.IsCustomer)
+                    {
+                        <form method="post" action="/Keranjang?handler=Add" class="d-grid">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@p.Id" />
+                            <input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path@ViewContext.HttpContext.Request.QueryString" />
+                            <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">add_shopping_cart</span> Masukkan Keranjang</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary btn-sm w-100 btn-tambah-tamu" data-product-id="@p.Id" type="button">
+                            <span class="material-icons">add_shopping_cart</span> Masukkan Keranjang
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (Model.Products.Items.Count == 0)
+{
+    <div class="text-center text-muted py-5">
+        <span class="material-icons" style="font-size:48px;">search_off</span>
+        <p class="mt-2 mb-0">Tidak ada produk yang cocok.</p>
+    </div>
+}
+
+@if (Model.Products.TotalPages > 1)
+{
+    <nav class="mt-4" aria-label="Navigasi halaman">
+        <ul class="pagination pagination-sm justify-content-center">
+            <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                <a class="page-link" href="/?page=@(Model.Page - 1)&q=@Uri.EscapeDataString(Model.Search ?? "")&kategori=@Uri.EscapeDataString(Model.Category ?? "")"><span class="material-icons">chevron_left</span></a>
+            </li>
+            @for (var i = 1; i <= Model.Products.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" href="/?page=@i&q=@Uri.EscapeDataString(Model.Search ?? "")&kategori=@Uri.EscapeDataString(Model.Category ?? "")">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.Page >= Model.Products.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="/?page=@(Model.Page + 1)&q=@Uri.EscapeDataString(Model.Search ?? "")&kategori=@Uri.EscapeDataString(Model.Category ?? "")"><span class="material-icons">chevron_right</span></a>
+            </li>
+        </ul>
+    </nav>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.btn-tambah-tamu').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var id = Number(btn.dataset.productId);
+                    var items = bacaKeranjangTamu();
+                    var ada = items.find(function (i) { return i.productId === id; });
+                    if (ada) { ada.qty = (Number(ada.qty) || 0) + 1; }
+                    else { items.push({ productId: id, qty: 1 }); }
+                    simpanKeranjangTamu(items);
+                    muatBadge();
+                    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
+                });
+            });
+        });
+    </script>
 }

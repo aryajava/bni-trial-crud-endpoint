@@ -1,0 +1,102 @@
+@page
+@model cobaproject.Pages.PesananSayaModel
+@{
+    ViewData["Title"] = "Pesanan Saya";
+    Layout = "_TokoLayout";
+    string Badge(string status) => status switch
+    {
+        "DIPROSES" => "badge bg-warning-subtle text-warning-emphasis",
+        "DIKIRIM" => "badge bg-info-subtle text-info-emphasis",
+        "DITERIMA" => "badge bg-success-subtle text-success-emphasis",
+        _ => "badge bg-danger-subtle text-danger-emphasis"
+    };
+}
+
+<div class="card">
+    <div class="card-body">
+        <h1 class="h4 mb-3"><span class="material-icons">receipt_long</span> Pesanan Saya</h1>
+
+        @if (Model.Orders.Count == 0)
+        {
+            <div class="text-center text-muted py-4">
+                <span class="material-icons" style="font-size:48px;">receipt_long</span>
+                <p class="mt-2 mb-2">Belum ada pesanan.</p>
+                <a class="btn btn-primary btn-sm" href="/">Belanja Sekarang</a>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var o in Model.Orders)
+                {
+                    <div class="border rounded p-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <div>
+                                <strong>#@o.Id</strong>
+                                <span class="ms-2"><span class="@Badge(o.Status)">@o.Status</span></span>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-primary">Rp @o.TotalAmount.ToString("N0")</div>
+                                <div class="text-muted small">@o.DiprosesAt.ToString("dd MMM yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                        <div class="text-muted small mb-2">
+                            @o.ShipName — @o.ShipPhone · @o.ShipAddress
+                            @if (!string.IsNullOrWhiteSpace(o.Note)) { <text> · Catatan: @o.Note</text> }
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if (o.Status == "DIPROSES")
+                            {
+                                <form method="post" asp-page-handler="Batal" class="form-batal">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@o.Id" />
+                                    <input type="hidden" name="reason" class="input-batal-reason" />
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-batal" data-order="@o.Id">
+                                        <span class="material-icons">close</span> Batalkan
+                                    </button>
+                                </form>
+                            }
+                            @if (o.Status == "DIKIRIM")
+                            {
+                                <form method="post" asp-page-handler="Terima">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@o.Id" />
+                                    <button class="btn btn-success btn-sm" type="submit">
+                                        <span class="material-icons">check_circle</span> Saya Terima Barang
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-batal').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                Swal.fire({
+                    title: 'Batalkan Pesanan #' + btn.dataset.order + '?',
+                    input: 'text',
+                    inputLabel: 'Alasan (wajib)',
+                    inputValidator: function (value) {
+                        if (!value || !value.trim()) { return 'Alasan wajib diisi.'; }
+                    },
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, batalkan',
+                    cancelButtonText: 'Tidak'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        var form = btn.closest('form');
+                        form.querySelector('.input-batal-reason').value = result.value.trim();
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,116 @@
+@page
+@model cobaproject.Pages.KeranjangModel
+@{
+    ViewData["Title"] = "Keranjang";
+    Layout = "_TokoLayout";
+    var total = Model.Items.Sum(i => i.Subtotal);
+}
+
+<div class="card">
+    <div class="card-body">
+        <h1 class="h4 mb-3"><span class="material-icons">shopping_cart</span> Keranjang</h1>
+
+        @if (Model.Items.Count == 0)
+        {
+            <div class="text-center text-muted py-4">
+                <span class="material-icons" style="font-size:48px;">remove_shopping_cart</span>
+                <p class="mt-2 mb-2">Keranjang kosong.</p>
+                <a class="btn btn-primary btn-sm" href="/">Belanja Sekarang</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th class="td-nomor">Harga Satuan</th>
+                            <th class="text-center" style="width:130px;">Jumlah</th>
+                            <th class="td-nomor">Subtotal</th>
+                            <th class="col-aksi"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.Title
+                                    @if (item.Quantity > item.Stock)
+                                    {
+                                        <div class="text-danger small">Stok tersisa @item.Stock</div>
+                                    }
+                                </td>
+                                <td class="td-nomor">
+                                    @if (item.DiscountPercent is > 0)
+                                    {
+                                        <span class="text-muted text-decoration-line-through small me-1">@item.Price.ToString("N0")</span>
+                                        <span class="text-primary fw-semibold">@item.EffectivePrice.ToString("N0")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@item.EffectivePrice.ToString("N0")</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form method="post" asp-page-handler="UpdateQty" class="d-flex gap-1 justify-content-center">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <input type="number" name="qty" value="@item.Quantity" min="1" max="@item.Stock" class="form-control form-control-sm" style="width:80px;" data-bilangan />
+                                        <button class="btn btn-outline-primary btn-sm" type="submit" title="Perbarui"><span class="material-icons">refresh</span></button>
+                                    </form>
+                                </td>
+                                <td class="td-nomor fw-semibold">Rp @item.Subtotal.ToString("N0")</td>
+                                <td>
+                                    <form method="post" asp-page-handler="Remove">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><span class="material-icons">delete</span></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                <div class="fs-5 fw-bold">Total: <span class="text-primary">Rp @total.ToString("N0")</span></div>
+                <a class="btn btn-primary" href="/Checkout"><span class="material-icons">checkout</span> Lanjut Checkout</a>
+            </div>
+            <div class="text-muted small mt-1">Ongkir dan pajak ditentukan saat checkout.</div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tamu = bacaKeranjangTamu();
+            if (tamu && tamu.length > 0 && !document.getElementById('mergeSelesai')) {
+                var ids = tamu.map(function (i) { return i.productId; });
+                var qtys = tamu.map(function (i) { return i.qty; });
+                var inputIds = document.createElement('input'); inputIds.type = 'hidden'; inputIds.name = 'productIds'; inputIds.value = ids.join(',');
+                var inputQtys = document.createElement('input'); inputQtys.type = 'hidden'; inputQtys.name = 'qtys'; inputQtys.value = qtys.join(',');
+                var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (tokenInput) {
+                    var f = document.createElement('form');
+                    f.method = 'post';
+                    f.action = '/Keranjang?handler=Merge';
+                    var cp = tokenInput.cloneNode(true);
+                    f.appendChild(cp);
+                    var mk = function (name, value) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden'; input.name = name; input.value = value;
+                        f.appendChild(input);
+                    };
+                    ids.forEach(function (id, i) { mk('productIds', id); mk('qtys', qtys[i]); });
+                    document.body.appendChild(f);
+                    f.submit();
+                }
+            }
+            localStorage.removeItem('gklaku_cart');
+            muatBadge();
+        });
+    </script>
+}

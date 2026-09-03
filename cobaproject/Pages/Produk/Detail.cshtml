@@ -1,0 +1,81 @@
+@page "{id:int}"
+@model cobaproject.Pages.Produk.DetailModel
+@{
+    Layout = "_TokoLayout";
+    ViewData["Title"] = Model.Product!.Title;
+}
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body p-0 d-flex align-items-center justify-content-center" style="height: 320px; overflow: hidden;">
+                @if (!string.IsNullOrWhiteSpace(Model.Product.Image))
+                {
+                    <img src="@Model.Product.Image" alt="@Model.Product.Title" style="max-height:100%; max-width:100%; object-fit:contain;" />
+                }
+                else
+                {
+                    <span class="material-icons text-secondary" style="font-size:96px;">inventory_2</span>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <h1 class="h3 mb-2">@Model.Product.Title</h1>
+        <div class="mb-1 text-muted small">Kategori: @(Model.Product.Category ?? "—")</div>
+        <div class="mb-3">
+            @if (Model.Product.DiscountPercent is > 0)
+            {
+                <span class="badge bg-warning mb-2">-@Model.Product.DiscountPercent%</span>
+                <div><span class="text-muted text-decoration-line-through">Rp @Model.Product.Price.ToString("N0")</span></div>
+            }
+            <span class="fs-3 fw-bold text-primary">Rp @Model.HargaEfektif(Model.Product).ToString("N0")</span>
+        </div>
+        <p class="text-muted" style="white-space: pre-line;">@Model.Product.Description</p>
+        <div class="mb-3">
+            Stok tersedia: <strong>@Model.Product.Stock</strong>
+        </div>
+        @if (Model.Product.Stock > 0)
+        {
+            if (Model.IsCustomer)
+            {
+                <form method="post" action="/Keranjang?handler=Add" class="d-flex gap-2 align-items-center">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@Model.Product.Id" />
+                    <input type="hidden" name="qty" value="1" />
+                    <input type="hidden" name="returnUrl" value="/Produk/Detail/@Model.Product.Id" />
+                    <button class="btn btn-primary" type="submit"><span class="material-icons">add_shopping_cart</span> Masukkan Keranjang</button>
+                </form>
+            }
+            else
+            {
+                <button class="btn btn-primary btn-tambah-tamu" data-product-id="@Model.Product.Id" type="button">
+                    <span class="material-icons">add_shopping_cart</span> Masukkan Keranjang
+                </button>
+            }
+        }
+        else
+        {
+            <button class="btn btn-outline-secondary" disabled>Stok Habis</button>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.btn-tambah-tamu').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var id = Number(btn.dataset.productId);
+                    var items = bacaKeranjangTamu();
+                    var ada = items.find(function (i) { return i.productId === id; });
+                    if (ada) { ada.qty = (Number(ada.qty) || 0) + 1; }
+                    else { items.push({ productId: id, qty: 1 }); }
+                    simpanKeranjangTamu(items);
+                    muatBadge();
+                    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
+                });
+            });
+        });
+    </script>
+}

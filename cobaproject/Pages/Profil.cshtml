@@ -1,0 +1,69 @@
+@page
+@model cobaproject.Pages.ProfilModel
+@{
+    ViewData["Title"] = "Profil Saya";
+    Layout = "_TokoLayout";
+}
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="h4 mb-3"><span class="material-icons">manage_accounts</span> Profil Saya</h1>
+                <p class="text-muted small mb-3">Email login: <strong>@Model.Customer?.Email</strong> (tidak dapat diubah sendiri)</p>
+
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Form.Name">Nama</label>
+                        <input asp-for="Form.Name" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Form.Phone">No. HP</label>
+                        <input asp-for="Form.Phone" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Form.Address">Alamat</label>
+                        <textarea asp-for="Form.Address" class="form-control" rows="3"></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit"><span class="material-icons">save</span> Simpan Profil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h2 class="h5 text-danger mb-2"><span class="material-icons">warning</span> Hapus Akun</h2>
+                <p class="text-muted small">
+                    Menonaktifkan akun Anda: tidak bisa masuk lagi, email terkunci, riwayat pesanan tetap tersimpan.
+                    Pemulihan hanya oleh Super Admin.
+                </p>
+                <form method="post" asp-page-handler="HapusAkun" id="formHapusAkun">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="btnHapusAkun">
+                        <span class="material-icons">person_off</span> Hapus Akun Saya
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('btnHapusAkun').addEventListener('click', function () {
+            Swal.fire({
+                title: 'Hapus akun Anda?',
+                text: 'Tindakan ini menonaktifkan akun dan tidak bisa dibatalkan sendiri.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    document.getElementById('formHapusAkun').submit();
+                }
+            });
+        });
+    </script>
+}

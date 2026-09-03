@@ -1,0 +1,36 @@
+@page
+@model cobaproject.Pages.GantiKataSandiModel
+@{
+    ViewData["Title"] = "Ganti Kata Sandi Pelanggan";
+    Layout = "_LoginLayout";
+}
+
+<form method="post">
+    <h1 class="h4 text-center mb-3 fw-bold">Ganti Kata Sandi</h1>
+    <p class="text-muted small text-center mb-3">
+        Akun Anda diblokir setelah beberapa kali gagal masuk. Ganti kata sandi untuk membuka blokir.
+    </p>
+
+    <div class="mb-3">
+        <label class="form-label" asp-for="Email">Email</label>
+        <input asp-for="Email" class="form-control" autocomplete="email" />
+        @Html.ValidationMessageFor(m => m.Email, null, new { @class = "field-error" })
+    </div>
+    <div class="mb-3">
+        <label class="form-label" asp-for="NewPassword">Kata Sandi Baru</label>
+        <input asp-for="NewPassword" type="password" class="form-control" autocomplete="new-password" />
+        @Html.ValidationMessageFor(m => m.NewPassword, null, new { @class = "field-error" })
+    </div>
+    <div class="mb-3">
+        <label class="form-label" asp-for="ConfirmPassword">Konfirmasi Kata Sandi</label>
+        <input asp-for="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" />
+        @Html.ValidationMessageFor(m => m.ConfirmPassword, null, new { @class = "field-error" })
+    </div>
+
+    <button class="btn btn-masuk w-100 text-white py-2" type="submit">Simpan &amp; Buka Blokir</button>
+    <a class="btn btn-link w-100 mt-2" href="/Masuk">Kembali ke Masuk</a>
+</form>
+
+@section Scripts {
+    <partial name="_ToastScriptsPartial" />
+}

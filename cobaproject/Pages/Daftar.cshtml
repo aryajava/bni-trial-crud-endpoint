@@ -1,0 +1,34 @@
+@page
+@model cobaproject.Pages.DaftarModel
+@{
+    ViewData["Title"] = "Daftar Akun";
+    Layout = "_LoginLayout";
+}
+
+<form method="post">
+    <h1 class="h4 text-center mb-3 fw-bold">Buat Akun</h1>
+
+    <div class="mb-3">
+        <label class="form-label" asp-for="Form.Name">Nama Lengkap</label>
+        <input asp-for="Form.Name" class="form-control" autocomplete="name" autofocus />
+        @Html.ValidationMessageFor(m => m.Form.Name, null, new { @class = "field-error" })
+    </div>
+    <div class="mb-3">
+        <label class="form-label" asp-for="Form.Email">Email</label>
+        <input asp-for="Form.Email" class="form-control" autocomplete="email" />
+        @Html.ValidationMessageFor(m => m.Form.Email, null, new { @class = "field-error" })
+    </div>
+    <div class="mb-3">
+        <label class="form-label" asp-for="Form.Password">Kata Sandi</label>
+        <input asp-for="Form.Password" type="password" class="form-control" autocomplete="new-password" />
+        @Html.ValidationMessageFor(m => m.Form.Password, null, new { @class = "field-error" })
+    </div>
+
+    <input type="hidden" name="returnUrl" value="@Request.Query["ReturnUrl"]" />
+    <button class="btn btn-masuk w-100 text-white py-2" type="submit"><span class="material-icons">person_add</span> Daftar</button>
+    <p class="text-center small mt-3 mb-0">Sudah punya akun? <a href="/Masuk">Masuk</a></p>
+</form>
+
+@section Scripts {
+    <partial name="_ToastScriptsPartial" />
+}

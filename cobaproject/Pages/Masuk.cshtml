@@ -1,0 +1,36 @@
+@page
+@model cobaproject.Pages.MasukModel
+@{
+    ViewData["Title"] = "Masuk Pelanggan";
+    Layout = "_LoginLayout";
+}
+
+<div class="card card-login">
+    <div class="card-body p-4">
+        <h1 class="h4 text-center mb-1 fw-bold">Selamat Datang</h1>
+        <p class="text-muted small text-center mb-3">Masuk untuk belanja dan cekout.</p>
+
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label" for="Email">Email</label>
+                <input type="email" class="form-control" id="Email" name="Email" asp-for="Email" autocomplete="email" autofocus />
+                <span class="field-error">@Html.ValidationMessageFor(m => m.Email)</span>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="Password">Kata Sandi</label>
+                <input type="password" class="form-control" id="Password" name="Password" asp-for="Password" autocomplete="current-password" />
+                <span class="field-error">@Html.ValidationMessageFor(m => m.Password)</span>
+            </div>
+            <input type="hidden" name="returnUrl" value="@Request.Query["ReturnUrl"]" />
+            <button class="btn btn-masuk w-100 text-white py-2" type="submit"><span class="material-icons">login</span> Masuk</button>
+        </form>
+
+        <div class="text-center mt-3 small">
+            Belum punya akun? <a href="/Daftar">Daftar di sini</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ToastScriptsPartial" />
+}

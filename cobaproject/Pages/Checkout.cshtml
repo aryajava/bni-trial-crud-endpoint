@@ -1,0 +1,87 @@
+@page
+@model cobaproject.Pages.CheckoutModel
+@{
+    ViewData["Title"] = "Checkout";
+    Layout = "_TokoLayout";
+}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="h4 mb-3"><span class="material-icons">local_shipping</span> Data Pengiriman</h1>
+
+                @if (!string.IsNullOrWhiteSpace(Model.StoreError))
+                {
+                    <div class="alert alert-danger py-2 small">@Model.StoreError</div>
+                }
+
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Form.Name">Nama Penerima</label>
+                        <input asp-for="Form.Name" class="form-control" autocomplete="name" />
+                        @Html.ValidationMessageFor(m => m.Form.Name, null, new { @class = "field-error" })
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Form.Phone">No. HP</label>
+                        <input asp-for="Form.Phone" class="form-control" autocomplete="tel" />
+                        @Html.ValidationMessageFor(m => m.Form.Phone, null, new { @class = "field-error" })
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Form.Address">Alamat Pengiriman</label>
+                        <textarea asp-for="Form.Address" class="form-control" rows="3" autocomplete="street-address"></textarea>
+                        @Html.ValidationMessageFor(m => m.Form.Address, null, new { @class = "field-error" })
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Form.Note">Catatan (opsional)</label>
+                        <input asp-for="Form.Note" class="form-control" placeholder="Contoh: hubungi sebelum kirim" />
+                        @Html.ValidationMessageFor(m => m.Form.Note, null, new { @class = "field-error" })
+                    </div>
+                    <button class="btn btn-primary" type="submit" id="btnKonfirmasi">
+                        <span class="material-icons">check_circle</span> Konfirmasi Pesanan
+                    </button>
+                </form>
+                <div class="text-muted small mt-2">* Stok divalidasi dan dikurangi saat konfirmasi; harga dihitung ulang saat itu juga.</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Ringkasan Pesanan</h2>
+                @if (Model.Items.Count == 0)
+                {
+                    <p class="text-muted small">Keranjang kosong. <a href="/Keranjang">Cek keranjang</a>.</p>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>@item.Title <span class="text-muted">x@(item.Quantity)</span></span>
+                                <span>Rp @item.Subtotal.ToString("N0")</span>
+                            </div>
+                        }
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-between small"><span>Subtotal</span><span>Rp @Model.Subtotal.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between small"><span>Ongkir</span><span>Rp @Model.ShippingFee.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between small"><span>Pajak</span><span>Rp @Model.TaxAmount.ToString("N0")</span></div>
+                    <hr />
+                    <div class="d-flex justify-content-between fw-bold"><span>Total</span><span class="text-primary">Rp @Model.Total.ToString("N0")</span></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('btnKonfirmasi').addEventListener('click', function (e) {
+            var btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+        });
+    </script>
+}
