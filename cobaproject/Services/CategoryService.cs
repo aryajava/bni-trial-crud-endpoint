@@ -19,10 +19,12 @@ public class CategoryService : ICategoryService
         """;
 
     private readonly string _connectionString;
+    private readonly IAuditLogService _audit;
 
-    public CategoryService(IOptions<DatabaseConfig> config)
+    public CategoryService(IOptions<DatabaseConfig> config, IAuditLogService auditLogService)
     {
         _connectionString = config.Value.DefaultConnection;
+        _audit = auditLogService;
     }
 
     public async Task<List<CategoryDto>> GetAllAsync()
@@ -130,7 +132,12 @@ public class CategoryService : ICategoryService
             VALUES (@Name, GETDATE(), @CreatedBy, 1);
             """, new { Name = request.Name.Trim(), CreatedBy = createdBy });
 
-        return (await GetByIdAsync(id), null);
+        var created = await GetByIdAsync(id);
+        if (created is not null)
+        {
+            await _audit.LogAsync("CATEGORY", created.Id.ToString(), "CREATE", null, AuditLogService.Json(created));
+        }
+        return (created, null);
     }
 
     public async Task<(CategoryDto? Category, bool IsConflict, string? Error)> UpdateAsync(
@@ -159,7 +166,12 @@ public class CategoryService : ICategoryService
             return (current, true, null);
         }
 
-        return (await GetByIdAsync(id), false, null);
+        var latest = await GetByIdAsync(id);
+        if (latest is not null)
+        {
+            await _audit.LogAsync("CATEGORY", id.ToString(), "UPDATE", null, AuditLogService.Json(latest));
+        }
+        return (latest, false, null);
     }
 
     public async Task<(bool Success, string? Error)> SoftDeleteAsync(int id, string updatedBy)
@@ -185,6 +197,10 @@ public class CategoryService : ICategoryService
             WHERE  ID         = @Id AND IS_ACTIVE = 1;
             """, new { Id = id, UpdatedBy = updatedBy });
 
+        if (rows > 0)
+        {
+            await _audit.LogAsync("CATEGORY", id.ToString(), "DELETE");
+        }
         return (rows > 0, null);
     }
 
@@ -200,6 +216,10 @@ public class CategoryService : ICategoryService
             WHERE  ID         = @Id AND IS_ACTIVE = 0;
             """, new { Id = id, UpdatedBy = updatedBy });
 
+        if (rows > 0)
+        {
+            await _audit.LogAsync("CATEGORY", id.ToString(), "UPDATE");
+        }
         return (rows > 0, null);
     }
 

@@ -1,0 +1,33 @@
+@page
+@model cobaproject.Pages.Panel.Settings.PengaturanAplikasiModel
+@{
+    ViewData["Title"] = "Pengaturan Aplikasi";
+    ViewData["CrumbRoot"] = "Pengaturan";
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">Pengaturan Aplikasi</h5>
+        <p class="text-muted small mb-4">
+            Pengaturan ini berlaku global untuk akun pengurus <strong>dan</strong> pelanggan.
+        </p>
+
+        <form method="post" class="w-100" style="max-width: 420px;">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+            <div class="mb-3">
+                <label class="form-label" for="AmbangBlokir">Gagal login sebelum akun diblokir</label>
+                <input type="number" class="form-control" id="AmbangBlokir" name="AmbangBlokir"
+                       value="@Model.AmbangBlokir" min="1" max="99" inputmode="numeric" data-bilangan />
+                <span class="field-error">@Html.ValidationMessage("AmbangBlokir")</span>
+                <div class="form-text">Default: 5. Blokir bersifat permanen sampai akun di-unblock atau ganti kata sandi.</div>
+            </div>
+            <input type="hidden" name="AmbangBlokirVersion" value="@Model.AmbangBlokirVersion" />
+            <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">save</span> Simpan</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_BilanganScriptsPartial" />
+    <partial name="_ToastScriptsPartial" />
+}

@@ -8,7 +8,7 @@ namespace cobaproject.Helpers;
 
 public class RequestResponseMiddleware
 {
-    private static readonly string[] ExcludedPathPrefixes = ["/swagger", "/openapi", "/favicon.ico", "/_framework", "/_vs"];
+    private static readonly string[] LoggedPathPrefixes = ["/api", "/Panel"];
 
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestResponseMiddleware> _logger;
@@ -23,7 +23,9 @@ public class RequestResponseMiddleware
         IRequestLogService requestLogService,
         IResponseLogService responseLogService)
     {
-        if (ExcludedPathPrefixes.Any(prefix => context.Request.Path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase)))
+        // Audit trail internal toko: hanya permintaan API dan area pengurus yang
+        // dicatat; lalu lintas publik (katalog, keranjang) tidak membanjiri tabel.
+        if (!LoggedPathPrefixes.Any(prefix => context.Request.Path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase)))
         {
             await _next(context);
             return;
@@ -68,7 +70,8 @@ public class RequestResponseMiddleware
             }
 
             var headers = context.Request.Headers
-                .ToDictionary(h => h.Key, h => h.Value.ToString());
+                .ToDictionary(h => h.Key, h => h.Value.ToString())
+                .ToDictionary(kv => kv.Key, RedactHeader);
             var queryParams = context.Request.Query
                 .ToDictionary(q => q.Key, q => q.Value.ToString());
 
@@ -79,7 +82,7 @@ public class RequestResponseMiddleware
                 HttpMethod = context.Request.Method,
                 Headers = JsonSerializer.Serialize(headers),
                 QueryParams = JsonSerializer.Serialize(queryParams),
-                Body = body,
+                Body = RedactBody(body),
                 IpAddress = context.Connection.RemoteIpAddress?.ToString(),
                 RequestedAt = DateTime.Now
             });
@@ -116,4 +119,55 @@ public class RequestResponseMiddleware
             _logger.LogError(ex, "[RESPONSE_LOG] Gagal menyimpan response | TraceId={TraceId}", traceId);
         }
     }
+
+    private static KeyValuePair<string, string> RedactHeader(KeyValuePair<string, string> header) =>
+        header.Key.Equals("X-Api-Key", StringComparison.OrdinalIgnoreCase)
+            ? new KeyValuePair<string, string>(header.Key, "***")
+            : header;
+
+    private static string RedactBody(string body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            var root = RedactNode(document.RootElement);
+            return JsonSerializer.Serialize(root);
+        }
+        catch (JsonException)
+        {
+            return RedactRaw(body);
+        }
+    }
+
+    private static object? RedactNode(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                return element.EnumerateObject().ToDictionary(
+                    p => p.Name,
+                    p => IsSensitiveKey(p.Name) ? "***" : RedactNode(p.Value));
+            case JsonValueKind.Array:
+                return element.EnumerateArray().Select(RedactNode).ToArray();
+            case JsonValueKind.String:
+                return element.GetString();
+            case JsonValueKind.Number:
+                return element.TryGetDecimal(out var d) ? d : element.GetRawText();
+            case JsonValueKind.True:
+                return true;
+            case JsonValueKind.False:
+                return false;
+            default:
+                return null;
+        }
+    }
+
+    private static bool IsSensitiveKey(string name) =>
+        name.Contains("password", StringComparison.OrdinalIgnoreCase)
+        || name.Contains("secretkey", StringComparison.OrdinalIgnoreCase)
+        || name.Contains("apikey", StringComparison.OrdinalIgnoreCase);
+
+    private static string RedactRaw(string body) =>
+        System.Text.RegularExpressions.Regex.Replace(body,
+            "(?i)(\"(?:password|secretkey|apikey)\"\\s*:\\s*\")[^\"]*(\")", "$1***$2");
 }

@@ -15,21 +15,24 @@ public class UserService : IUserService
     private readonly string _connectionString;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<UserService> _logger;
+    private readonly IAuditLogService _audit;
 
     private const string SelectColumns = """
         ID, USERNAME, PASSWORD_HASH, DISPLAY_NAME, ROLE, SECRET_KEY, LAST_LOGIN_AT,
-        LOGIN_FAILED_COUNT, IS_BLOCKED,
+        IS_BLOCKED,
         IS_ACTIVE, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY, VERSION
         """;
 
     public UserService(
         IOptions<DatabaseConfig> config,
         IHttpContextAccessor httpContextAccessor,
-        ILogger<UserService> logger)
+        ILogger<UserService> logger,
+        IAuditLogService auditLogService)
     {
         _connectionString = config.Value.DefaultConnection;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _audit = auditLogService;
     }
 
     private string TraceId =>
@@ -142,34 +145,29 @@ public class UserService : IUserService
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            // Blokir setelah 5× gagal — hanya user yang benar-benar ada yang dihitung.
+            // Blokir berbasis audit: hitung LOGIN_FAILED berurutan sejak
+            // LOGIN/PASSWORD_CHANGED/UNBLOCKED terakhir (sumber kebenaran).
             if (user is not null)
             {
-                var newCount = user.LoginFailedCount + 1;
-                if (newCount >= 5)
+                await _audit.LogAsync("USER", user.Id.ToString(), "LOGIN_FAILED");
+
+                var threshold = await GetLoginFailThresholdAsync(connection);
+                var streak = await CountLoginFailStreakAsync(connection, user.Id);
+
+                if (streak >= threshold)
                 {
                     await connection.ExecuteAsync("""
                         UPDATE LOSCONSUMER.MASTER_USER
-                        SET    LOGIN_FAILED_COUNT = 5,
-                               IS_BLOCKED         = 1,
+                        SET    IS_BLOCKED         = 1,
                                UPDATED_AT         = GETDATE(),
                                UPDATED_BY         = @UpdatedBy,
                                VERSION            = VERSION + 1
                         WHERE  ID = @Id;
                         """, new { user.Id, UpdatedBy = "SYSTEM" });
-                    _logger.LogWarning("[AUTH] Akun diblokir setelah 5× gagal | User={Username} | TraceId={TraceId}",
-                        user.Username, TraceId);
+                    _logger.LogWarning("[AUTH] Akun diblokir setelah {Streak}× gagal | User={Username} | TraceId={TraceId}",
+                        streak, user.Username, TraceId);
                     return (null, "blocked");
                 }
-
-                await connection.ExecuteAsync("""
-                    UPDATE LOSCONSUMER.MASTER_USER
-                    SET    LOGIN_FAILED_COUNT = @NewCount,
-                           UPDATED_AT         = GETDATE(),
-                           UPDATED_BY         = @UpdatedBy,
-                           VERSION            = VERSION + 1
-                    WHERE  ID = @Id;
-                    """, new { user.Id, NewCount = newCount, UpdatedBy = "SYSTEM" });
             }
 
             return (null, "invalid");
@@ -183,14 +181,38 @@ public class UserService : IUserService
         await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
             SET    LAST_LOGIN_AT    = GETDATE(),
-                   LOGIN_FAILED_COUNT = 0,
                    UPDATED_AT        = GETDATE(),
                    UPDATED_BY        = @UpdatedBy,
                    VERSION           = VERSION + 1
             WHERE ID = @Id
             """, new { user.Id, UpdatedBy = user.Username });
 
+        await _audit.LogAsync("USER", user.Id.ToString(), "LOGIN");
+
         return (UserMapper.ToDto(user), null);
+    }
+
+    private static async Task<int> GetLoginFailThresholdAsync(SqlConnection connection)
+    {
+        var value = await connection.ExecuteScalarAsync<string>("""
+            SELECT SETTING_VALUE FROM LOSCONSUMER.APP_SETTING
+            WHERE SETTING_KEY = 'LOGIN_FAIL_THRESHOLD' AND IS_ACTIVE = 1;
+            """);
+        return int.TryParse(value, out var threshold) ? threshold : 5;
+    }
+
+    private static async Task<int> CountLoginFailStreakAsync(SqlConnection connection, int userId)
+    {
+        return await connection.ExecuteScalarAsync<int>("""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.TRX_AUDIT_LOG A
+            WHERE A.ENTITY = 'USER' AND A.ENTITY_ID = @Id AND A.ACTION = 'LOGIN_FAILED'
+              AND A.ACTED_AT > COALESCE((
+                    SELECT MAX(B.ACTED_AT) FROM LOSCONSUMER.TRX_AUDIT_LOG B
+                    WHERE B.ENTITY = 'USER' AND B.ENTITY_ID = @Id
+                      AND B.ACTION IN ('LOGIN', 'PASSWORD_CHANGED', 'UNBLOCKED')
+              ), '1900-01-01');
+            """, new { Id = userId });
     }
 
     /// <summary>Ganti password untuk akun yang diblokir (jalur keluar lockout).</summary>
@@ -209,13 +231,14 @@ public class UserService : IUserService
         await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
             SET    PASSWORD_HASH     = @PasswordHash,
-                   LOGIN_FAILED_COUNT = 0,
                    IS_BLOCKED         = 0,
                    UPDATED_AT         = GETDATE(),
                    UPDATED_BY         = @UpdatedBy,
                    VERSION            = VERSION + 1
             WHERE  ID = @Id;
             """, new { user.Id, PasswordHash = passwordHash, UpdatedBy = user.Username });
+
+        await _audit.LogAsync("USER", user.Id.ToString(), "PASSWORD_CHANGED");
 
         _logger.LogWarning("[AUTH] Password diubah lewat jalur ganti-password | User={Username} | TraceId={TraceId}",
             user.Username, TraceId);
@@ -229,12 +252,16 @@ public class UserService : IUserService
         var rows = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
             SET    IS_BLOCKED         = 0,
-                   LOGIN_FAILED_COUNT = 0,
                    UPDATED_AT         = GETDATE(),
                    UPDATED_BY         = @UpdatedBy,
                    VERSION            = VERSION + 1
             WHERE  ID = @Id AND IS_BLOCKED = 1;
             """, new { Id = id, UpdatedBy = updatedBy });
+
+        if (rows > 0)
+        {
+            await _audit.LogAsync("USER", id.ToString(), "UNBLOCKED");
+        }
 
         return (rows > 0, null);
     }
@@ -250,6 +277,11 @@ public class UserService : IUserService
                    VERSION            = VERSION + 1
             WHERE  ID = @Id AND IS_BLOCKED = 0;
             """, new { Id = id, UpdatedBy = updatedBy });
+
+        if (rows > 0)
+        {
+            await _audit.LogAsync("USER", id.ToString(), "BLOCKED");
+        }
 
         return (rows > 0, null);
     }
@@ -284,6 +316,7 @@ public class UserService : IUserService
 
             _logger.LogInformation("[{TraceId}] User {Username} dibuat oleh {Creator}", TraceId, request.Username, createdBy);
             var created = await GetByIdAsync(id);
+            await _audit.LogAsync("USER", created?.Id.ToString(), "CREATE", null, AuditLogService.Json(created));
             return (created, secretKey, null);
         }
         catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601)
@@ -346,6 +379,10 @@ public class UserService : IUserService
         });
 
         var user = await GetByIdAsync(id);
+        if (user is not null)
+        {
+            await _audit.LogAsync("USER", id.ToString(), "UPDATE", null, AuditLogService.Json(user));
+        }
         return (user, affected == 0);
     }
 
@@ -366,6 +403,11 @@ public class UserService : IUserService
                 VERSION = VERSION + 1
             WHERE ID = @Id AND IS_ACTIVE = 1
             """, new { Id = id, UpdatedBy = updatedBy });
+
+        if (affected > 0)
+        {
+            await _audit.LogAsync("USER", id.ToString(), "DELETE");
+        }
         return (affected > 0, null);
     }
 
@@ -383,6 +425,9 @@ public class UserService : IUserService
             return (false, "Akun Super Admin seed tidak dapat diturunkan.");
         }
 
+        var currentRole = await connection.ExecuteScalarAsync<string?>(
+            "SELECT ROLE FROM LOSCONSUMER.MASTER_USER WHERE ID = @Id;", new { Id = id });
+
         var affected = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
             SET ROLE = @NewRole,
@@ -391,6 +436,12 @@ public class UserService : IUserService
                 VERSION = VERSION + 1
             WHERE ID = @Id
             """, new { Id = id, NewRole = newRole, UpdatedBy = updatedBy });
+
+        if (affected > 0)
+        {
+            await _audit.LogAsync("USER", id.ToString(), "CHANGE_ROLE",
+                AuditLogService.Json(new { currentRole }), AuditLogService.Json(new { newRole }));
+        }
         return (affected > 0, null);
     }
 
@@ -411,6 +462,11 @@ public class UserService : IUserService
                 VERSION = VERSION + 1
             WHERE ID = @Id
             """, new { Id = id, IsActive = isActive, UpdatedBy = updatedBy });
+
+        if (affected > 0)
+        {
+            await _audit.LogAsync("USER", id.ToString(), "UPDATE", null, AuditLogService.Json(new { isActive }));
+        }
         return (affected > 0, null);
     }
 
@@ -423,12 +479,16 @@ public class UserService : IUserService
             UPDATE LOSCONSUMER.MASTER_USER
             SET PASSWORD_HASH     = @PasswordHash,
                 IS_BLOCKED        = 0,
-                LOGIN_FAILED_COUNT = 0,
                 UPDATED_AT = GETDATE(),
                 UPDATED_BY = @UpdatedBy,
                 VERSION = VERSION + 1
             WHERE ID = @Id
             """, new { Id = id, PasswordHash = passwordHash, UpdatedBy = updatedBy });
+
+        if (affected > 0)
+        {
+            await _audit.LogAsync("USER", id.ToString(), "RESET_PASSWORD");
+        }
         return (affected > 0, null);
     }
 

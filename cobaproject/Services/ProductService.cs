@@ -16,6 +16,7 @@ public class ProductService : IProductService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IDiscountApprovalService _discountApprovalService;
     private readonly ILogger<ProductService> _logger;
+    private readonly IAuditLogService _audit;
 
     private const string SelectColumns = """
         P.ID, P.TITLE, P.PRICE, P.DESCRIPTION, C.NAME AS CATEGORY, P.CATEGORY_ID, P.IMAGE,
@@ -60,12 +61,14 @@ public class ProductService : IProductService
         IOptions<DatabaseConfig> config,
         IHttpContextAccessor httpContextAccessor,
         IDiscountApprovalService discountApprovalService,
-        ILogger<ProductService> logger)
+        ILogger<ProductService> logger,
+        IAuditLogService auditLogService)
     {
         _connectionString = config.Value.DefaultConnection;
         _httpContextAccessor = httpContextAccessor;
         _discountApprovalService = discountApprovalService;
         _logger = logger;
+        _audit = auditLogService;
     }
 
     private string TraceId =>
@@ -256,7 +259,9 @@ public class ProductService : IProductService
             "[MASTER_PRODUCT] INSERT | ID={Id} | Title=\"{Title}\" | Version=1 | TraceId={TraceId}",
             newId, request.Title, TraceId);
 
-        return await GetByIdAsync(newId);
+        var created = await GetByIdAsync(newId);
+        await _audit.LogAsync("PRODUCT", newId.ToString(), "CREATE", null, AuditLogService.Json(created));
+        return created;
     }
 
     public async Task<(ProductDto? Product, bool IsConflict, string? PendingMessage)> UpdateAsync(
@@ -320,6 +325,7 @@ public class ProductService : IProductService
         }
 
         var updated = await GetByIdAsync(id);
+        await _audit.LogAsync("PRODUCT", id.ToString(), "UPDATE", null, AuditLogService.Json(updated));
         _logger.LogInformation(
             "[MASTER_PRODUCT] UPDATE | ID={Id} | NewVersion={NewVersion} | TraceId={TraceId}",
             id, updated?.Version, TraceId);
@@ -351,7 +357,10 @@ public class ProductService : IProductService
             """;
         var rows = await connection.ExecuteAsync(sql, new { Id = id, UpdatedBy = updatedBy });
         if (rows > 0)
+        {
             _logger.LogWarning("[MASTER_PRODUCT] SOFT_DELETE | ID={Id} | TraceId={TraceId}", id, TraceId);
+            await _audit.LogAsync("PRODUCT", id.ToString(), "DELETE");
+        }
         return rows > 0;
     }
 
@@ -362,7 +371,10 @@ public class ProductService : IProductService
             "DELETE FROM LOSCONSUMER.MASTER_PRODUCT WHERE ID = @Id;",
             new { Id = id });
         if (rows > 0)
+        {
             _logger.LogWarning("[MASTER_PRODUCT] HARD_DELETE | ID={Id} | TraceId={TraceId}", id, TraceId);
+            await _audit.LogAsync("PRODUCT", id.ToString(), "DELETE");
+        }
         return rows > 0;
     }
 
