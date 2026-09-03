@@ -28,16 +28,46 @@ public class CartService : ICartService
             ORDER BY K.ID;
             """, new { CustomerId = customerId });
 
-        return rows.Select(r => new CartItemDto
+        var result = new List<CartItemDto>();
+        foreach (var r in rows)
         {
-            ProductId = (int)r.ID,
-            Title = (string)r.TITLE,
-            Price = (decimal)r.PRICE,
-            DiscountPercent = r.DISCOUNT_PERCENT as decimal?,
-            EffectivePrice = Harga.Efektif((decimal)r.PRICE, r.DISCOUNT_PERCENT as decimal?),
-            Stock = (int)r.STOCK,
-            Quantity = (int)r.QUANTITY
-        }).ToList();
+            var stock = (int)r.STOCK;
+            var qty = (int)r.QUANTITY;
+
+            // Qty keranjang otomatis menyesuaikan sisa stok: berlebih → dikunci ke stok,
+            // produk habis → dihapus dari keranjang.
+            if (stock <= 0)
+            {
+                await connection.ExecuteAsync("""
+                    DELETE FROM LOSCONSUMER.TRX_CART_ITEM
+                    WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
+                    """, new { CustomerId = customerId, ProductId = (int)r.ID });
+                continue;
+            }
+
+            if (qty > stock)
+            {
+                await connection.ExecuteAsync("""
+                    UPDATE LOSCONSUMER.TRX_CART_ITEM
+                    SET QUANTITY = @Quantity
+                    WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
+                    """, new { Quantity = stock, CustomerId = customerId, ProductId = (int)r.ID });
+                qty = stock;
+            }
+
+            result.Add(new CartItemDto
+            {
+                ProductId = (int)r.ID,
+                Title = (string)r.TITLE,
+                Price = (decimal)r.PRICE,
+                DiscountPercent = r.DISCOUNT_PERCENT as decimal?,
+                EffectivePrice = Harga.Efektif((decimal)r.PRICE, r.DISCOUNT_PERCENT as decimal?),
+                Stock = stock,
+                Quantity = qty
+            });
+        }
+
+        return result;
     }
 
     public async Task<int> CountAsync(int customerId)

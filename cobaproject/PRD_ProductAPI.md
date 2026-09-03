@@ -82,9 +82,9 @@ Stok berkurang **hanya saat checkout**, bukan saat masuk keranjang; dikembalikan
 ### Status & transisi
 
 ```
-DIPROSES ──(staf ADMIN/OWNER/SA: "Tandai Dikirim")──▶ DIKIRIM ──(pelanggan)──▶ DITERIMA
-    │                                                        │
-    └──(DIBATALKAN: pelanggan sblm DIKIRIM / staf kapan saja, alasan wajib)──▶ DIBATALKAN
+DIPROSES ──(staff: "Tandai Dikirim")──▶ DIKIRIM ──(pelanggan)──▶ DITERIMA
+    │
+    └──(DIBATALKAN — HANYA dari DIPROSES, oleh pelanggan atau staf, alasan wajib; stok dikembalikan)──▶ DIBATALKAN
 ```
 
 Snapshot per pesanan: `SUBTOTAL`, `SHIPPING_FEE`, `TAX_AMOUNT`, `TOTAL_AMOUNT` + per baris judul/harga/qty (`TRX_ORDER_ITEM`, tanpa FK). Riwayat status who/when (`DIPROSES_AT`, `DIKIRIM_AT/BY`, `DITERIMA_AT/BY`, `DIBATALKAN_AT/BY/REASON`).

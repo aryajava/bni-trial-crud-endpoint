@@ -39,7 +39,7 @@ public class PesananSayaModel : PageModel
 
     public async Task<IActionResult> OnPostBatalAsync(long id, string reason)
     {
-        var (ok, error) = await _orderService.CancelAsync(id, reason, User.Identity!.Name!, isStaff: false);
+        var (ok, error) = await _orderService.CancelAsync(id, reason, User.Identity!.Name!);
         TempData[ok ? "SuccessMessage" : "ErrorMessage"] = ok
             ? $"Pesanan #{id} dibatalkan."
             : (error ?? "Pesanan tidak dapat dibatalkan.");

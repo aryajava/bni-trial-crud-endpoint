@@ -69,7 +69,7 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var (ok, error) = await _orderService.CancelAsync(id, request.Reason, Caller, isStaff: true);
+            var (ok, error) = await _orderService.CancelAsync(id, request.Reason, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Pesanan #{id} dibatalkan.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Pesanan tidak dapat dibatalkan."]);

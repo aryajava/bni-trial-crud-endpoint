@@ -45,7 +45,7 @@ Kumpulan produk yang dikumpulkan pelanggan untuk dibeli; untuk tamu tersimpan di
 _Avoid_: cart, troli, bakul
 
 **Pesanan**:
-Catatan pembelian yang dibuat pelanggan saat menyelesaikan checkout; stok berkurang saat pesanan dibuat, dan harga dihitung ulang dari Harga Setelah Diskon pada saat itu. Berstatus DIPROSES → DIKIRIM → DITERIMA, atau DIBATALKAN (saat dibatalkan stok dikembalikan).
+Catatan pembelian yang dibuat pelanggan saat menyelesaikan checkout; stok berkurang saat pesanan dibuat, dan harga dihitung ulang dari Harga Setelah Diskon pada saat itu. Berstatus DIPROSES → DIKIRIM → DITERIMA, atau DIBATALKAN — pembatalan hanya dapat dilakukan saat masih DIPROSES, dan saat dibatalkan stok dikembalikan. Qty di Keranjang pengguna lain otomatis menyesuaikan sisa stok.
 _Avoid_: order, transaksi, nota
 
 **Blokir Akun**:

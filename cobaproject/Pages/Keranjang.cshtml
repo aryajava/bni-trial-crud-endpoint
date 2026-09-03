@@ -37,12 +37,7 @@
                             @foreach (var item in Model.Items)
                             {
                                 <tr>
-                                    <td class="fw-semibold">@item.Title
-                                        @if (item.Quantity > item.Stock)
-                                        {
-                                            <div class="text-danger small">Stok tersisa @item.Stock</div>
-                                        }
-                                    </td>
+                                    <td class="fw-semibold">@item.Title</td>
                                     <td class="td-nomor">
                                         @if (item.DiscountPercent is > 0)
                                         {

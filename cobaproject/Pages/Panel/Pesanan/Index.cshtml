@@ -100,7 +100,7 @@
                 if (o.status === 'DIPROSES') {
                     aksi += ' <button class="btn btn-success btn-sm btn-kirim" data-id="' + o.id + '" title="Tandai dikirim"><span class="material-icons">local_shipping</span></button>';
                 }
-                if (o.status === 'DIPROSES' || o.status === 'DIKIRIM') {
+                if (o.status === 'DIPROSES') {
                     aksi += ' <button class="btn btn-outline-danger btn-sm btn-batal" data-id="' + o.id + '" title="Batalkan"><span class="material-icons">close</span></button>';
                 }
                 return '<tr>' +

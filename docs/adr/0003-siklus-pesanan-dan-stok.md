@@ -7,8 +7,8 @@ accepted
 
 ## Keputusan
 
-- **Status pesanan**: `DIPROSES` → `DIKIRIM` (ditandai staf ADMIN/OWNER/SA) → `DITERIMA` (dikonfirmasi pelanggan); `DIBATALKAN` — oleh pelanggan sebelum `DIKIRIM`, atau staf (ADMIN/OWNER/SA) kapan saja dengan alasan wajib.
-- **Stok**: validasi & pengurangan atomik saat konfirmasi (`SET STOCK = STOCK - @qty WHERE STOCK >= @qty`, tanpa menyentuh `VERSION`); dikembalikan saat batal.
+- **Status pesanan**: `DIPROSES` → `DIKIRIM` (ditandai staf ADMIN/OWNER/SA) → `DITERIMA` (dikonfirmasi pelanggan); `DIBATALKAN` — **hanya saat berstatus `DIPROSES`** (oleh pelanggan atau staf ADMIN/OWNER/SA, dengan alasan wajib). Pesanan `DIKIRIM` tidak dapat dibatalkan — barang sudah keluar, stok tidak pernah dikembalikan dari status itu.
+- **Stok**: validasi & pengurangan atomik saat konfirmasi (`SET STOCK = STOCK - @qty WHERE STOCK >= @qty`, tanpa menyentuh `VERSION`); dikembalikan saat batal (`DIBATALKAN` dari `DIPROSES`). Qty di keranjang otomatis disesuaikan ke sisa stok saat keranjang dibaca (berlebih → dikunci ke stok; produk habis → item dihapus).
 - **Harga**: `SUBTOTAL = Σ qty × Harga Setelah Diskon`, `PAJAK_AMOUNT = SUBTOTAL × Pajak%`, `TOTAL = SUBTOTAL + ONGKIR + PAJAK_AMOUNT` — semua di-snapshot ke `TRX_ORDER` (`SUBTOTAL`, `SHIPPING_FEE`, `TAX_AMOUNT`, `TOTAL_AMOUNT`) bersama snapshot judul/harga per baris di `TRX_ORDER_ITEM`.
 - **Pengaturan ongkir & pajak**: global di `APP_SETTING` (`SHIPPING_FEE`, `TAX_PERCENT`), diubah oleh OWNER/SA lewat Pengaturan Toko; berlaku untuk semua pesanan; nilai tersimpan sebagai snapshot di pesanan.
 - **Integritas**: `TRX_ORDER` boleh ber-FK ke `MASTER_CUSTOMER` (pelanggan tak bisa dihapus); `TRX_ORDER_ITEM` memakai ID polos tanpa FK — baris riwayat harus selamat dari penonaktifan/hapus produk.

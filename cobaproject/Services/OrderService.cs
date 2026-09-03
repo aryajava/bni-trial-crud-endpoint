@@ -255,7 +255,7 @@ public class OrderService : IOrderService
         return (affected > 0, null);
     }
 
-    public async Task<(bool Success, string? Error)> CancelAsync(long id, string reason, string updatedBy, bool isStaff)
+    public async Task<(bool Success, string? Error)> CancelAsync(long id, string reason, string updatedBy)
     {
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -274,13 +274,11 @@ public class OrderService : IOrderService
         {
             return (false, "Pesanan tidak ditemukan.");
         }
-        if (current == Diterima || current == Dibatalan)
+        if (current != Diproses)
         {
-            return (false, $"Pesanan berstatus {current} — tidak dapat dibatalkan.");
-        }
-        if (!isStaff && current != Diproses)
-        {
-            return (false, "Pesanan hanya dapat dibatalkan sebelum dikirim.");
+            return current == Dikirim
+                ? (false, "Pesanan sudah dikirim — tidak dapat dibatalkan.")
+                : (false, $"Pesanan berstatus {current} — tidak dapat dibatalkan.");
         }
 
         var affected = await connection.ExecuteAsync("""
@@ -297,6 +295,7 @@ public class OrderService : IOrderService
 
         if (affected > 0)
         {
+            // Stok kembali hanya saat DIBATALKAN dari DIPROSES (barang belum keluar).
             var items = (await connection.QueryAsync<dynamic>("""
                 SELECT PRODUCT_ID, QUANTITY FROM LOSCONSUMER.TRX_ORDER_ITEM WHERE ORDER_ID = @OrderId;
                 """, new { OrderId = id }, transaction)).ToList();
