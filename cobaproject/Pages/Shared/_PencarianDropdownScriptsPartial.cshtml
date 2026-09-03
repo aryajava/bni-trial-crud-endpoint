@@ -109,17 +109,17 @@
                 var qq = (q || "").trim().toLowerCase();
                 var ada = false;
                 daftarUrut().forEach(function (k) {
-                    var posisi = k.teks.toLowerCase().indexOf(qq);
-                    if (qq !== "" && posisi === -1) { return; }
+                    var teksRendah = k.teks.toLowerCase();
+                    var cocok = qq === "" || teksRendah.startsWith(qq);
+                    if (!cocok) { return; }
                     if (k.nilai === "" && select.value !== "") { return; }
                     ada = true;
                     var li = document.createElement("li");
                     if (qq === "") {
                         li.textContent = k.teks;
                     } else {
-                        li.innerHTML = esc(k.teks.slice(0, posisi)) +
-                            "<mark>" + esc(k.teks.slice(posisi, posisi + qq.length)) + "</mark>" +
-                            esc(k.teks.slice(posisi + qq.length));
+                        li.innerHTML = "<mark>" + esc(k.teks.slice(0, qq.length)) + "</mark>" +
+                            esc(k.teks.slice(qq.length));
                     }
                     li.dataset.index = k.index;
                     li.addEventListener("click", function () {
