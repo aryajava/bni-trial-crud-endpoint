@@ -39,8 +39,8 @@ public class IndexModel : PageModel
         var (_, error) = await _categoryService.CreateAsync(Create, Caller);
         if (error is not null)
         {
-            ModelState.AddModelError(string.Empty, error);
-            return await ReloadWithErrorsAsync();
+            TempData["ErrorMessage"] = error;
+            return Page();
         }
 
         TempData["SuccessMessage"] = $"Kategori \"{Create.Name.Trim()}\" ditambahkan.";

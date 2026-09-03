@@ -44,7 +44,7 @@ public class ChangePasswordModel : PageModel
         var (success, error) = await _userService.ChangePasswordBlockedAsync(Username.Trim(), NewPassword);
         if (!success)
         {
-            ModelState.AddModelError(string.Empty, error ?? "Gagal mengganti password.");
+            TempData["ErrorMessage"] = error ?? "Gagal mengganti password.";
             return Page();
         }
 

@@ -45,14 +45,15 @@ public class LoginModel : PageModel
         {
             _logger.LogWarning("[AUTH] Login gagal untuk {Username} (alasan {Reason})", Username, error ?? "invalid");
 
-            // Akun diblokir setelah 5× gagal login → wajib ganti password.
+            // Akun diblokir setelah beberapa kali gagal login → wajib ganti password.
             if (string.Equals(error, "blocked", StringComparison.OrdinalIgnoreCase))
             {
+                TempData["ErrorMessage"] = "Akun Anda diblokir setelah beberapa kali gagal masuk. Ganti kata sandi untuk membuka blokir.";
                 TempData["BlockedRedirect"] = true;
-                return RedirectToPage("/Panel/GantiKataSandi", new { username = Username.Trim() });
+                return Redirect("/Panel/GantiKataSandi?username=" + Uri.EscapeDataString(Username.Trim()));
             }
 
-            ModelState.AddModelError(string.Empty, "Username atau password salah.");
+            TempData["ErrorMessage"] = "Username atau password salah.";
             return Page();
         }
 
