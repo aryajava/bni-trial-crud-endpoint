@@ -29,7 +29,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        CanDecide = User.IsInRole(UserRolePolicy.Owner);
+        CanDecide = User.IsInRole(UserRolePolicy.Owner) || User.IsInRole(UserRolePolicy.Sa);
 
         // JS memanggil endpoint dengan secret-key user yang login, sehingga
         // identitas & role asli dikenali API (pola halaman Master Produk).

@@ -41,7 +41,7 @@ Semua keputusan bisnis ditulis permanen (audit trail dua sisi, tabel DB, bukan f
 |---|---|
 | `/Panel` (Dashboard) | ADMIN+OWNER+SA |
 | `/Panel/Produk`, `/Panel/Kategori` | ADMIN+OWNER+SA (delete: OWNER+SA) |
-| `/Panel/Monitoring` (persetujuan diskon) | semua staf; putuskan: OWNER |
+| `/Panel/Monitoring` (persetujuan diskon) | semua staf; putuskan: OWNER+SA |
 | `/Panel/MasterUser` | OWNER+SA |
 | `/Panel/UserControl` | OWNER+SA |
 | `/Panel/Pelanggan` | OWNER+SA (blokir/buka; hapus-lunak & aktifkan kembali: SA) |
@@ -96,7 +96,7 @@ Global di `APP_SETTING` (`SHIPPING_FEE` Rp tetap, `TAX_PERCENT` %): diubah OWNER
 
 ## 6. Persetujuan Diskon
 
-Alur **tidak berubah** (pengajuan persen diskon → keputusan oleh OWNER/SYSTEM, satu MENUNGGU per produk). Yang berubah: halaman Monitoring menampilkan **Harga Dasar & Harga Setelah Diskon** sebelum↔sesudah, dihitung saat dibaca (rumus yang sama: diskon dari `PRICE`, pembulatan ke 100). `PRICE` tidak pernah berubah oleh diskon.
+Alur **tidak berubah** (pengajuan persen diskon → keputusan oleh OWNER/SA/SYSTEM, satu MENUNGGU per produk). Yang berubah: halaman Monitoring menampilkan **Harga Dasar & Harga Setelah Diskon** sebelum↔sesudah, dihitung saat dibaca (rumus yang sama: diskon dari `PRICE`, pembulatan ke 100). `PRICE` tidak pernah berubah oleh diskon.
 
 ---
 

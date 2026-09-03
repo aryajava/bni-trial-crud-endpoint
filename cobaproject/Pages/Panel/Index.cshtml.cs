@@ -16,7 +16,7 @@ public class IndexModel : PageModel
 
     public int PendingApprovals { get; set; }
 
-    public bool IsOwner { get; set; }
+    public bool IsOwnerOrSa { get; set; }
 
     public IndexModel(IProductService productService, IDiscountApprovalService approvalService)
     {
@@ -27,8 +27,8 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         Stats = await _productService.GetDashboardStatsAsync();
-        IsOwner = User.IsInRole(UserRolePolicy.Owner);
-        PendingApprovals = IsOwner
+        IsOwnerOrSa = User.IsInRole(UserRolePolicy.Owner) || User.IsInRole(UserRolePolicy.Sa);
+        PendingApprovals = IsOwnerOrSa
             ? await _approvalService.CountPendingAsync()
             : 0;
         ViewData["CrumbRoot"] = "Beranda";

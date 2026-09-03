@@ -81,6 +81,7 @@ public class ProductService : IProductService
     // langsung tanpa persetujuan; selain itu (ADMIN) wajib konfirmasi Pemilik Toko.
     private bool CallerIsOwnerOrSystem =>
         _httpContextAccessor.HttpContext?.User.IsInRole(UserRolePolicy.Owner) == true
+        || _httpContextAccessor.HttpContext?.User.IsInRole(UserRolePolicy.Sa) == true
         || string.Equals(Caller, "SYSTEM", StringComparison.OrdinalIgnoreCase);
 
     public async Task<IEnumerable<ProductDto>> GetAllAsync()

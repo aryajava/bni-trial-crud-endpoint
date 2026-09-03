@@ -36,7 +36,7 @@ public class DiscountApprovalsController : ControllerBase
     }
 
     [HttpPost("{id:int}/approve")]
-    [Authorize(Roles = UserRolePolicy.Owner)]
+    [Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
     public async Task<IResult> Approve(int id, [FromBody] ApprovalDecisionRequest request)
     {
         try
@@ -62,7 +62,7 @@ public class DiscountApprovalsController : ControllerBase
     }
 
     [HttpPost("{id:int}/reject")]
-    [Authorize(Roles = UserRolePolicy.Owner)]
+    [Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
     public async Task<IResult> Reject(int id, [FromBody] ApprovalDecisionRequest request)
     {
         try

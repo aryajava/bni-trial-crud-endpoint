@@ -95,8 +95,9 @@ public class DiscountApprovalService : IDiscountApprovalService
         var conditions = new List<string>();
         var parameters = new DynamicParameters();
 
-        // OWNER melihat semua permintaan; selain itu hanya miliknya sendiri.
-        if (HttpContext.User.IsInRole(UserRolePolicy.Owner) != true)
+        // OWNER dan SA melihat semua permintaan; selain itu hanya miliknya sendiri.
+        if (HttpContext.User.IsInRole(UserRolePolicy.Owner) != true
+            && HttpContext.User.IsInRole(UserRolePolicy.Sa) != true)
         {
             conditions.Add("A.REQUESTED_BY = @RequestedBy");
             parameters.Add("RequestedBy", HttpContext.User.Identity?.Name ?? "?");
