@@ -1,6 +1,7 @@
 @using System.Security.Claims
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    var routeId = ViewContext.RouteData.Values["id"]?.ToString();
     var isDashboardPages = currentPage.Equals("/Panel", StringComparison.OrdinalIgnoreCase);
     var isProductPages = currentPage.StartsWith("/Panel/Produk", StringComparison.OrdinalIgnoreCase);
     var isMasterUserPages = currentPage.StartsWith("/Panel/MasterUser", StringComparison.OrdinalIgnoreCase);
@@ -8,16 +9,57 @@
     var isUserControlPages = currentPage.StartsWith("/Panel/UserControl", StringComparison.OrdinalIgnoreCase);
     var isPersetujuanPages = currentPage.StartsWith("/Panel/PersetujuanDiskon", StringComparison.OrdinalIgnoreCase);
     var isPermintaanPages = currentPage.StartsWith("/Panel/PermintaanDiskon", StringComparison.OrdinalIgnoreCase);
-    var isSettingsPages = currentPage.StartsWith("/Panel/Settings", StringComparison.OrdinalIgnoreCase);
-    var crumbRoot = ViewData["CrumbRoot"] as string
-        ?? (isDashboardPages ? "Beranda"
-            : isMasterUserPages ? "Master User"
-            : isCategoryPages ? "Master Kategori"
-            : isUserControlPages ? "User Control"
-            : isPersetujuanPages ? "Persetujuan Diskon"
-            : isPermintaanPages ? "Permintaan Diskon"
-            : isSettingsPages ? "Pengaturan"
-            : "Master Produk");
+
+    var breadcrumbTrail = new List<(string Label, string? Url)>();
+    if (!isDashboardPages)
+    {
+        breadcrumbTrail.Add(("Beranda", "/Panel"));
+        if (isProductPages)
+        {
+            breadcrumbTrail.Add(("Master", null));
+            breadcrumbTrail.Add(("Master Produk", "/Panel/Produk"));
+            if (currentPage.EndsWith("/Create", StringComparison.OrdinalIgnoreCase)) breadcrumbTrail.Add(("Tambah", null));
+            else if (currentPage.EndsWith("/Delete", StringComparison.OrdinalIgnoreCase)) breadcrumbTrail.Add(("Hapus", null));
+            else if (currentPage.StartsWith("/Panel/Produk/Edit", StringComparison.OrdinalIgnoreCase)) breadcrumbTrail.Add(("Edit" + (routeId is not null ? " #" + routeId : ""), null));
+        }
+        else if (isMasterUserPages)
+        {
+            breadcrumbTrail.Add(("Master", null));
+            breadcrumbTrail.Add(("Master User", "/Panel/MasterUser"));
+            if (currentPage.EndsWith("/Create", StringComparison.OrdinalIgnoreCase)) breadcrumbTrail.Add(("Tambah", null));
+            else if (currentPage.StartsWith("/Panel/MasterUser/Edit", StringComparison.OrdinalIgnoreCase)) breadcrumbTrail.Add(("Edit" + (routeId is not null ? " #" + routeId : ""), null));
+        }
+        else if (isCategoryPages)
+        {
+            breadcrumbTrail.Add(("Master", null));
+            breadcrumbTrail.Add(("Master Kategori", "/Panel/Kategori"));
+        }
+        else if (isUserControlPages)
+        {
+            breadcrumbTrail.Add(("Maintenance", null));
+            breadcrumbTrail.Add(("User Control", "/Panel/UserControl"));
+        }
+        else if (isPermintaanPages)
+        {
+            breadcrumbTrail.Add(("Monitoring", null));
+            breadcrumbTrail.Add(("Permintaan Diskon", "/Panel/PermintaanDiskon"));
+        }
+        else if (isPersetujuanPages)
+        {
+            breadcrumbTrail.Add(("Monitoring", null));
+            breadcrumbTrail.Add(("Persetujuan Diskon", "/Panel/PersetujuanDiskon"));
+        }
+        else if (currentPage.Equals("/Panel/Settings/PengaturanAplikasi", StringComparison.OrdinalIgnoreCase))
+        {
+            breadcrumbTrail.Add(("Pengaturan", null));
+            breadcrumbTrail.Add(("Pengaturan Aplikasi", "/Panel/Settings/PengaturanAplikasi"));
+        }
+        else if (currentPage.Equals("/Panel/Settings/PengaturanToko", StringComparison.OrdinalIgnoreCase))
+        {
+            breadcrumbTrail.Add(("Pengaturan", null));
+            breadcrumbTrail.Add(("Pengaturan Toko", "/Panel/Settings/PengaturanToko"));
+        }
+    }
     var signedIn = User.Identity?.IsAuthenticated == true;
     var isOwner = User.IsInRole("OWNER");
     var isAdmin = User.IsInRole("ADMIN");
@@ -192,6 +234,8 @@
         .col-aksi { width: 80px; min-width: 80px; }
         .table-data td.col-no, .table-data th.col-no, .table-data td.col-aksi, .table-data th.col-aksi { padding-left: 4px; padding-right: 4px; }
         th { white-space: nowrap; }
+        .breadcrumb-nav .breadcrumb { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+        .breadcrumb-nav .breadcrumb::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -273,12 +317,29 @@
 {
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">
-                <a href="@(isDashboardPages ? "/Panel" : isMasterUserPages ? "/Panel/MasterUser" : isCategoryPages ? "/Panel/Kategori" : isUserControlPages ? "/Panel/UserControl" : isPermintaanPages ? "/Panel/PermintaanDiskon" : isPersetujuanPages ? "/Panel/PersetujuanDiskon" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk")">@crumbRoot</a>
-            </li>
-            @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
+            @for (var i = 0; i < breadcrumbTrail.Count; i++)
             {
-                <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+                var (label, url) = breadcrumbTrail[i];
+                if (i == breadcrumbTrail.Count - 1)
+                {
+                    <li class="breadcrumb-item active" aria-current="page">@label</li>
+                }
+                else if (url is null)
+                {
+                    <li class="breadcrumb-item">@label</li>
+                }
+                else
+                {
+                    <li class="breadcrumb-item">
+                        <a href="@url">
+                            @if (i == 0)
+                            {
+                                <span class="material-icons" style="font-size: 14px; vertical-align: -2px;">home</span>
+                            }
+                            @label
+                        </a>
+                    </li>
+                }
             }
         </ol>
     </nav>

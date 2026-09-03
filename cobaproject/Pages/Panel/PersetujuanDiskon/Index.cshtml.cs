@@ -23,7 +23,6 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         ViewData["Title"] = "Persetujuan Diskon";
-        ViewData["CrumbRoot"] = "Persetujuan Diskon";
         ViewData["ApiKeyHeader"] = _apiKeyConfig.HeaderName;
         ViewData["ApiKey"] = await ResolveApiKeyAsync();
         ViewData["CanDecide"] = true;

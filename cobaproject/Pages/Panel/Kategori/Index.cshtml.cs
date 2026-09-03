@@ -28,7 +28,6 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         Categories = await _categoryService.GetAllAsync();
-        ViewData["CrumbRoot"] = "Master Kategori";
     }
 
     public async Task<IActionResult> OnPostCreateAsync()
@@ -102,7 +101,6 @@ public class IndexModel : PageModel
     private async Task<IActionResult> ReloadWithErrorsAsync()
     {
         Categories = await _categoryService.GetAllAsync();
-        ViewData["CrumbRoot"] = "Master Kategori";
         return Page();
     }
 }

@@ -31,6 +31,5 @@ public class IndexModel : PageModel
         PendingApprovals = IsOwnerOrSa
             ? await _approvalService.CountPendingAsync()
             : 0;
-        ViewData["CrumbRoot"] = "Beranda";
     }
 }
