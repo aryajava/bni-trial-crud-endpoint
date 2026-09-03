@@ -42,7 +42,7 @@ Semua keputusan bisnis ditulis permanen (audit trail dua sisi, tabel DB, bukan f
 | `/Panel` (Dashboard) | ADMIN+OWNER+SA |
 | `/Panel/Produk`, `/Panel/Kategori` | ADMIN+OWNER+SA (delete: OWNER) |
 | `/Panel/Monitoring` (persetujuan diskon) | semua staf; putuskan: OWNER |
-| `/Panel/MasterUser` | ADMIN+OWNER+SA |
+| `/Panel/MasterUser` | OWNER+SA |
 | `/Panel/UserControl` | OWNER+SA |
 | `/Panel/Pelanggan` | OWNER+SA (blokir/buka; hapus-lunak & aktifkan kembali: SA) |
 | `/Panel/Pesanan` | ADMIN+OWNER+SA (DIPROSES→DIKIRIM; batalkan) |

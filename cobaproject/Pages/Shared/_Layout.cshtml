@@ -195,7 +195,7 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar d-none d-lg-flex">
-            <a class="sidebar-brand" asp-page="/Panel">
+            <a class="sidebar-brand" href="/Panel">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -203,31 +203,34 @@
                 @if (signedIn)
                 {
                     <div class="nav-group-title">Beranda</div>
-                    <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel">
+                    <a class="nav-link @(isDashboardPages ? "active" : "")" href="/Panel">
                         <span class="material-icons">dashboard</span> Dashboard
                     </a>
                     <div class="nav-group-title">Master</div>
-                    <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Panel/Produk/Index">
+                    <a class="nav-link @(isProductPages ? "active" : "")" href="/Panel/Produk">
                         <span class="material-icons">inventory_2</span> Master Produk
                     </a>
-                    @if (isAdmin || isOwner || isSa)
+                    @if (isOwner || isSa)
                     {
-                        <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Panel/MasterUser/Index">
+                        <a class="nav-link @(isMasterUserPages ? "active" : "")" href="/Panel/MasterUser">
                             <span class="material-icons">group</span> Master User
                         </a>
-                        <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Panel/Kategori/Index">
+                    }
+                    @if (isAdmin || isOwner || isSa)
+                    {
+                        <a class="nav-link @(isCategoryPages ? "active" : "")" href="/Panel/Kategori">
                             <span class="material-icons">category</span> Master Kategori
                         </a>
                     }
                     @if (isOwner || isSa)
                     {
                         <div class="nav-group-title">Maintenance</div>
-                        <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Panel/UserControl/Index">
+                        <a class="nav-link @(isUserControlPages ? "active" : "")" href="/Panel/UserControl">
                             <span class="material-icons">manage_accounts</span> User Control
                         </a>
                     }
                     <div class="nav-group-title">Monitoring</div>
-                    <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Panel/Monitoring/Index">
+                    <a class="nav-link @(isMonitoringPages ? "active" : "")" href="/Panel/Monitoring">
                         <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
                     </a>
                     @if (isOwner || isSa)
@@ -235,11 +238,11 @@
                         <div class="nav-group-title">Settings</div>
                         @if (isSa)
                         {
-                            <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" asp-page="/Panel/Settings/PengaturanAplikasi">
+                            <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" href="/Panel/Settings/PengaturanAplikasi">
                                 <span class="material-icons">settings_applications</span> Pengaturan Aplikasi
                             </a>
                         }
-                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" asp-page="/Panel/Settings/PengaturanToko">
+                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
                             <span class="material-icons">store</span> Pengaturan Toko
                         </a>
                     }
@@ -263,7 +266,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a asp-page="@(isDashboardPages ? "/Panel" : isMasterUserPages ? "/Panel/MasterUser/Index" : isCategoryPages ? "/Panel/Kategori/Index" : isUserControlPages ? "/Panel/UserControl/Index" : isMonitoringPages ? "/Panel/Monitoring/Index" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk/Index")">@crumbRoot</a>
+                <a href="@(isDashboardPages ? "/Panel" : isMasterUserPages ? "/Panel/MasterUser" : isCategoryPages ? "/Panel/Kategori" : isUserControlPages ? "/Panel/UserControl" : isMonitoringPages ? "/Panel/Monitoring" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -277,7 +280,7 @@
     {
         <span class="text-muted small">@displayName</span>
         <span class="badge @(isOwner || isSa ? "bg-dark" : "bg-primary-subtle text-primary-emphasis")">@UserRolePolicy.DisplayName(currentRole)</span>
-        <a class="btn btn-outline-secondary btn-sm" asp-page="/Panel/Keluar" title="Keluar">
+        <a class="btn btn-outline-secondary btn-sm" href="/Panel/Keluar" title="Keluar">
             <span class="material-icons">logout</span>
         </a>
     }
@@ -297,7 +300,7 @@
 
     <div class="offcanvas offcanvas-start offcanvas-nav" tabindex="-1" id="sidebarMobile">
         <div class="offcanvas-header">
-            <a class="sidebar-brand" asp-page="/Panel">
+            <a class="sidebar-brand" href="/Panel">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -307,31 +310,34 @@
             @if (signedIn)
             {
                 <div class="nav-group-title">Beranda</div>
-                <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel">
+                <a class="nav-link @(isDashboardPages ? "active" : "")" href="/Panel">
                     <span class="material-icons">dashboard</span> Dashboard
                 </a>
                 <div class="nav-group-title">Master</div>
-                <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Panel/Produk/Index">
+                <a class="nav-link @(isProductPages ? "active" : "")" href="/Panel/Produk">
                     <span class="material-icons">inventory_2</span> Master Produk
                 </a>
-                @if (isAdmin || isOwner || isSa)
+                @if (isOwner || isSa)
                 {
-                    <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Panel/MasterUser/Index">
+                    <a class="nav-link @(isMasterUserPages ? "active" : "")" href="/Panel/MasterUser">
                         <span class="material-icons">group</span> Master User
                     </a>
-                    <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Panel/Kategori/Index">
+                }
+                @if (isAdmin || isOwner || isSa)
+                {
+                    <a class="nav-link @(isCategoryPages ? "active" : "")" href="/Panel/Kategori">
                         <span class="material-icons">category</span> Master Kategori
                     </a>
                 }
                 @if (isOwner || isSa)
                 {
                     <div class="nav-group-title">Maintenance</div>
-                    <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Panel/UserControl/Index">
+                    <a class="nav-link @(isUserControlPages ? "active" : "")" href="/Panel/UserControl">
                         <span class="material-icons">manage_accounts</span> User Control
                     </a>
                 }
                 <div class="nav-group-title">Monitoring</div>
-                <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Panel/Monitoring/Index">
+                <a class="nav-link @(isMonitoringPages ? "active" : "")" href="/Panel/Monitoring">
                     <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
                 </a>
                 @if (isOwner || isSa)
@@ -339,11 +345,11 @@
                     <div class="nav-group-title">Settings</div>
                     @if (isSa)
                     {
-                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" asp-page="/Panel/Settings/PengaturanAplikasi">
+                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" href="/Panel/Settings/PengaturanAplikasi">
                             <span class="material-icons">settings_applications</span> Pengaturan Aplikasi
                         </a>
                     }
-                    <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" asp-page="/Panel/Settings/PengaturanToko">
+                    <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
                         <span class="material-icons">store</span> Pengaturan Toko
                     </a>
                 }

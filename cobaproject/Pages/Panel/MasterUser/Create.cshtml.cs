@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace cobaproject.Pages.Users;
 
-[Authorize(Roles = "ADMIN,OWNER,SA")]
+[Authorize(Roles = "OWNER,SA")]
 public class CreateModel : PageModel
 {
     private readonly IUserService _userService;

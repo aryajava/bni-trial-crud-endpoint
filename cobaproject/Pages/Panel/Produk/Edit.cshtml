@@ -29,7 +29,7 @@
                     @if (Model.Categories.Count == 0)
                     {
                         <div class="alert alert-warning py-2 small mb-1">
-                            Belum ada kategori. <a asp-page="/Panel/Kategori/Index">Tambahkan di Master Kategori</a> dulu.
+                            Belum ada kategori. <a href="/Panel/Kategori">Tambahkan di Master Kategori</a> dulu.
                         </div>
                         @Html.ValidationMessageFor(m => m.Form.CategoryId, null, new { @class = "field-error" })
                     }
