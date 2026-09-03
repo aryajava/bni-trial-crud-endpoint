@@ -66,7 +66,7 @@ public class OrderService : IOrderService
         {
             var stock = await connection.ExecuteScalarAsync<int>(
                 "SELECT ISNULL(STOCK, 0) FROM LOSCONSUMER.MASTER_PRODUCT WHERE ID = @Id AND IS_ACTIVE = 1;",
-                new { item.ProductId }, transaction);
+                new { Id = item.ProductId }, transaction);
             if (stock < item.Quantity)
             {
                 return (null, $"Stok produk \"{item.Title}\" tidak cukup (tersisa {stock}).");
