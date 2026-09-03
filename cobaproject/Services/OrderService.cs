@@ -88,10 +88,10 @@ public class OrderService : IOrderService
             Shipping = shipping,
             Tax = taxAmount,
             Total = total,
-            request.Name,
-            request.Phone,
-            request.Address,
-            request.Note,
+            ShipName = request.Name,
+            ShipPhone = request.Phone,
+            ShipAddress = request.Address,
+            Note = request.Note,
             CreatedBy = createdBy
         }, transaction);
 
@@ -118,7 +118,7 @@ public class OrderService : IOrderService
                 UPDATE LOSCONSUMER.MASTER_PRODUCT
                 SET STOCK = STOCK - @Quantity
                 WHERE ID = @Id AND STOCK >= @Quantity;
-                """, new { item.Quantity, item.ProductId }, transaction);
+                """, new { Quantity = item.Quantity, Id = item.ProductId }, transaction);
 
             if (affected == 0)
             {
