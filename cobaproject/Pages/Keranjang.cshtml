@@ -12,6 +12,7 @@
 
         @if (Model.IsCustomer)
         {
+            @Html.AntiForgeryToken()
             @if (Model.Items.Count == 0)
             {
                 <div class="text-center text-muted py-4">
@@ -215,20 +216,19 @@
                 var tamu = bacaKeranjangTamu();
                 if (tamu && tamu.length > 0) {
                     var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-                    if (tokenInput) {
-                        var f = document.createElement('form');
-                        f.method = 'post';
-                        f.action = '/Keranjang?handler=Merge';
-                        f.appendChild(tokenInput.cloneNode(true));
-                        var mk = function (name, value) {
-                            var input = document.createElement('input');
-                            input.type = 'hidden'; input.name = name; input.value = value;
-                            f.appendChild(input);
-                        };
-                        tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); });
-                        document.body.appendChild(f);
-                        f.submit();
-                    }
+                    if (!tokenInput) { return; }
+                    var f = document.createElement('form');
+                    f.method = 'post';
+                    f.action = '/Keranjang?handler=Merge';
+                    f.appendChild(tokenInput.cloneNode(true));
+                    var mk = function (name, value) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden'; input.name = name; input.value = value;
+                        f.appendChild(input);
+                    };
+                    tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); });
+                    document.body.appendChild(f);
+                    f.submit();
                 }
                 localStorage.removeItem('gklaku_cart');
                 muatBadge();
