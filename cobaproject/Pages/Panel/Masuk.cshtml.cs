@@ -73,6 +73,6 @@ public class LoginModel : PageModel
             return Redirect(returnUrl);
         }
 
-        return RedirectToPage("/Panel");
+        return Redirect("/Panel");
     }
 }
