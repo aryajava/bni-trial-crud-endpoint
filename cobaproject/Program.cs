@@ -6,6 +6,7 @@ using cobaproject.Helpers;
 using cobaproject.Services;
 using cobaproject.Services.Interfaces;
 using DbUp;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
