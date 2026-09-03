@@ -10,6 +10,8 @@ public interface ICategoryService
     /// <summary>Kategori aktif saja — untuk dropdown produk.</summary>
     Task<List<CategoryDto>> GetActiveAsync();
 
+    Task<PagedResult<CategoryDto>> GetPagedAsync(CategoryQueryParams query);
+
     Task<CategoryDto?> GetByIdAsync(int id);
 
     Task<(CategoryDto? Category, string? Error)> CreateAsync(CreateCategoryRequest request, string createdBy);

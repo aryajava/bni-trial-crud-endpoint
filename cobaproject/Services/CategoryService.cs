@@ -48,6 +48,64 @@ public class CategoryService : ICategoryService
         return rows.Select(CategoryMapper.ToDto).ToList();
     }
 
+    public async Task<PagedResult<CategoryDto>> GetPagedAsync(CategoryQueryParams query)
+    {
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        if (query.Active.HasValue)
+        {
+            conditions.Add("C.IS_ACTIVE = @Active");
+            parameters.Add("Active", query.Active.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+            AddContainsCondition(conditions, parameters, "Search", """
+                (C.NAME LIKE @Search ESCAPE '\'
+                 OR C.CREATED_BY LIKE @Search ESCAPE '\'
+                 OR C.UPDATED_BY LIKE @Search ESCAPE '\')
+                """, query.Search);
+
+        var whereClause = conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(" AND ", conditions);
+
+        var sortColumn = !string.IsNullOrEmpty(query.SortBy)
+            && SortColumns.TryGetValue(query.SortBy, out var column) ? column : "C.NAME";
+        var sortOrder = query.SortOrder.Equals("asc", StringComparison.OrdinalIgnoreCase) ? "ASC" : "DESC";
+        var tieBreaker = sortColumn == "C.ID" ? string.Empty : ", C.ID";
+        var offset = (page - 1) * pageSize;
+
+        parameters.Add("Offset", offset);
+        parameters.Add("PageSize", pageSize);
+
+        using var connection = new SqlConnection(_connectionString);
+
+        var total = await connection.ExecuteScalarAsync<int>($"""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.MASTER_CATEGORY C
+            {whereClause};
+            """, parameters);
+
+        var rows = await connection.QueryAsync<MasterCategory>($"""
+            SELECT {SelectColumns}
+            FROM LOSCONSUMER.MASTER_CATEGORY C
+            {whereClause}
+            ORDER BY {sortColumn} {sortOrder}{tieBreaker}
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            """, parameters);
+
+        return new PagedResult<CategoryDto>
+        {
+            Items = rows.Select(CategoryMapper.ToDto).ToList(),
+            Page = page,
+            PageSize = pageSize,
+            Total = total,
+            TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
+        };
+    }
+
     public async Task<CategoryDto?> GetByIdAsync(int id)
     {
         using var connection = new SqlConnection(_connectionString);
@@ -144,6 +202,27 @@ public class CategoryService : ICategoryService
 
         return (rows > 0, null);
     }
+
+    private const int MaxPageSize = 100;
+
+    private static readonly Dictionary<string, string> SortColumns = new()
+    {
+        ["id"] = "C.ID",
+        ["name"] = "C.NAME",
+        ["productCount"] = "PRODUCT_COUNT",
+        ["createdAt"] = "C.CREATED_AT",
+        ["updatedAt"] = "C.UPDATED_AT"
+    };
+
+    private static void AddContainsCondition(
+        List<string> conditions, DynamicParameters parameters, string name, string sql, string value)
+    {
+        conditions.Add(sql);
+        parameters.Add(name, $"%{EscapeLike(value.Trim())}%");
+    }
+
+    private static string EscapeLike(string value) =>
+        value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static async Task<bool> NameExistsAsync(SqlConnection connection, string name, int? excludeId)
     {

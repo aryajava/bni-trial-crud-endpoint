@@ -5,6 +5,7 @@ namespace cobaproject.Services.Interfaces;
 public interface IUserService
 {
     Task<IEnumerable<UserDto>> GetAllAsync();
+    Task<PagedResult<UserDto>> GetPagedAsync(UserQueryParams query);
     Task<UserDto?> GetByIdAsync(int id);
     Task<UserDto?> GetByUsernameAsync(string username);
 
@@ -23,6 +24,8 @@ public interface IUserService
     Task<(bool Success, string? Error)> ChangePasswordBlockedAsync(string username, string newPassword);
 
     Task<(bool Success, string? Error)> UnblockAsync(int id, string updatedBy);
+
+    Task<(bool Success, string? Error)> BlockAsync(int id, string updatedBy);
 
     Task<int> CountActiveByRoleAsync(string role);
 }

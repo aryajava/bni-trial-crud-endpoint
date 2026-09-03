@@ -37,7 +37,7 @@
                                 <br /><small class="text-muted">@(string.IsNullOrWhiteSpace(u.DisplayName) ? "—" : u.DisplayName)</small>
                             </td>
                             <td>
-                                @if (u.Role == UserRolePolicy.Owner)
+                                @if (u.Role == UserRolePolicy.Owner || u.Role == UserRolePolicy.Sa)
                                 {
                                     <span class="badge bg-dark">@UserRolePolicy.DisplayName(u.Role)</span>
                                 }
@@ -67,9 +67,11 @@
                                     {
                                         <form method="post" asp-page-handler="ChangeRole" class="d-inline-flex gap-1 align-items-center m-0">
                                             <input type="hidden" name="id" value="@u.Id" />
-                                            <select name="role" class="form-select form-select-sm" style="width: 110px;">
-                                                <option value="ADMIN" selected="@(u.Role == UserRolePolicy.Admin)">Admin Toko</option>
-                                                <option value="OWNER" selected="@(u.Role == UserRolePolicy.Owner)">Pemilik Toko</option>
+                                            <select name="role" class="form-select form-select-sm" style="width: 130px;">
+                                                @foreach (var role in Model.AvailableRoles)
+                                                {
+                                                    <option value="@role" selected="@(u.Role == role)">@UserRolePolicy.DisplayName(role)</option>
+                                                }
                                             </select>
                                             <button class="btn btn-outline-primary btn-sm" type="submit" title="Simpan role">
                                                 <span class="material-icons">admin_panel_settings</span>

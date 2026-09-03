@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace cobaproject.Pages.Users;
 
-[Authorize(Roles = "ADMIN,OWNER")]
+[Authorize(Roles = "ADMIN,OWNER,SA")]
 public class EditModel : PageModel
 {
     private readonly IUserService _userService;

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace cobaproject.Pages.Users;
 
-[Authorize(Roles = "ADMIN,OWNER")]
+[Authorize(Roles = "ADMIN,OWNER,SA")]
 public class CreateModel : PageModel
 {
     private readonly IUserService _userService;
@@ -61,7 +61,10 @@ public class CreateModel : PageModel
         return RedirectToPage("Index");
     }
 
-    private static List<string> AllowedRolesFor(string currentRole) => currentRole == UserRolePolicy.Owner
-        ? [UserRolePolicy.Owner, UserRolePolicy.Admin]
-        : [UserRolePolicy.Admin];
+    private static List<string> AllowedRolesFor(string currentRole) => currentRole switch
+    {
+        UserRolePolicy.Sa => [UserRolePolicy.Sa, UserRolePolicy.Owner, UserRolePolicy.Admin],
+        UserRolePolicy.Owner => [UserRolePolicy.Owner, UserRolePolicy.Admin],
+        _ => [UserRolePolicy.Admin]
+    };
 }

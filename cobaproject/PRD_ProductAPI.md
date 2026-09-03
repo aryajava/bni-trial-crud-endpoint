@@ -1,137 +1,170 @@
-# PRD — Product CRUD API (Consumer & Server)
+# PRD — Toko Online LOSCONSUMER (Consumer & Server)
 
-> **Version:** 1.5.0 | **Date:** 2026-08-24 | **Author:** Engineering  
-> **Updated:** Skema MASTER_PRODUCT hanya menggunakan ID (PRODUCT_ID/EXTERNAL_ID dihapus), Dapper SQL langsung di Service layer, cek duplikasi /insert berbasis ID, Swagger UI dengan Authorize Key.
+> **Version:** 2.0.0 | **Date:** 2026-09-03 | **Author:** Engineering
+> **Updated:** Rombakan total dari aplikasi admin CRUD menjadi toko online — dua area (publik & `/Panel`), dua kelas akun (pengurus & pelanggan), siklus pesanan penuh, audit trail dua sisi, laporan penjualan. Keputusan desain direkam di `docs/adr/0001..0004`; kosakata domain di `CONTEXT.md`.
 
 ---
 
 ## 1. Overview
 
-API berbasis ASP.NET Core (.NET 10) yang memiliki dua peran utama:
+Aplikasi berbasis ASP.NET Core (.NET 10) yang menjadi **toko online**: pelanggan menjelajah produk, mengisi keranjang, dan checkout dengan akun; pengurus toko mengelola katalog, persetujuan diskon, pesanan, pelanggan, dan pengaturan dari area terpisah yang tidak terlihat oleh publik.
 
 | Peran | Keterangan |
 |---|---|
-| **Consumer** | Mengambil data produk dari `https://fakestoreapi.com/products` dan menyinkronkan ke DB lokal |
-| **Server** | Menyajikan CRUD produk ke/dari SQL Server lokal |
+| **Pelanggan** | Membeli: katalog → keranjang → checkout (wajib akun) → pesanan |
+| **Consumer (API)** | Menarik data dari `https://fakestoreapi.com/products` dan menyinkronkan ke DB lokal |
+| **Server (API/UI)** | CRUD produk/kategori/user + persetujuan diskon + pesanan + audit |
 
-Semua endpoint dilindungi **API Key** melalui HTTP Header `X-Api-Key`. Response dikembalikan dengan **HTTP Status Code dinamis** yang ditentukan otomatis oleh `ResponseHelper` — tidak ada hardcode status code di controller.
+Semua keputusan bisnis ditulis permanen (audit trail dua sisi, tabel DB, bukan file). API dilindungi `X-Api-Key`; UI staf dilindungi cookie login.
 
 ---
 
-## 2. Architecture & Pattern
+## 2. Area & Navigasi
 
-### Layered MVC dengan Dapper di Service Layer
-```
-Request → [Middleware Pipeline] → Controller → Service (Dapper SQL + Mapper) → SQL Server
-```
+### 2.1 Area Publik (`/` — root, layout toko, tanpa login wajib)
 
-| Layer | Peran |
+| Path | Halaman |
 |---|---|
-| **Controller** | Menerima request, validasi model state, memanggil interface `IProductService`, mengembalikan response via `ResponseHelper` |
-| **Service** | Mengimplementasikan logika bisnis, menjalankan query SQL langsung via **Dapper**, menggunakan **Mapper** untuk konversi Entity ⇄ DTO, dan mencatat log audit Serilog |
-| **Database** | SQL Server (Database: `LOSCONSUMER`, Schema: `LOSCONSUMER`) |
+| `/` | Katalog (grid + search LIKE + filter kategori, stok 0 = "Habis") |
+| `/Produk/{id}` | Detail produk |
+| `/Keranjang` | Keranjang (tamu: localStorage; login: server) |
+| `/Checkout` | Checkout — **wajib login** |
+| `/Masuk` / `/Keluar` | Login/logout pelanggan (email + sandi) |
+| `/Daftar` | Daftar akun (nama, email, sandi) |
+| `/Profil` | Edit profil + **Hapus Akun** (soft delete oleh pemilik akun) |
+| `/GantiKataSandi` | Ganti sandi; juga jalan pemulihan dari blokir |
+| `/PesananSaya` | Riwayat pesanan + konfirmasi DITERIMA / batalkan |
 
----
+### 2.2 Area Pengurus (`/Panel/**` — perlu login; anonim → `/Panel/Masuk`)
 
-## 3. Technology Stack
-
-| Komponen | Pilihan |
+| Path | Akses |
 |---|---|
-| Framework | .NET 10 (ASP.NET Core Web API) |
-| Architecture Pattern | Layered MVC (Controller → Service + Dapper + Mapper) |
-| ORM / Data Access | **Dapper** (Dapper Query langsung di Service) |
-| Database | Microsoft SQL Server (LocalDB) |
-| Primary Key Strategy | **`SEQUENCE NO CACHE`** (`DEFAULT (NEXT VALUE FOR ...)`) — Menjamin ID urut 1, 2, 3 tanpa gap |
-| DB Migration | `dbup-sqlserver` (Embedded SQL scripts di folder `Scripts/`) |
-| Logging | **Serilog** (File rolling harian di `logs/master_product/`) + Tabel Audit DB |
-| Authentication | API Key via HTTP Header `X-Api-Key` |
-| API Docs UI | **Swagger UI** (`Swashbuckle.AspNetCore.SwaggerUI` + `Microsoft.AspNetCore.OpenApi`) |
+| `/Panel` (Dashboard) | ADMIN+OWNER+SA |
+| `/Panel/Produk`, `/Panel/Kategori` | ADMIN+OWNER+SA (delete: OWNER) |
+| `/Panel/Monitoring` (persetujuan diskon) | semua staf; putuskan: OWNER |
+| `/Panel/MasterUser` | ADMIN+OWNER+SA |
+| `/Panel/UserControl` | OWNER+SA |
+| `/Panel/Pelanggan` | OWNER+SA (blokir/buka; hapus-lunak & aktifkan kembali: SA) |
+| `/Panel/Pesanan` | ADMIN+OWNER+SA (DIPROSES→DIKIRIM; batalkan) |
+| `/Panel/LaporanPenjualan` | OWNER+SA |
+| `/Panel/Settings/PengaturanAplikasi` | **SA saja** (ambang blokir login) |
+| `/Panel/Settings/PengaturanToko` | OWNER+SA (ongkir tetap + pajak %) |
+| `/Panel/Settings/Audit` | **SA saja** |
+
+### 2.3 Peran (`MASTER_USER`)
+
+Hierarki **SA > OWNER > ADMIN** (`SA`/`OWNER`/`ADMIN`; label "Super Admin/Pemilik Toko/Admin Toko"). Seed: `admin`, `owner`, `sa` (`sa123`). Aturan: SA buat SA/OWNER/ADMIN · OWNER buat OWNER/ADMIN · ADMIN buat ADMIN; akun seed `sa` tak bisa dihapus/diturunkan; minimal satu SA aktif. Cek blokir hanya saat masuk (tanpa kick-session).
 
 ---
 
-## 4. Database Schema (`LOSCONSUMER`)
+## 3. Akun Pelanggan (`MASTER_CUSTOMER`)
 
-### 4.1 Tabel `LOSCONSUMER.MASTER_PRODUCT`
-
-| Nama Kolom | Tipe Data | Nullable | Keterangan |
-|---|---|---|---|
-| `ID` | `INT IDENTITY(1,1)` | NOT NULL | **Primary Key** |
-| `TITLE` | `NVARCHAR(500)` | NOT NULL | Nama produk |
-| `PRICE` | `DECIMAL(18,2)` | NOT NULL | Harga produk |
-| `DESCRIPTION` | `NVARCHAR(MAX)` | NULL | Deskripsi produk |
-| `CATEGORY` | `NVARCHAR(200)` | NULL | Kategori produk |
-| `IMAGE` | `NVARCHAR(1000)` | NULL | URL gambar produk |
-| `RATING_RATE` | `DECIMAL(5,2)` | NULL | Rating produk (0.0 - 5.0) |
-| `RATING_COUNT` | `INT` | NULL | Jumlah ulasan |
-| `IS_ACTIVE` | `BIT` | NOT NULL | **6 Kolom Wajib**: 1 = Aktif, 0 = Soft Deleted (Default: 1) |
-| `CREATED_AT` | `DATETIME` | NOT NULL | **6 Kolom Wajib**: Timestamp dibuat (Default: `GETDATE()`) |
-| `CREATED_BY` | `NVARCHAR(100)` | NOT NULL | **6 Kolom Wajib**: User/Key pembuat (Default: `'SYSTEM'`) |
-| `UPDATED_AT` | `DATETIME` | NULL | **6 Kolom Wajib**: Timestamp diupdate |
-| `UPDATED_BY` | `NVARCHAR(100)` | NULL | **6 Kolom Wajib**: User/Key pengupdate |
-| `VERSION` | `INT` | NOT NULL | **6 Kolom Wajib**: Optimistic Concurrency token (Default: 1) |
+Login **email + sandi** (bcrypt). Blokir (`IS_BLOCKED`): oleh sistem (gagal login berulang — lihat §7) atau OWNER/SA; buka kembali oleh OWNER/SA. **Hapus lunak** (`IS_ACTIVE=0`): oleh pemilik akun sendiri atau SA; pemulihan hanya SA; email tetap terkunci; riwayat dan audit utuh. Akun pelanggan **tidak bisa dihapus** dari DB.
 
 ---
 
-### 4.2 Tabel `LOSCONSUMER.REQUEST_PRODUCT`
+## 4. Keranjang & Checkout
 
-| Nama Kolom | Tipe Data | Keterangan |
+1. Keranjang tamu = `localStorage` browser; saat login → digabung otomatis ke `TRX_CART_ITEM` (qty dijumlah, dibatasi stok; produk nonaktif dilewati) dan localStorage dikosongkan; keranjang ikut akun lintas perangkat
+2. Tombol **Checkout** → wajib login (`/Masuk`/`/Daftar`)
+3. Isi data pengiriman (nama, no. HP, alamat, catatan opsional) — tersimpan ke profil sebagai default
+4. Ringkasan: `SUBTOTAL = Σ qty × Harga Setelah Diskon` · `PAJAK = SUBTOTAL × Pajak%` · `TOTAL = SUBTOTAL + ONGKIR + PAJAK` — **harga dihitung ulang saat konfirmasi**
+5. **Konfirmasi Pesanan**: stok divalidasi & dikurang atomik; pesanan `DIPROSES`; keranjang dikosongkan
+6. Riwayat di `/PesananSaya`
+
+Stok berkurang **hanya saat checkout**, bukan saat masuk keranjang; dikembalikan saat pesanan dibatalkan.
+
+---
+
+## 5. Pesanan (`TRX_ORDER`, `TRX_ORDER_ITEM`)
+
+### Status & transisi
+
+```
+DIPROSES ──(staf ADMIN/OWNER/SA: "Tandai Dikirim")──▶ DIKIRIM ──(pelanggan)──▶ DITERIMA
+    │                                                        │
+    └──(DIBATALKAN: pelanggan sblm DIKIRIM / staf kapan saja, alasan wajib)──▶ DIBATALKAN
+```
+
+Snapshot per pesanan: `SUBTOTAL`, `SHIPPING_FEE`, `TAX_AMOUNT`, `TOTAL_AMOUNT` + per baris judul/harga/qty (`TRX_ORDER_ITEM`, tanpa FK). Riwayat status who/when (`DIPROSES_AT`, `DIKIRIM_AT/BY`, `DITERIMA_AT/BY`, `DIBATALKAN_AT/BY/REASON`).
+
+### Pengaturan ongkir & pajak
+
+Global di `APP_SETTING` (`SHIPPING_FEE` Rp tetap, `TAX_PERCENT` %): diubah OWNER/SA di Pengaturan Toko, berlaku untuk semua pesanan, nilai disnapshot per pesanan.
+
+---
+
+## 6. Persetujuan Diskon
+
+Alur **tidak berubah** (pengajuan persen diskon → keputusan oleh OWNER/SYSTEM, satu MENUNGGU per produk). Yang berubah: halaman Monitoring menampilkan **Harga Dasar & Harga Setelah Diskon** sebelum↔sesudah, dihitung saat dibaca (rumus yang sama: diskon dari `PRICE`, pembulatan ke 100). `PRICE` tidak pernah berubah oleh diskon.
+
+---
+
+## 7. Lockout Berbasis Audit
+
+- Sumber kebenaran = event `LOGIN_FAILED` berurutan sejak `LOGIN`/`PASSWORD_CHANGED`/`UNBLOCKED` terakhir ≥ ambang → `IS_BLOCKED = 1`
+- Ambang global `APP_SETTING.LOGIN_FAIL_THRESHOLD` (default 5), diubah SA di Pengaturan Aplikasi; berlaku untuk pengurus **dan** pelanggan
+- Blokir permanen; pemulihan: ganti sandi (halaman khusus) atau dibuka pengurus
+- Kolom `LOGIN_FAILED_COUNT` **dihapus** dari `MASTER_USER` & `MASTER_CUSTOMER`
+
+---
+
+## 8. Audit Trail (DB, bukan file)
+
+| Tabel | Isi |
+|---|---|
+| `TRX_AUDIT_LOG` | Aksi pengurus: entitas PRODUCT/CATEGORY/USER/DISCOUNT_APPROVAL/ORDER/SETTING; snapshot JSON sebelum-sesudah; `REASON`; `TRACE_ID` → `REQUEST_PRODUCT`; termasuk `LOGIN`/`LOGIN_FAILED` |
+| `TRX_CUSTOMER_AUDIT_TRAIL` | REGISTER/LOGIN/LOGIN_FAILED/PROFILE_UPDATED/PASSWORD_CHANGED/BLOCKED/UNBLOCKED/DEACTIVATED/REACTIVATED; ACTOR = email pelanggan atau username pengurus |
+| `REQUEST_PRODUCT`/`RESPONSE_PRODUCT` | Log HTTP untuk `/api/*` & `/Panel/*` saja (publik dikecualikan) |
+
+Redaksi: `password`/`secretKey`/`X-Api-Key` → `***`. Kedua tabel audit **tanpa FK** (bukti selamat dari penghapusan data). Serilog hanya untuk kesalahan teknis.
+
+---
+
+## 9. Laporan Penjualan
+
+`/Panel/LaporanPenjualan` (OWNER+SA): dari `TRX_ORDER_ITEM` (mengecualikan pesanan `DIBATALKAN`) — **terlaris** (top 10: produk, qty, pendapatan) & **jarang terjual** (bottom 10 / nol penjualan), filter 7/30 hari/sepanjang masa. Masukan keputusan harga/diskon Pemilik Toko.
+
+---
+
+## 10. Database — Tabel Baru (penamaan Inggris)
+
+| Tabel | Keterangan |
+|---|---|
+| `MASTER_CUSTOMER` | Akun pelanggan (email unik, bcrypt, nama, HP, alamat, lockout, audit) |
+| `TRX_CART_ITEM` | Keranjang server (CUSTOMER_ID, PRODUCT_ID, QUANTITY; unik per pasangan) |
+| `TRX_ORDER`, `TRX_ORDER_ITEM` | Pesanan + snapshot baris |
+| `TRX_AUDIT_LOG` | Audit aksi pengurus |
+| `TRX_CUSTOMER_AUDIT_TRAIL` | Audit siklus hidup pelanggan |
+| `APP_SETTING` | `LOGIN_FAIL_THRESHOLD` (SA), `SHIPPING_FEE` & `TAX_PERCENT` (OWNER/SA) |
+
+Migrasi: dbup `Scripts/Script00XX_*.sql` — lanjutan dari 16 skrip yang ada; constraint `CK_MASTER_USER_ROLE` dimigrasi menerima `'SA'`.
+
+---
+
+## 11. Endpoints API
+
+**Grid client-side (standar semua tabel):** setiap data tabel punya endpoint `paged` dengan parameternya masing-masing (`Page/PageSize/SortBy/SortOrder/Search` + filter spesifik). Sudah ada: produk, persetujuan diskon, **kategori** (`/api/categories/paged`, sort whitelist: id/name/productCount/createdAt/updatedAt, filter `Active`), **user** (`/api/users/paged`, sort whitelist: id/username/displayName/role/lastLoginAt/createdAt/updatedAt, filter `Role`).
+
+| Method | Path | Keterangan |
 |---|---|---|
-| `ID` | `BIGINT IDENTITY(1,1)` | Primary Key |
-| `TRACE_ID` | `NVARCHAR(100)` | Korelasi GUID unik per request |
-| `ENDPOINT` | `NVARCHAR(500)` | Path URL endpoint |
-| `HTTP_METHOD` | `NVARCHAR(10)` | GET, POST, PUT, DELETE |
-| `HEADERS` | `NVARCHAR(MAX)` | Header request (JSON) |
-| `QUERY_PARAMS` | `NVARCHAR(MAX)` | Query parameter (JSON) |
-| `BODY` | `NVARCHAR(MAX)` | Request body (JSON) |
-| `IP_ADDRESS` | `NVARCHAR(50)` | IP address client |
-| `REQUESTED_AT` | `DATETIME` | Waktu request masuk |
+| GET/POST/PUT/DELETE | `/api/products` (`/paged`, `/{id}`) | CRUD produk; DELETE `?type=soft\|hard` (OWNER) |
+| GET | `/api/products/public*` | FakeStore API |
+| GET/POST | `/api/discount-approvals` (`/paged`, `/{id}/approve\|reject`) | Persetujuan diskon (keputusan: OWNER) |
+| GET/POST/PUT/DELETE | `/api/categories` (`/paged`, `/active`, `/{id}`) | Kategori (delete: OWNER) |
+| GET/POST/PUT/DELETE | `/api/users` (`/paged`, `/{id}`, role/active/reset-password/secret-key) | User pengurus |
+| POST | `/api/users/{id}/block` · `/unblock` | Blokir/buka (OWNER+SA, guard rank) |
+
+**Endpoint masa depan** (dibangun bersama bloknya): `/api/customers` (paged, block/unblock, reset-sandi, hapus-lunak/aktifkan — Blok 2A) · `/api/orders` (paged, `{id}/ship`, `{id}/cancel` — Blok 2C) · `/api/audit-logs/paged` (Blok 2D) · `/api/settings` (get, `{key}` put; threshold→SA, ongkir/pajak→OWNER+SA — menyusul setelah TRX_AUDIT_LOG) · `/api/reports/sales` (Laporan Penjualan — Blok 2D).
+
+Auth API: `X-Api-Key` (fallback `TEST123` → SYSTEM/OWNER; selain itu `SECRET_KEY` per user). Bypass: `/swagger`, `/openapi`, `/favicon.ico`. Halaman grid memakai **secret key user yang login** (pola Monitoring — lihat ADR-0004).
 
 ---
 
-### 4.3 Tabel `LOSCONSUMER.RESPONSE_PRODUCT`
+## 12. Rencana Eksekusi (ringkas)
 
-| Nama Kolom | Tipe Data | Keterangan |
-|---|---|---|
-| `ID` | `BIGINT IDENTITY(1,1)` | Primary Key |
-| `TRACE_ID` | `NVARCHAR(100)` | Korelasi GUID unik yang sama |
-| `STATUS_CODE` | `INT` | HTTP Status Code (200, 201, 400, 404, dll) |
-| `IS_SUCCESS` | `BIT` | `1` jika `STATUS_CODE < 400` |
-| `MESSAGE` | `NVARCHAR(MAX)` | Pesan status |
-| `RESPONSE_BODY` | `NVARCHAR(MAX)` | Response body (JSON) |
-| `ELAPSED_MS` | `BIGINT` | Durasi eksekusi (milidetik) |
-| `RESPONDED_AT` | `DATETIME` | Waktu response dikirim |
+Lihat `docs/execution-plan-rombak-online.md`. Urutan: **Blok 1** (fondasi RBAC/SA + Settings + lockout berbasis audit → harga di approval → polish UI) dilanjut **Blok 2** (toko online: akun pelanggan, area publik, keranjang/checkout/pesanan, audit dua sisi, laporan).
 
 ---
 
-## 5. Endpoints
-
-### 5.1 Server Endpoints (`/products`)
-
-| Method | Path | Deskripsi | Status Code |
-|---|---|---|---|
-| `GET` | `/products` | Ambil semua produk aktif (`IS_ACTIVE = 1`) | 200 OK |
-| `GET` | `/products/{id}` | Ambil produk by ID | 200 OK / 404 Not Found |
-| `POST` | `/products` | Tambah produk baru (`VERSION = 1`) | 201 Created / 422 Validation Error |
-| `PUT` | `/products/{id}` | Update produk (wajib kirim `version`) | 200 OK / 404 / 409 Conflict |
-| `DELETE` | `/products/{id}?type=soft` | Soft delete (`IS_ACTIVE = 0`) | 200 OK / 404 |
-| `DELETE` | `/products/{id}?type=hard` | Hard delete (`DELETE FROM`) | 204 No Content / 404 |
-
-### 5.2 Consumer Endpoints (`/products/public`)
-
-| Method | Path | Deskripsi |
-|---|---|---|
-| `GET` | `/products/public` | Ambil semua produk langsung dari FakeStore API |
-| `GET` | `/products/public/{id}` | Ambil satu produk dari FakeStore API by ID |
-| `GET` | `/products/public/insert` | Sinkronkan semua produk FakeStore ke database lokal (cek duplikasi berdasarkan ID) |
-
----
-
-## 6. Authentication
-
-- **Header Name:** `X-Api-Key`
-- **Default Key:** `LOS-SECRET-KEY-2026`
-- **Bypass Paths:** `/swagger`, `/openapi`, `/favicon.ico`
-
----
-
-*PRD v1.5.0*
+*PRD v2.0.0 — dirancang melalui sesi perancangan berulang (grilling + domain modeling), 2026-09-03*

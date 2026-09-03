@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace cobaproject.Pages.Users;
 
-[Authorize(Roles = "ADMIN,OWNER")]
+[Authorize(Roles = "ADMIN,OWNER,SA")]
 public class IndexModel : PageModel
 {
     private readonly IUserService _userService;
@@ -91,16 +91,23 @@ public class IndexModel : PageModel
 
         var countAdmin = await _userService.CountActiveByRoleAsync(UserRolePolicy.Admin);
         var countOwner = await _userService.CountActiveByRoleAsync(UserRolePolicy.Owner);
+        var countSa = await _userService.CountActiveByRoleAsync(UserRolePolicy.Sa);
 
         Rows = users.Select(u => new UserRow
         {
             User = u,
             IsSelf = u.Id == CurrentUserId,
             CanManage = UserRolePolicy.CanManage(CurrentRole, u.Role),
-            IsLastActiveInRole = u.IsActive &&
-                (u.Role == UserRolePolicy.Admin ? countAdmin : countOwner) <= 1
+            IsLastActiveInRole = u.IsActive && LastActiveByRole(u.Role, countAdmin, countOwner, countSa)
         }).ToList();
     }
+
+    private static bool LastActiveByRole(string role, int countAdmin, int countOwner, int countSa) => role switch
+    {
+        UserRolePolicy.Sa => countSa <= 1,
+        UserRolePolicy.Owner => countOwner <= 1,
+        _ => countAdmin <= 1
+    };
 }
 
 public class UserRow

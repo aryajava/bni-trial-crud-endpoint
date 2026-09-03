@@ -34,6 +34,20 @@ public class CategoryController : ControllerBase
         }
     }
 
+    [HttpGet("paged")]
+    public async Task<IResult> GetPaged([FromQuery] CategoryQueryParams query)
+    {
+        try
+        {
+            var result = await _categoryService.GetPagedAsync(query);
+            return ResponseHelper.Success(HttpContext, result);
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+
     [HttpGet("active")]
     public async Task<IResult> GetActive()
     {

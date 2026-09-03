@@ -1,6 +1,7 @@
 using cobaproject.Dtos;
 using cobaproject.Helpers;
 using cobaproject.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace cobaproject.Controllers;
@@ -19,6 +20,12 @@ public class UsersController : ControllerBase
     private string Caller =>
         HttpContext.Items["Caller"]?.ToString() ?? "SYSTEM";
 
+    private bool CanManageTarget(UserDto target)
+    {
+        var actorRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        return actorRole is not null && UserRolePolicy.CanManage(actorRole, target.Role);
+    }
+
     [HttpGet]
     public async Task<IResult> GetAll()
     {
@@ -26,6 +33,20 @@ public class UsersController : ControllerBase
         {
             var users = await _userService.GetAllAsync();
             return ResponseHelper.Success(HttpContext, users.ToList());
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+
+    [HttpGet("paged")]
+    public async Task<IResult> GetPaged([FromQuery] UserQueryParams query)
+    {
+        try
+        {
+            var result = await _userService.GetPagedAsync(query);
+            return ResponseHelper.Success(HttpContext, result);
         }
         catch (Exception ex)
         {
@@ -190,6 +211,72 @@ public class UsersController : ControllerBase
             return ok
                 ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" {(request.IsActive ? "diaktifkan" : "dinonaktifkan")}.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal mengubah status."]);
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+
+    [HttpPost("{id:int}/block")]
+    [Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
+    public async Task<IResult> Block(int id)
+    {
+        try
+        {
+            var user = await _userService.GetByIdAsync(id);
+            if (user is null)
+            {
+                return ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
+            }
+
+            if (!CanManageTarget(user))
+            {
+                return ResponseHelper.ValidationError(HttpContext, ["Tidak berhak memblokir user ini."]);
+            }
+
+            if (user.IsBlocked)
+            {
+                return ResponseHelper.ValidationError(HttpContext, [$"User \"{user.Display}\" sudah diblokir."]);
+            }
+
+            var (ok, error) = await _userService.BlockAsync(id, Caller);
+            return ok
+                ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" diblokir.", "Berhasil")
+                : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal memblokir user."]);
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+
+    [HttpPost("{id:int}/unblock")]
+    [Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
+    public async Task<IResult> Unblock(int id)
+    {
+        try
+        {
+            var user = await _userService.GetByIdAsync(id);
+            if (user is null)
+            {
+                return ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
+            }
+
+            if (!CanManageTarget(user))
+            {
+                return ResponseHelper.ValidationError(HttpContext, ["Tidak berhak membuka blokir user ini."]);
+            }
+
+            if (!user.IsBlocked)
+            {
+                return ResponseHelper.ValidationError(HttpContext, [$"User \"{user.Display}\" tidak dalam status diblokir."]);
+            }
+
+            var (ok, error) = await _userService.UnblockAsync(id, Caller);
+            return ok
+                ? ResponseHelper.Success(HttpContext, $"Blokir user \"{user.Display}\" dibuka.", "Berhasil")
+                : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal membuka blokir."]);
         }
         catch (Exception ex)
         {

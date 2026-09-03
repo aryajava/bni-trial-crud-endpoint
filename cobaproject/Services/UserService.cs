@@ -46,6 +46,69 @@ public class UserService : IUserService
         return users.Select(UserMapper.ToDto);
     }
 
+    public async Task<PagedResult<UserDto>> GetPagedAsync(UserQueryParams query)
+    {
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        if (!string.IsNullOrWhiteSpace(query.Role))
+        {
+            conditions.Add("U.ROLE = @Role");
+            parameters.Add("Role", query.Role.Trim().ToUpperInvariant());
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            conditions.Add("""
+                (U.USERNAME LIKE @Search ESCAPE '\'
+                 OR U.DISPLAY_NAME LIKE @Search ESCAPE '\'
+                 OR U.ROLE LIKE @Search ESCAPE '\'
+                 OR U.CREATED_BY LIKE @Search ESCAPE '\'
+                 OR U.UPDATED_BY LIKE @Search ESCAPE '\')
+                """);
+            parameters.Add("Search", $"%{EscapeLike(query.Search.Trim())}%");
+        }
+
+        var whereClause = conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(" AND ", conditions);
+
+        var sortColumn = !string.IsNullOrEmpty(query.SortBy)
+            && SortColumns.TryGetValue(query.SortBy, out var column) ? column : "ID";
+        var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var tieBreaker = sortColumn == "ID" ? string.Empty : ", ID";
+        var offset = (page - 1) * pageSize;
+
+        parameters.Add("Offset", offset);
+        parameters.Add("PageSize", pageSize);
+
+        using var connection = new SqlConnection(_connectionString);
+
+        var total = await connection.ExecuteScalarAsync<int>($"""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.MASTER_USER U
+            {whereClause};
+            """, parameters);
+
+        var users = await connection.QueryAsync<MasterUser>($"""
+            SELECT {SelectColumns}
+            FROM LOSCONSUMER.MASTER_USER U
+            {whereClause}
+            ORDER BY {sortColumn} {sortOrder}{tieBreaker}
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            """, parameters);
+
+        return new PagedResult<UserDto>
+        {
+            Items = users.Select(UserMapper.ToDto).ToList(),
+            Page = page,
+            PageSize = pageSize,
+            Total = total,
+            TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
+        };
+    }
+
     public async Task<UserDto?> GetByIdAsync(int id)
     {
         using var connection = new SqlConnection(_connectionString);
@@ -176,6 +239,21 @@ public class UserService : IUserService
         return (rows > 0, null);
     }
 
+    public async Task<(bool Success, string? Error)> BlockAsync(int id, string updatedBy)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var rows = await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET    IS_BLOCKED         = 1,
+                   UPDATED_AT         = GETDATE(),
+                   UPDATED_BY         = @UpdatedBy,
+                   VERSION            = VERSION + 1
+            WHERE  ID = @Id AND IS_BLOCKED = 0;
+            """, new { Id = id, UpdatedBy = updatedBy });
+
+        return (rows > 0, null);
+    }
+
     public async Task<(UserDto? User, string? SecretKey, string? Error)> CreateAsync(CreateUserRequest request, string createdBy)
     {
         var existing = await GetByUsernameAsync(request.Username);
@@ -274,6 +352,12 @@ public class UserService : IUserService
     public async Task<(bool Success, string? Error)> SoftDeleteAsync(int id, string updatedBy)
     {
         using var connection = new SqlConnection(_connectionString);
+
+        if (await IsSeededSuperAdminAsync(connection, id))
+        {
+            return (false, "Akun Super Admin seed tidak dapat dinonaktifkan.");
+        }
+
         var affected = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
             SET IS_ACTIVE = 0,
@@ -293,6 +377,12 @@ public class UserService : IUserService
         }
 
         using var connection = new SqlConnection(_connectionString);
+
+        if (newRole != UserRolePolicy.Sa && await IsSeededSuperAdminAsync(connection, id))
+        {
+            return (false, "Akun Super Admin seed tidak dapat diturunkan.");
+        }
+
         var affected = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
             SET ROLE = @NewRole,
@@ -307,6 +397,12 @@ public class UserService : IUserService
     public async Task<(bool Success, string? Error)> SetActiveAsync(int id, bool isActive, string updatedBy)
     {
         using var connection = new SqlConnection(_connectionString);
+
+        if (!isActive && await IsSeededSuperAdminAsync(connection, id))
+        {
+            return (false, "Akun Super Admin seed tidak dapat dinonaktifkan.");
+        }
+
         var affected = await connection.ExecuteAsync("""
             UPDATE LOSCONSUMER.MASTER_USER
             SET IS_ACTIVE = @IsActive,
@@ -345,4 +441,29 @@ public class UserService : IUserService
             WHERE ROLE = @Role AND IS_ACTIVE = 1
             """, new { Role = role });
     }
+
+    private const int MaxPageSize = 100;
+
+    private static async Task<bool> IsSeededSuperAdminAsync(SqlConnection connection, int id)
+    {
+        return await connection.ExecuteScalarAsync<bool>("""
+            SELECT CASE WHEN EXISTS (
+                SELECT 1 FROM LOSCONSUMER.MASTER_USER WHERE ID = @Id AND USERNAME = 'sa'
+            ) THEN 1 ELSE 0 END;
+            """, new { Id = id });
+    }
+
+    private static readonly Dictionary<string, string> SortColumns = new()
+    {
+        ["id"] = "ID",
+        ["username"] = "USERNAME",
+        ["displayName"] = "DISPLAY_NAME",
+        ["role"] = "ROLE",
+        ["lastLoginAt"] = "LAST_LOGIN_AT",
+        ["createdAt"] = "CREATED_AT",
+        ["updatedAt"] = "UPDATED_AT"
+    };
+
+    private static string EscapeLike(string value) =>
+        value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 }
