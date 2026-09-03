@@ -54,12 +54,7 @@
                 }
                 else
                 {
-                    @if (Model.ExcludedCount > 0)
-                    {
-                        <div class="alert alert-warning py-2 small mb-3">
-                            @Model.ExcludedCount item tidak dipilih / tidak tersedia — tetap tersimpan di keranjang.
-                        </div>
-                    }
+                    <div id="notifRingkasan" class="alert alert-warning py-2 small mb-3 d-none"></div>
                     <div class="mb-3">
                         @foreach (var item in Model.Items)
                         {
