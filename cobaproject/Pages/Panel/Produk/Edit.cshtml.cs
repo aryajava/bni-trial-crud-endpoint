@@ -54,7 +54,7 @@ public class EditModel : PageModel
             return Page();
         }
 
-        var (product, isConflict, pendingMessage) = await _productService.UpdateAsync(id, Form, Caller);
+        var (product, isConflict, pendingMessage, isSaved) = await _productService.UpdateAsync(id, Form, Caller);
         if (product is null)
         {
             return NotFound();
@@ -67,6 +67,12 @@ public class EditModel : PageModel
                 "Form di bawah sudah diperbarui dengan data terbaru — periksa lalu simpan lagi.");
             Form = CopyFrom(product);
             return Page();
+        }
+
+        if (!isSaved)
+        {
+            TempData["ErrorMessage"] = pendingMessage ?? "Gagal menyimpan produk.";
+            return RedirectToPage("Index");
         }
 
         TempData["SuccessMessage"] = pendingMessage is null

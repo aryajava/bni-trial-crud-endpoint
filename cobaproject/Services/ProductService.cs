@@ -264,12 +264,12 @@ public class ProductService : IProductService
         return created;
     }
 
-    public async Task<(ProductDto? Product, bool IsConflict, string? PendingMessage)> UpdateAsync(
+    public async Task<(ProductDto? Product, bool IsConflict, string? PendingMessage, bool IsSaved)> UpdateAsync(
         int id, UpdateProductRequest request, string updatedBy)
     {
         var current = await GetByIdAsync(id);
         if (current is null)
-            return (null, false, null);
+            return (null, false, null, false);
 
         // Diskon yang diubah oleh ADMIN tidak langsung disimpan: produk tetap
         // memakai diskon lama, permintaan persetujuan diajukan (keputusan Q1–Q5).
@@ -277,7 +277,7 @@ public class ProductService : IProductService
             && !CallerIsOwnerOrSystem;
 
         if (needsApproval && await _discountApprovalService.HasPendingAsync(id))
-            return (current, false, "Produk ini masih memiliki permintaan diskon yang menunggu persetujuan.");
+            return (current, false, "Produk ini masih memiliki permintaan diskon yang menunggu persetujuan.", false);
 
         using var connection = new SqlConnection(_connectionString);
         var sql = """
@@ -321,7 +321,7 @@ public class ProductService : IProductService
                 "[MASTER_PRODUCT] CONFLICT | ID={Id} | ExpectedVersion={ExpectedVersion} | TraceId={TraceId}",
                 id, request.Version, TraceId);
 
-            return (current, true, null);
+            return (current, true, null, false);
         }
 
         var updated = await GetByIdAsync(id);
@@ -335,13 +335,16 @@ public class ProductService : IProductService
             var (_, error) = await _discountApprovalService.RequestAsync(
                 id, current.DiscountPercent, request.DiscountPercent, updatedBy);
             if (error is not null)
+            {
                 _logger.LogWarning("[TRX_DISCOUNT_APPROVAL] Gagal mengajukan | ProductId={ProductId} | {Error} | TraceId={TraceId}",
                     id, error, TraceId);
+                return (updated, false, error, false);
+            }
 
-            return (updated, false, "Diskon menunggu persetujuan Pemilik Toko.");
+            return (updated, false, "Diskon menunggu persetujuan Pemilik Toko.", true);
         }
 
-        return (updated, false, null);
+        return (updated, false, null, true);
     }
 
     public async Task<bool> SoftDeleteAsync(int id, string updatedBy)
