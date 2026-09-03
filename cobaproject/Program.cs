@@ -162,6 +162,21 @@ if (app.Urls.Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnor
 app.UseMiddleware<RequestResponseMiddleware>();
 
 app.UseAuthentication();
+// UseAuthentication hanya memvalidasi scheme default (cookie staf). Cookie
+// pelanggan (GKLaku.Customer) perlu di-autentikasi eksplisit — fallback di
+// sini membuat halaman publik mengenali pelanggan yang sudah masuk.
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated != true)
+    {
+        var result = await context.AuthenticateAsync(CustomerAuth.CustomerScheme);
+        if (result.Succeeded && result.Principal is not null)
+        {
+            context.User = result.Principal;
+        }
+    }
+    await next();
+});
 // ApiKeyMiddleware dijalankan setelah UseAuthentication agar principal API key
 // (dengan role claim) menimpa principal cookie untuk semua permintaan /api/*.
 app.UseMiddleware<ApiKeyMiddleware>();
