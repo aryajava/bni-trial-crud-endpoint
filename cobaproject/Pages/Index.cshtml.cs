@@ -11,9 +11,9 @@ public class IndexModel : PageModel
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToPage("/Products/Index");
+            return RedirectToPage("/Panel/Index");
         }
 
-        return RedirectToPage("/Login");
+        return RedirectToPage("/Panel/Masuk");
     }
 }

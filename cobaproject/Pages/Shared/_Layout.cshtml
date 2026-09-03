@@ -1,22 +1,25 @@
 @using System.Security.Claims
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-    var isDashboardPages = currentPage.StartsWith("/Dashboard", StringComparison.OrdinalIgnoreCase);
-    var isProductPages = currentPage.StartsWith("/Products", StringComparison.OrdinalIgnoreCase);
-    var isMasterUserPages = currentPage.StartsWith("/Users", StringComparison.OrdinalIgnoreCase);
-    var isCategoryPages = currentPage.StartsWith("/Categories", StringComparison.OrdinalIgnoreCase);
-    var isUserControlPages = currentPage.StartsWith("/UserControl", StringComparison.OrdinalIgnoreCase);
-    var isMonitoringPages = currentPage.StartsWith("/Monitoring", StringComparison.OrdinalIgnoreCase);
+    var isDashboardPages = currentPage.Equals("/Panel/Index", StringComparison.OrdinalIgnoreCase);
+    var isProductPages = currentPage.StartsWith("/Panel/Produk", StringComparison.OrdinalIgnoreCase);
+    var isMasterUserPages = currentPage.StartsWith("/Panel/MasterUser", StringComparison.OrdinalIgnoreCase);
+    var isCategoryPages = currentPage.StartsWith("/Panel/Kategori", StringComparison.OrdinalIgnoreCase);
+    var isUserControlPages = currentPage.StartsWith("/Panel/UserControl", StringComparison.OrdinalIgnoreCase);
+    var isMonitoringPages = currentPage.StartsWith("/Panel/Monitoring", StringComparison.OrdinalIgnoreCase);
+    var isSettingsPages = currentPage.StartsWith("/Panel/Settings", StringComparison.OrdinalIgnoreCase);
     var crumbRoot = ViewData["CrumbRoot"] as string
         ?? (isDashboardPages ? "Beranda"
             : isMasterUserPages ? "Master User"
             : isCategoryPages ? "Master Kategori"
             : isUserControlPages ? "User Control"
             : isMonitoringPages ? "Monitoring"
+            : isSettingsPages ? "Pengaturan"
             : "Master Produk");
     var signedIn = User.Identity?.IsAuthenticated == true;
     var isOwner = User.IsInRole("OWNER");
     var isAdmin = User.IsInRole("ADMIN");
+    var isSa = User.IsInRole("SA");
     var currentRole = User.FindFirstValue(ClaimTypes.Role) ?? UserRolePolicy.Admin;
     var displayName = User.FindFirstValue("DisplayName") ?? User.Identity?.Name ?? "";
 }
@@ -192,7 +195,7 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar d-none d-lg-flex">
-            <a class="sidebar-brand" asp-page="/Dashboard/Index">
+            <a class="sidebar-brand" asp-page="/Panel/Index">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -200,33 +203,46 @@
                 @if (signedIn)
                 {
                     <div class="nav-group-title">Beranda</div>
-                    <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Dashboard/Index">
+                    <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel/Index">
                         <span class="material-icons">dashboard</span> Dashboard
                     </a>
                     <div class="nav-group-title">Master</div>
-                    <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Products/Index">
+                    <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Panel/Produk/Index">
                         <span class="material-icons">inventory_2</span> Master Produk
                     </a>
-                    @if (isAdmin || isOwner)
+                    @if (isAdmin || isOwner || isSa)
                     {
-                        <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Users/Index">
+                        <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Panel/MasterUser/Index">
                             <span class="material-icons">group</span> Master User
                         </a>
-                        <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Categories/Index">
+                        <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Panel/Kategori/Index">
                             <span class="material-icons">category</span> Master Kategori
                         </a>
                     }
-                    @if (isOwner)
+                    @if (isOwner || isSa)
                     {
                         <div class="nav-group-title">Maintenance</div>
-                        <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
+                        <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Panel/UserControl/Index">
                             <span class="material-icons">manage_accounts</span> User Control
                         </a>
                     }
                     <div class="nav-group-title">Monitoring</div>
-                    <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
+                    <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Panel/Monitoring/Index">
                         <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
                     </a>
+                    @if (isOwner || isSa)
+                    {
+                        <div class="nav-group-title">Settings</div>
+                        @if (isSa)
+                        {
+                            <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" asp-page="/Panel/Settings/PengaturanAplikasi">
+                                <span class="material-icons">settings_applications</span> Pengaturan Aplikasi
+                            </a>
+                        }
+                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" asp-page="/Panel/Settings/PengaturanToko">
+                            <span class="material-icons">store</span> Pengaturan Toko
+                        </a>
+                    }
                 }
             </div>
             <div class="sidebar-footer">
@@ -247,7 +263,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a asp-page="@(isDashboardPages ? "/Dashboard/Index" : isMasterUserPages ? "/Users/Index" : isCategoryPages ? "/Categories/Index" : isUserControlPages ? "/UserControl/Index" : isMonitoringPages ? "/Monitoring/Index" : "/Products/Index")">@crumbRoot</a>
+                <a asp-page="@(isDashboardPages ? "/Panel/Index" : isMasterUserPages ? "/Panel/MasterUser/Index" : isCategoryPages ? "/Panel/Kategori/Index" : isUserControlPages ? "/Panel/UserControl/Index" : isMonitoringPages ? "/Panel/Monitoring/Index" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk/Index")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -260,8 +276,8 @@
     @if (signedIn)
     {
         <span class="text-muted small">@displayName</span>
-        <span class="badge @(isOwner ? "bg-dark" : "bg-primary-subtle text-primary-emphasis")">@UserRolePolicy.DisplayName(currentRole)</span>
-        <a class="btn btn-outline-secondary btn-sm" asp-page="/Logout" title="Keluar">
+        <span class="badge @(isOwner || isSa ? "bg-dark" : "bg-primary-subtle text-primary-emphasis")">@UserRolePolicy.DisplayName(currentRole)</span>
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Panel/Keluar" title="Keluar">
             <span class="material-icons">logout</span>
         </a>
     }
@@ -281,7 +297,7 @@
 
     <div class="offcanvas offcanvas-start offcanvas-nav" tabindex="-1" id="sidebarMobile">
         <div class="offcanvas-header">
-            <a class="sidebar-brand" asp-page="/Dashboard/Index">
+            <a class="sidebar-brand" asp-page="/Panel/Index">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -291,33 +307,46 @@
             @if (signedIn)
             {
                 <div class="nav-group-title">Beranda</div>
-                <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Dashboard/Index">
+                <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel/Index">
                     <span class="material-icons">dashboard</span> Dashboard
                 </a>
                 <div class="nav-group-title">Master</div>
-                <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Products/Index">
+                <a class="nav-link @(isProductPages ? "active" : "")" asp-page="/Panel/Produk/Index">
                     <span class="material-icons">inventory_2</span> Master Produk
                 </a>
-                @if (isAdmin || isOwner)
+                @if (isAdmin || isOwner || isSa)
                 {
-                    <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Users/Index">
+                    <a class="nav-link @(isMasterUserPages ? "active" : "")" asp-page="/Panel/MasterUser/Index">
                         <span class="material-icons">group</span> Master User
                     </a>
-                    <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Categories/Index">
+                    <a class="nav-link @(isCategoryPages ? "active" : "")" asp-page="/Panel/Kategori/Index">
                         <span class="material-icons">category</span> Master Kategori
                     </a>
                 }
-                @if (isOwner)
+                @if (isOwner || isSa)
                 {
                     <div class="nav-group-title">Maintenance</div>
-                    <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/UserControl/Index">
+                    <a class="nav-link @(isUserControlPages ? "active" : "")" asp-page="/Panel/UserControl/Index">
                         <span class="material-icons">manage_accounts</span> User Control
                     </a>
                 }
                 <div class="nav-group-title">Monitoring</div>
-                <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Monitoring/Index">
+                <a class="nav-link @(isMonitoringPages ? "active" : "")" asp-page="/Panel/Monitoring/Index">
                     <span class="material-icons">fact_check</span> @(isOwner ? "Persetujuan Diskon" : "Permintaan Diskon Saya")
                 </a>
+                @if (isOwner || isSa)
+                {
+                    <div class="nav-group-title">Settings</div>
+                    @if (isSa)
+                    {
+                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" asp-page="/Panel/Settings/PengaturanAplikasi">
+                            <span class="material-icons">settings_applications</span> Pengaturan Aplikasi
+                        </a>
+                    }
+                    <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" asp-page="/Panel/Settings/PengaturanToko">
+                        <span class="material-icons">store</span> Pengaturan Toko
+                    </a>
+                }
             }
             <div class="mt-auto">
                 <a class="nav-link" href="/swagger" target="_blank">

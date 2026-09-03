@@ -14,7 +14,7 @@ public class CreateModel : PageModel
     private readonly IUserService _userService;
 
     [BindProperty]
-    public new CreateUserRequest Request { get; set; } = new();
+    public CreateUserRequest Form { get; set; } = new();
 
     public List<string> AllowedRoles { get; private set; } = [];
 
@@ -38,7 +38,7 @@ public class CreateModel : PageModel
     {
         AllowedRoles = AllowedRolesFor(CurrentRole);
 
-        if (!AllowedRoles.Contains(Request.Role))
+        if (!AllowedRoles.Contains(Form.Role))
         {
             ModelState.AddModelError(string.Empty,
                 "Anda tidak berhak membuat user dengan role tersebut.");
@@ -49,7 +49,7 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var (user, secretKey, error) = await _userService.CreateAsync(Request, Caller);
+        var (user, secretKey, error) = await _userService.CreateAsync(Form, Caller);
         if (user is null)
         {
             ModelState.AddModelError(string.Empty, error ?? "Gagal menyimpan user.");

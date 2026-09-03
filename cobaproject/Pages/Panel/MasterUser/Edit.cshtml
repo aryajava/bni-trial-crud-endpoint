@@ -18,13 +18,13 @@
     <div class="card-body p-3">
         <form method="post" style="max-width: 560px;">
             <div class="mb-3">
-                <label class="form-label" asp-for="Request.DisplayName">Nama Tampilan</label>
-                <input asp-for="Request.DisplayName" class="form-control" />
-                <span asp-validation-for="Request.DisplayName" class="field-error"></span>
+                <label class="form-label" asp-for="Form.DisplayName">Nama Tampilan</label>
+                <input asp-for="Form.DisplayName" class="form-control" />
+                @Html.ValidationMessageFor(m => m.Form.DisplayName, null, new { @class = "field-error" })
                 <div class="form-text">Perubahan role tersedia di menu User Control (Pemilik Toko).</div>
             </div>
 
-            <input type="hidden" asp-for="Request.Version" />
+            <input type="hidden" asp-for="Form.Version" />
 
             <div class="mt-4 d-flex gap-2 flex-wrap">
                 <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">save</span> Simpan</button>

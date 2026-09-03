@@ -23,7 +23,7 @@ public class EditModel : PageModel
     public int Id { get; set; }
 
     [BindProperty]
-    public new UpdateProductRequest Request { get; set; } = new();
+    public UpdateProductRequest Form { get; set; } = new();
 
     private string Caller => User.Identity?.Name
         ?? HttpContext.Items["Caller"]?.ToString()
@@ -38,7 +38,7 @@ public class EditModel : PageModel
         }
 
         Id = id;
-        Request = CopyFrom(product);
+        Form = CopyFrom(product);
         await LoadCategoriesAsync();
         return Page();
     }
@@ -54,7 +54,7 @@ public class EditModel : PageModel
             return Page();
         }
 
-        var (product, isConflict, pendingMessage) = await _productService.UpdateAsync(id, Request, Caller);
+        var (product, isConflict, pendingMessage) = await _productService.UpdateAsync(id, Form, Caller);
         if (product is null)
         {
             return NotFound();
@@ -65,7 +65,7 @@ public class EditModel : PageModel
             ModelState.AddModelError(string.Empty,
                 $"Produk sudah diubah orang lain (versi sekarang {product.Version}). " +
                 "Form di bawah sudah diperbarui dengan data terbaru — periksa lalu simpan lagi.");
-            Request = CopyFrom(product);
+            Form = CopyFrom(product);
             return Page();
         }
 
@@ -81,9 +81,9 @@ public class EditModel : PageModel
 
         // Kategori produk yang sedang diedit tetap ditampilkan walau sudah
         // dinonaktifkan di master — agar produk lama bisa disimpan tanpa mengubahnya.
-        if (Request.CategoryId.HasValue && Categories.All(c => c.Id != Request.CategoryId))
+        if (Form.CategoryId.HasValue && Categories.All(c => c.Id != Form.CategoryId))
         {
-            var current = await _categoryService.GetByIdAsync(Request.CategoryId.Value);
+            var current = await _categoryService.GetByIdAsync(Form.CategoryId.Value);
             if (current is not null)
                 Categories.Insert(0, current);
         }

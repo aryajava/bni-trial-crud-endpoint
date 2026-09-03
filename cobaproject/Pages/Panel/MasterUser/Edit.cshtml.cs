@@ -16,7 +16,7 @@ public class EditModel : PageModel
     private readonly IUserService _userService;
 
     [BindProperty]
-    public new UpdateUserRequest Request { get; set; } = new();
+    public UpdateUserRequest Form { get; set; } = new();
 
     public int Id { get; set; }
 
@@ -52,8 +52,8 @@ public class EditModel : PageModel
         }
 
         TargetUsername = user.Username;
-        Request.DisplayName = user.DisplayName;
-        Request.Version = user.Version;
+        Form.DisplayName = user.DisplayName;
+        Form.Version = user.Version;
         return Page();
     }
 
@@ -80,12 +80,12 @@ public class EditModel : PageModel
 
         TargetUsername = target.Username;
 
-        var (user, isConflict) = await _userService.UpdateAsync(id, Request, Caller);
+        var (user, isConflict) = await _userService.UpdateAsync(id, Form, Caller);
         if (isConflict)
         {
             ModelState.AddModelError(string.Empty,
                 "Data user sudah diubah orang lain — form diperbarui dengan data terbaru, simpan lagi.");
-            Request = new UpdateUserRequest
+            Form = new UpdateUserRequest
             {
                 DisplayName = user?.DisplayName,
                 Version = user?.Version ?? 0

@@ -95,8 +95,8 @@ builder.Services.AddScoped<IDiscountApprovalService, DiscountApprovalService>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Login";
-        options.AccessDeniedPath = "/AccessDenied";
+        options.LoginPath = "/Panel/Masuk";
+        options.AccessDeniedPath = "/Panel/Ditolak";
         options.Cookie.Name = "GKLaku.Auth";
         options.SlidingExpiration = true;
     });

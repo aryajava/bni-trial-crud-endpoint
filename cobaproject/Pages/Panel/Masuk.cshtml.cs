@@ -46,7 +46,7 @@ public class LoginModel : PageModel
             if (string.Equals(error, "blocked", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["BlockedRedirect"] = true;
-                return RedirectToPage("/ChangePassword", new { username = Username.Trim() });
+                return RedirectToPage("/Panel/GantiKataSandi", new { username = Username.Trim() });
             }
 
             ModelState.AddModelError(string.Empty, "Username atau password salah.");
@@ -70,6 +70,6 @@ public class LoginModel : PageModel
             return Redirect(returnUrl);
         }
 
-        return RedirectToPage("/Dashboard/Index");
+        return RedirectToPage("/Panel/Index");
     }
 }

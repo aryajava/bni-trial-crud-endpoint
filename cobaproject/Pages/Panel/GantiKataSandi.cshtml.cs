@@ -49,6 +49,6 @@ public class ChangePasswordModel : PageModel
         }
 
         TempData["SuccessMessage"] = "Password berhasil diganti. Silakan masuk dengan password baru.";
-        return RedirectToPage("/Login");
+        return RedirectToPage("/Panel/Masuk");
     }
 }

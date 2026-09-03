@@ -21,7 +21,7 @@ public class CreateModel : PageModel
     }
 
     [BindProperty]
-    public new CreateProductRequest Request { get; set; } = new();
+    public CreateProductRequest Form { get; set; } = new();
 
     private string Caller => User.Identity?.Name
         ?? HttpContext.Items["Caller"]?.ToString()
@@ -41,14 +41,14 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        var created = await _productService.CreateAsync(Request, Caller);
+        var created = await _productService.CreateAsync(Form, Caller);
         if (created is null)
         {
             ModelState.AddModelError(string.Empty, "Gagal membuat produk.");
             return Page();
         }
 
-        TempData["SuccessMessage"] = Request.DiscountPercent.HasValue
+        TempData["SuccessMessage"] = Form.DiscountPercent.HasValue
             ? $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}). Diskon menunggu persetujuan Pemilik Toko."
             : $"Produk \"{created.Title}\" berhasil dibuat (ID {created.Id}).";
         return RedirectToPage("Index");

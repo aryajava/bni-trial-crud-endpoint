@@ -1,0 +1,104 @@
+@page
+@model cobaproject.Pages.Products.CreateModel
+@{
+    ViewData["Title"] = "Tambah Produk";
+}
+
+<div class="page-header">
+    <h1>Tambah Produk</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">arrow_back</span> Kembali</a>
+</div>
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        <form method="post">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label" for="Form.Title">Judul</label>
+                    <input name="Form.Title" value="@Model.Form.Title" class="form-control form-control-sm" />
+                    @Html.ValidationMessageFor(m => m.Form.Title, null, new { @class = "field-error" })
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="Form.CategoryId">Kategori</label>
+                    @if (Model.Categories.Count == 0)
+                    {
+                        <div class="alert alert-warning py-2 small mb-1">
+                            Belum ada kategori. <a asp-page="/Panel/Kategori/Index">Tambahkan di Master Kategori</a> dulu.
+                        </div>
+                        @Html.ValidationMessageFor(m => m.Form.CategoryId, null, new { @class = "field-error" })
+                    }
+                    else
+                    {
+                        <select name="Form.CategoryId" class="form-select form-select-sm">
+                            <option value="" selected disabled>Pilih Kategori</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                        @Html.ValidationMessageFor(m => m.Form.CategoryId, null, new { @class = "field-error" })
+                    }
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="Form.Price">Harga</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light">Rp</span>
+                        <input data-rupiah data-rupiah-target="Form.Price" inputmode="decimal" class="form-control form-control-sm" />
+                    </div>
+                    <input name="Form.Price" value="@Model.Form.Price" type="hidden" />
+                    @Html.ValidationMessageFor(m => m.Form.Price, null, new { @class = "field-error" })
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="Form.DiscountPercent">Diskon</label>
+                    <div class="input-group input-group-sm">
+                        <input name="Form.DiscountPercent" value="@Model.Form.DiscountPercent" data-bilangan data-bilangan-desimal data-bilangan-max="100" inputmode="decimal" class="form-control form-control-sm" />
+                        <span class="input-group-text bg-light">%</span>
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Form.DiscountPercent, null, new { @class = "field-error" })
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="Form.Stock">Stok</label>
+                    <input name="Form.Stock" value="@Model.Form.Stock" data-bilangan inputmode="numeric" class="form-control form-control-sm" />
+                    @Html.ValidationMessageFor(m => m.Form.Stock, null, new { @class = "field-error" })
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="Form.RatingRate">Rating</label>
+                    <input name="Form.RatingRate" value="@Model.Form.RatingRate" data-bilangan data-bilangan-desimal data-bilangan-max="5" inputmode="decimal" class="form-control form-control-sm" />
+                    @Html.ValidationMessageFor(m => m.Form.RatingRate, null, new { @class = "field-error" })
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="Form.RatingCount">Jumlah Rating</label>
+                    <input name="Form.RatingCount" value="@Model.Form.RatingCount" data-bilangan inputmode="numeric" class="form-control form-control-sm" />
+                    @Html.ValidationMessageFor(m => m.Form.RatingCount, null, new { @class = "field-error" })
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" for="Form.Image">URL Gambar</label>
+                    <input name="Form.Image" value="@Model.Form.Image" class="form-control form-control-sm" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" for="Form.Description">Deskripsi</label>
+                    <textarea name="Form.Description" class="form-control form-control-sm" rows="4">@Model.Form.Description</textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">save</span> Simpan</button>
+                <a class="btn btn-outline-secondary btn-sm" asp-page="Index"><span class="material-icons">close</span> Batal</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <partial name="_RupiahScriptsPartial" />
+    <partial name="_BilanganScriptsPartial" />
+}

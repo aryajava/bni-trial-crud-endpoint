@@ -14,34 +14,34 @@
     <div class="card-body p-3">
         <form method="post" style="max-width: 560px;">
             <div class="mb-3">
-                <label class="form-label" asp-for="Request.Username">Username</label>
-                <input asp-for="Request.Username" class="form-control" autocomplete="off" />
-                <span asp-validation-for="Request.Username" class="field-error"></span>
+                <label class="form-label" asp-for="Form.Username">Username</label>
+                <input asp-for="Form.Username" class="form-control" autocomplete="off" />
+                @Html.ValidationMessageFor(m => m.Form.Username, null, new { @class = "field-error" })
                 <div class="form-text">Huruf kecil dan angka, 3–50 karakter.</div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label" asp-for="Request.DisplayName">Nama Tampilan</label>
-                <input asp-for="Request.DisplayName" class="form-control" />
-                <span asp-validation-for="Request.DisplayName" class="field-error"></span>
+                <label class="form-label" asp-for="Form.DisplayName">Nama Tampilan</label>
+                <input asp-for="Form.DisplayName" class="form-control" />
+                @Html.ValidationMessageFor(m => m.Form.DisplayName, null, new { @class = "field-error" })
             </div>
 
             <div class="mb-3">
-                <label class="form-label" asp-for="Request.Password">Password Awal</label>
-                <input asp-for="Request.Password" class="form-control" autocomplete="new-password" />
-                <span asp-validation-for="Request.Password" class="field-error"></span>
+                <label class="form-label" asp-for="Form.Password">Password Awal</label>
+                <input asp-for="Form.Password" class="form-control" autocomplete="new-password" />
+                @Html.ValidationMessageFor(m => m.Form.Password, null, new { @class = "field-error" })
                 <div class="form-text">Minimal 6 karakter.</div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label" asp-for="Request.Role">Role</label>
-                <select asp-for="Request.Role" class="form-select">
+                <label class="form-label" asp-for="Form.Role">Role</label>
+                <select asp-for="Form.Role" class="form-select">
                     @foreach (var role in Model.AllowedRoles)
                     {
                         <option value="@role">@role</option>
                     }
                 </select>
-                <span asp-validation-for="Request.Role" class="field-error"></span>
+                @Html.ValidationMessageFor(m => m.Form.Role, null, new { @class = "field-error" })
             </div>
 
             <div class="mt-4 d-flex gap-2 flex-wrap">

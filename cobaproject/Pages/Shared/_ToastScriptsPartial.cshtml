@@ -43,7 +43,7 @@
 
         @if (pesanToast is not null)
         {
-            <text>tampilToast("@ikonToast", @Html.Raw(keJson(pesanToast)), @(ikonToast == "error" ? 5000 : 3000));</text>
+            @Html.Raw("tampilToast('" + ikonToast + "', " + keJson(pesanToast) + ", " + (ikonToast == "error" ? 5000 : 3000) + ");")
         }
     })();
 </script>

@@ -11,6 +11,6 @@ public class LogoutModel : PageModel
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         TempData["InfoMessage"] = "Anda telah keluar.";
-        return RedirectToPage("/Login");
+        return RedirectToPage("/Panel/Masuk");
     }
 }
