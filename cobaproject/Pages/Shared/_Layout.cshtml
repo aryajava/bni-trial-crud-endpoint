@@ -1,7 +1,7 @@
 @using System.Security.Claims
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-    var isDashboardPages = currentPage.Equals("/Panel/Index", StringComparison.OrdinalIgnoreCase);
+    var isDashboardPages = currentPage.Equals("/Panel", StringComparison.OrdinalIgnoreCase);
     var isProductPages = currentPage.StartsWith("/Panel/Produk", StringComparison.OrdinalIgnoreCase);
     var isMasterUserPages = currentPage.StartsWith("/Panel/MasterUser", StringComparison.OrdinalIgnoreCase);
     var isCategoryPages = currentPage.StartsWith("/Panel/Kategori", StringComparison.OrdinalIgnoreCase);
@@ -195,7 +195,7 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar d-none d-lg-flex">
-            <a class="sidebar-brand" asp-page="/Panel/Index">
+            <a class="sidebar-brand" asp-page="/Panel">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -203,7 +203,7 @@
                 @if (signedIn)
                 {
                     <div class="nav-group-title">Beranda</div>
-                    <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel/Index">
+                    <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel">
                         <span class="material-icons">dashboard</span> Dashboard
                     </a>
                     <div class="nav-group-title">Master</div>
@@ -263,7 +263,7 @@
     <nav aria-label="breadcrumb" class="breadcrumb-nav">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-                <a asp-page="@(isDashboardPages ? "/Panel/Index" : isMasterUserPages ? "/Panel/MasterUser/Index" : isCategoryPages ? "/Panel/Kategori/Index" : isUserControlPages ? "/Panel/UserControl/Index" : isMonitoringPages ? "/Panel/Monitoring/Index" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk/Index")">@crumbRoot</a>
+                <a asp-page="@(isDashboardPages ? "/Panel" : isMasterUserPages ? "/Panel/MasterUser/Index" : isCategoryPages ? "/Panel/Kategori/Index" : isUserControlPages ? "/Panel/UserControl/Index" : isMonitoringPages ? "/Panel/Monitoring/Index" : isSettingsPages ? "/Panel/Settings/PengaturanToko" : "/Panel/Produk/Index")">@crumbRoot</a>
             </li>
             @if (!string.Equals(ViewData["Title"]?.ToString(), crumbRoot, StringComparison.OrdinalIgnoreCase))
             {
@@ -297,7 +297,7 @@
 
     <div class="offcanvas offcanvas-start offcanvas-nav" tabindex="-1" id="sidebarMobile">
         <div class="offcanvas-header">
-            <a class="sidebar-brand" asp-page="/Panel/Index">
+            <a class="sidebar-brand" asp-page="/Panel">
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
@@ -307,7 +307,7 @@
             @if (signedIn)
             {
                 <div class="nav-group-title">Beranda</div>
-                <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel/Index">
+                <a class="nav-link @(isDashboardPages ? "active" : "")" asp-page="/Panel">
                     <span class="material-icons">dashboard</span> Dashboard
                 </a>
                 <div class="nav-group-title">Master</div>

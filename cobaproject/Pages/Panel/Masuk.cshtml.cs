@@ -15,7 +15,7 @@ public class LoginModel : PageModel
     private readonly IUserService _userService;
     private readonly ILogger<LoginModel> _logger;
 
-    [BindProperty(SupportsGet = true)]
+    [BindProperty]
     [Required(ErrorMessage = "Username wajib diisi.")]
     public string Username { get; set; } = string.Empty;
 
@@ -73,6 +73,6 @@ public class LoginModel : PageModel
             return Redirect(returnUrl);
         }
 
-        return RedirectToPage("/Panel/Index");
+        return RedirectToPage("/Panel");
     }
 }
