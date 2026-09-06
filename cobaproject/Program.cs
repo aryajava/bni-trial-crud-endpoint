@@ -86,13 +86,8 @@ builder.Host.UseSerilog((context, services, configuration) =>
             .Filter.ByIncludingOnly(IsAuditSource)
             .WriteTo.File(LogsPath("audit"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate));
 
-    // Salin konfigurasi ke Log.Logger statis agar log startup + non-DI tetap berfungsi.
-    Log.Logger = configuration.CreateLogger();
-
-    Log.Information("Log aplikasi siap — service/helper/lainnya tercatat di sini");
-    Log.ForContext("SourceContext", "cobaproject.Controllers").Information("Log api siap — controller/endpoint tercatat di sini");
-    Log.ForContext("SourceContext", "cobaproject.Pages").Information("Log web siap — halaman Razor tercatat di sini");
-    Log.ForContext("SourceContext", "Audit").Information("Log audit siap — jejak audit DB dicerminkan ke sini");
+    // Catatan: CreateLogger() dipanggil otomatis oleh UseSerilog (sekali) — jangan dipanggil manual.
+    // Baris "siap" ditulis setelah app di-build supaya Log.Logger sudah terpasang.
 });
 
 static Func<LogEvent, bool> IsSourceOf(string prefix) => evt =>
@@ -195,6 +190,13 @@ builder.Services.AddHttpClient<IFakeStoreService, FakeStoreService>(client =>
     client.BaseAddress = new Uri(builder.Configuration["FakeStoreApi:BaseUrl"]!));
 
 var app = builder.Build();
+
+// Log.Logger sudah terpasang oleh UseSerilog — tulis baris "siap" per kategori agar
+// file log langsung lahir & struktur folders terlihat sejak awal.
+Log.Information("Log aplikasi siap — service/helper/lainnya tercatat di sini");
+Log.ForContext("SourceContext", "cobaproject.Controllers").Information("Log api siap — controller/endpoint tercatat di sini");
+Log.ForContext("SourceContext", "cobaproject.Pages").Information("Log web siap — halaman Razor tercatat di sini");
+Log.ForContext("SourceContext", "Audit").Information("Log audit siap — jejak audit DB dicerminkan ke sini");
 
 // DB migration via dbup-sqlserver saat startup
 try
