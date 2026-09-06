@@ -198,6 +198,9 @@ Log.ForContext("SourceContext", "cobaproject.Controllers").Information("Log api 
 Log.ForContext("SourceContext", "cobaproject.Pages").Information("Log web siap — halaman Razor tercatat di sini");
 Log.ForContext("SourceContext", "Audit").Information("Log audit siap — jejak audit DB dicerminkan ke sini");
 
+try
+{
+
 // DB migration via dbup-sqlserver saat startup
 try
 {
@@ -290,6 +293,19 @@ if (app.Environment.IsDevelopment()
 app.Run();
 
 return 0;
+
+}
+catch (Exception ex)
+{
+    // Terminal sengaja senyap — simpan jejak crash ke file agar terbaca tanpa console.
+    var crashDir = Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "logs"));
+    File.WriteAllText(
+        Path.Combine(crashDir.FullName, "startup-crash.txt"),
+        $"{DateTime.Now:O}{Environment.NewLine}{ex}");
+    Log.Fatal(ex, "Aplikasi crash");
+    Log.CloseAndFlush();
+    return 1;
+}
 
 static void OpenBrowserInEdge(string url)
 {
