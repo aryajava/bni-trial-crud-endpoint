@@ -5,6 +5,7 @@ using cobaproject.Services.Interfaces;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace cobaproject.Services;
 
@@ -148,6 +149,9 @@ public class OrderService : IOrderService
             """, new { CustomerId = customerId, ProductIds = items.Select(i => i.ProductId).ToList() }, transaction);
 
         await transaction.CommitAsync();
+
+        Log.Information("PESANAN #{OrderId} dibuat | Pelanggan={Customer} | Subtotal={Subtotal} | Ongkir={Shipping} | Pajak={Tax} | Total={Total} | By={By}",
+            orderId, createdBy, subtotal, shipping, taxAmount, total, createdBy);
 
         var (order, _) = await GetByIdAsync(orderId);
         return (order, null);

@@ -6,6 +6,7 @@ using cobaproject.Models;
 using cobaproject.Services.Interfaces;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace cobaproject.Services;
 
@@ -135,6 +136,7 @@ public class CategoryService : ICategoryService
         var created = await GetByIdAsync(id);
         if (created is not null)
         {
+            Log.Information("[CATEGORY] CREATE | ID={Id} | Name=\"{Name}\" | By={By}", created.Id, created.Name, createdBy);
             await _audit.LogAsync("CATEGORY", created.Id.ToString(), "CREATE", null, AuditLogService.Json(created));
         }
         return (created, null);
@@ -169,6 +171,7 @@ public class CategoryService : ICategoryService
         var latest = await GetByIdAsync(id);
         if (latest is not null)
         {
+            Log.Information("[CATEGORY] UPDATE | ID={Id} | Name=\"{Name}\" | By={By}", id, latest.Name, updatedBy);
             await _audit.LogAsync("CATEGORY", id.ToString(), "UPDATE", null, AuditLogService.Json(latest));
         }
         return (latest, false, null);
@@ -199,6 +202,7 @@ public class CategoryService : ICategoryService
 
         if (rows > 0)
         {
+            Log.Information("[CATEGORY] DELETE | ID={Id} | By={By}", id, updatedBy);
             await _audit.LogAsync("CATEGORY", id.ToString(), "DELETE");
         }
         return (rows > 0, null);

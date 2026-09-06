@@ -4,6 +4,7 @@ using cobaproject.Services.Interfaces;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace cobaproject.Services;
 
@@ -143,6 +144,8 @@ public class CourierService : ICourierService
         var created = await GetByIdAsync(id);
         if (created is not null)
         {
+            Log.Information("[COURIER] CREATE | ID={Id} | Name=\"{Name}\" | Ongkir={Fee} | By={By}",
+                created.Id, created.Name, created.ShippingFee, createdBy);
             await _audit.LogAsync("COURIER", created.Id.ToString(), "CREATE", null, AuditLogService.Json(created));
         }
         return (created, null);
@@ -180,6 +183,8 @@ public class CourierService : ICourierService
         var latest = await GetByIdAsync(id);
         if (latest is not null)
         {
+            Log.Information("[COURIER] UPDATE | ID={Id} | Name=\"{Name}\" | Ongkir={Fee} | By={By}",
+                id, latest.Name, latest.ShippingFee, updatedBy);
             await _audit.LogAsync("COURIER", id.ToString(), "UPDATE", null, AuditLogService.Json(latest));
         }
         return (latest, false, null);
@@ -199,6 +204,7 @@ public class CourierService : ICourierService
 
         if (rows > 0)
         {
+            Log.Information("[COURIER] DELETE | ID={Id} | By={By}", id, updatedBy);
             await _audit.LogAsync("COURIER", id.ToString(), "DELETE");
         }
         return (rows > 0, null);

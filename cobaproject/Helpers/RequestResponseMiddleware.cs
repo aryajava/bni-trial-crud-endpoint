@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using cobaproject.Models;
 using cobaproject.Services.Interfaces;
+using Serilog;
 
 namespace cobaproject.Helpers;
 
@@ -113,6 +114,15 @@ public class RequestResponseMiddleware
                 ElapsedMs = elapsedMs,
                 RespondedAt = DateTime.Now
             });
+
+            // Satu baris per permintaan, dirutekan ke logs/api (path /api) atau logs/web (halaman).
+            var source = context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
+                ? "cobaproject.Controllers"
+                : "cobaproject.Pages";
+            Log.ForContext("SourceContext", source)
+                .Information("HTTP {Method} {Path} → {Status} ({Elapsed} ms) | Trace={Trace} | IP={Ip}",
+                    context.Request.Method, context.Request.Path.Value, context.Response.StatusCode,
+                    elapsedMs, traceId, context.Connection.RemoteIpAddress?.ToString() ?? "-");
         }
         catch (Exception ex)
         {
