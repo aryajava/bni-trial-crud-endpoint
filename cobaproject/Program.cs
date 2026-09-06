@@ -46,6 +46,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 const string logTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}";
 
+        // Buat folder log secara eksplisit agar strukturnya langsung terlihat,
+        // lalu pakai path absolut berbasis direktori kerja saat startup.
+        static string LogsPath(string sub)
+        {
+            var dir = Path.Combine(Directory.GetCurrentDirectory(), "logs", sub);
+            Directory.CreateDirectory(dir);
+            return Path.Combine(dir, "log-.log");
+        }
+
+        foreach (var sub in new[] { "aplikasi", "web", "api", "audit" })
+        {
+            _ = LogsPath(sub);
+        }
+
 builder.Host.UseSerilog((context, services) =>
 {
     Log.Logger = new LoggerConfiguration()
@@ -58,16 +72,16 @@ builder.Host.UseSerilog((context, services) =>
         // api (controller), audit (jejak audit DB dicerminkan ke file).
         .WriteTo.Logger(l => l
             .Filter.ByIncludingOnly(IsOtherSource)
-            .WriteTo.File("logs/aplikasi/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+            .WriteTo.File(LogsPath("aplikasi"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .WriteTo.Logger(l => l
             .Filter.ByIncludingOnly(Serilog.Filters.Matching.FromSource("cobaproject.Controllers"))
-            .WriteTo.File("logs/api/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+            .WriteTo.File(LogsPath("api"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .WriteTo.Logger(l => l
             .Filter.ByIncludingOnly(Serilog.Filters.Matching.FromSource("cobaproject.Pages"))
-            .WriteTo.File("logs/web/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+            .WriteTo.File(LogsPath("web"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .WriteTo.Logger(l => l
             .Filter.ByIncludingOnly(IsAuditSource)
-            .WriteTo.File("logs/audit/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+            .WriteTo.File(LogsPath("audit"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .CreateLogger();
 });
 
