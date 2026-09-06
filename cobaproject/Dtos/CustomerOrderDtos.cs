@@ -128,6 +128,7 @@ public class OrderDto
     public string? ShipPhone { get; set; }
     public string? ShipAddress { get; set; }
     public string? Note { get; set; }
+    public DateTime CreatedAt { get; set; }
     public DateTime DiprosesAt { get; set; }
     public DateTime? KirimAt { get; set; }
     public string? KirimBy { get; set; }
