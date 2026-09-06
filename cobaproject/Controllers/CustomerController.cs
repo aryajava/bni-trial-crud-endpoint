@@ -11,10 +11,12 @@ namespace cobaproject.Controllers;
 public class CustomerController : ControllerBase
 {
     private readonly ICustomerService _customerService;
+    private readonly ILogger<CustomerController> _logger;
 
-    public CustomerController(ICustomerService customerService)
+    public CustomerController(ICustomerService customerService, ILogger<CustomerController> logger)
     {
         _customerService = customerService;
+        _logger = logger;
     }
 
     private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SYSTEM";
@@ -44,12 +46,15 @@ public class CustomerController : ControllerBase
             if (customer.IsBlocked) return ResponseHelper.ValidationError(HttpContext, [$"Pelanggan \"{customer.Display}\" sudah diblokir."]);
 
             var (ok, error) = await _customerService.BlockAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-PELANGGAN] Blokir pelanggan berhasil | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Pelanggan \"{customer.Display}\" diblokir.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal memblokir."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-PELANGGAN] Exception saat blokir pelanggan | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -65,12 +70,15 @@ public class CustomerController : ControllerBase
             if (!customer.IsBlocked) return ResponseHelper.ValidationError(HttpContext, [$"Pelanggan \"{customer.Display}\" tidak dalam status diblokir."]);
 
             var (ok, error) = await _customerService.UnblockAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-PELANGGAN] Buka blokir pelanggan berhasil | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Blokir pelanggan \"{customer.Display}\" dibuka.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal membuka blokir."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-PELANGGAN] Exception saat buka blokir pelanggan | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -86,12 +94,15 @@ public class CustomerController : ControllerBase
             if (!customer.IsActive) return ResponseHelper.ValidationError(HttpContext, [$"Pelanggan \"{customer.Display}\" sudah nonaktif."]);
 
             var (ok, error) = await _customerService.DeactivateAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-PELANGGAN] Nonaktifkan pelanggan berhasil | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Pelanggan \"{customer.Display}\" dinonaktifkan.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal menonaktifkan."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-PELANGGAN] Exception saat nonaktifkan pelanggan | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -107,12 +118,15 @@ public class CustomerController : ControllerBase
             if (customer.IsActive) return ResponseHelper.ValidationError(HttpContext, [$"Pelanggan \"{customer.Display}\" sudah aktif."]);
 
             var (ok, error) = await _customerService.ReactivateAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-PELANGGAN] Aktivasi ulang pelanggan berhasil | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Pelanggan \"{customer.Display}\" diaktifkan kembali.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal mengaktifkan."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-PELANGGAN] Exception saat aktivasi ulang pelanggan | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -128,12 +142,15 @@ public class CustomerController : ControllerBase
             if (request.NewPassword.Length < 6) return ResponseHelper.ValidationError(HttpContext, ["Kata sandi minimal 6 karakter."]);
 
             var (ok, error) = await _customerService.ResetPasswordAsync(id, request.NewPassword, Caller);
+            if (ok)
+                _logger.LogInformation("[API-PELANGGAN] Reset password pelanggan berhasil | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Kata sandi pelanggan \"{customer.Display}\" di-reset.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal reset kata sandi."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-PELANGGAN] Exception saat reset password pelanggan | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }

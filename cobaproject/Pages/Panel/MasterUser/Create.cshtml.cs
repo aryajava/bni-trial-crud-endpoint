@@ -12,6 +12,7 @@ namespace cobaproject.Pages.Users;
 public class CreateModel : PageModel
 {
     private readonly IUserService _userService;
+    private readonly ILogger<CreateModel> _logger;
 
     [BindProperty]
     public CreateUserRequest Form { get; set; } = new();
@@ -24,9 +25,10 @@ public class CreateModel : PageModel
         ?? HttpContext.Items["Caller"]?.ToString()
         ?? "SCREEN";
 
-    public CreateModel(IUserService userService)
+    public CreateModel(IUserService userService, ILogger<CreateModel> logger)
     {
         _userService = userService;
+        _logger = logger;
     }
 
     public void OnGet()
@@ -52,10 +54,12 @@ public class CreateModel : PageModel
         var (user, secretKey, error) = await _userService.CreateAsync(Form, Caller);
         if (user is null)
         {
+            _logger.LogWarning("[USER] Buat user gagal | Caller={Caller} | Error={Error}", Caller, error);
             ModelState.AddModelError(string.Empty, error ?? "Gagal menyimpan user.");
             return Page();
         }
 
+        _logger.LogInformation("[USER] Buat user berhasil | UserId={UserId} | Username={Username} | Role={Role} | Caller={Caller}", user.Id, user.Username, user.Role, Caller);
         TempData["NewSecretKey"] = secretKey;
         TempData["SuccessMessage"] = $"User \"{user.Display}\" berhasil dibuat.";
         return RedirectToPage("Index");

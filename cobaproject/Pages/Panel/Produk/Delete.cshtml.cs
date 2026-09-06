@@ -11,10 +11,12 @@ namespace cobaproject.Pages.Products;
 public class DeleteModel : PageModel
 {
     private readonly IProductService _productService;
+    private readonly ILogger<DeleteModel> _logger;
 
-    public DeleteModel(IProductService productService)
+    public DeleteModel(IProductService productService, ILogger<DeleteModel> logger)
     {
         _productService = productService;
+        _logger = logger;
     }
 
     public ProductDto? Product { get; set; }
@@ -43,6 +45,7 @@ public class DeleteModel : PageModel
             return NotFound();
         }
 
+        _logger.LogInformation("[PRODUK] Soft delete produk | ProductId={ProductId} | Caller={Caller}", id, Caller);
         TempData["SuccessMessage"] = $"Produk ID {id} dihapus (soft delete).";
         return RedirectToPage("Index");
     }
@@ -55,6 +58,7 @@ public class DeleteModel : PageModel
             return NotFound();
         }
 
+        _logger.LogInformation("[PRODUK] Hard delete produk | ProductId={ProductId} | Caller={Caller}", id, Caller);
         TempData["SuccessMessage"] = $"Produk ID {id} dihapus permanen (hard delete).";
         return RedirectToPage("Index");
     }

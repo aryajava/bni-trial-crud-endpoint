@@ -13,6 +13,7 @@ namespace cobaproject.Pages;
 public class ProfilModel : PageModel
 {
     private readonly ICustomerService _customerService;
+    private readonly ILogger<ProfilModel> _logger;
 
     public CustomerDto? Customer { get; set; }
 
@@ -21,9 +22,10 @@ public class ProfilModel : PageModel
 
     public int CustomerId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
-    public ProfilModel(ICustomerService customerService)
+    public ProfilModel(ICustomerService customerService, ILogger<ProfilModel> logger)
     {
         _customerService = customerService;
+        _logger = logger;
     }
 
     public async Task OnGetAsync()
@@ -43,10 +45,12 @@ public class ProfilModel : PageModel
         var (ok, error) = await _customerService.UpdateProfileAsync(CustomerId, Form, User.Identity!.Name!);
         if (!ok)
         {
+            _logger.LogWarning("[PROFIL] Update profil gagal | CustomerId={CustomerId} | Error={Error}", CustomerId, error);
             TempData["ErrorMessage"] = error ?? "Gagal menyimpan profil.";
         }
         else
         {
+            _logger.LogInformation("[PROFIL] Update profil berhasil | CustomerId={CustomerId}", CustomerId);
             TempData["SuccessMessage"] = "Profil disimpan.";
         }
         return Redirect("/Profil");
@@ -56,6 +60,7 @@ public class ProfilModel : PageModel
     {
         var email = User.Identity!.Name!;
         await _customerService.DeactivateAsync(CustomerId, email);
+        _logger.LogInformation("[PROFIL] Akun pelanggan dinonaktifkan | CustomerId={CustomerId} | Email={Email}", CustomerId, email);
         await HttpContext.SignOutAsync(CustomerAuth.CustomerScheme);
         TempData["SuccessMessage"] = "Akun Anda dinonaktifkan. Terima kasih sudah berbelanja.";
         return Redirect("/");

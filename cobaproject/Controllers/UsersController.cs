@@ -11,10 +11,12 @@ namespace cobaproject.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, ILogger<UsersController> logger)
     {
         _userService = userService;
+        _logger = logger;
     }
 
     private string Caller =>
@@ -98,12 +100,18 @@ public class UsersController : ControllerBase
             }
 
             var (user, secretKey, error) = await _userService.CreateAsync(request, Caller);
-            return user is null
-                ? ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal membuat user."])
-                : ResponseHelper.Success(HttpContext, new { user, secretKey });
+            if (user is null)
+            {
+                _logger.LogWarning("[API-USER] Buat user gagal | Caller={Caller} | Error={Error}", Caller, error);
+                return ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal membuat user."]);
+            }
+
+            _logger.LogInformation("[API-USER] Buat user berhasil | UserId={UserId} | Username={Username} | Role={Role} | Caller={Caller}", user.Id, user.Username, user.Role, Caller);
+            return ResponseHelper.Success(HttpContext, new { user, secretKey });
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat buat user | Caller={Caller}", Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -127,14 +135,17 @@ public class UsersController : ControllerBase
 
             if (isConflict)
             {
+                _logger.LogWarning("[API-USER] Update user conflict | UserId={UserId} | Caller={Caller}", id, Caller);
                 return ResponseHelper.Conflict(HttpContext,
                     errors: ["User telah diubah oleh proses lain (ID " + id + ")."]);
             }
 
+            _logger.LogInformation("[API-USER] Update user berhasil | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Success(HttpContext, user);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat update user | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -162,12 +173,15 @@ public class UsersController : ControllerBase
             }
 
             var (deleted, _) = await _userService.SoftDeleteAsync(id, Caller);
+            if (deleted)
+                _logger.LogInformation("[API-USER] Delete user berhasil | UserId={UserId} | Caller={Caller}", id, Caller);
             return deleted
                 ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" berhasil dinonaktifkan.", "Berhasil")
                 : ResponseHelper.NotFound(HttpContext, "User tidak ditemukan.");
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat delete user | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -206,12 +220,15 @@ public class UsersController : ControllerBase
             }
 
             var (ok, error) = await _userService.ChangeRoleAsync(id, request.Role, Caller);
+            if (ok)
+                _logger.LogInformation("[API-USER] Ubah role berhasil | UserId={UserId} | NewRole={NewRole} | Caller={Caller}", id, request.Role, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Role user \"{user.Display}\" diubah menjadi {UserRolePolicy.DisplayName(request.Role)}.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal mengubah role."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat ubah role | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -245,12 +262,15 @@ public class UsersController : ControllerBase
             }
 
             var (ok, error) = await _userService.SetActiveAsync(id, request.IsActive, Caller);
+            if (ok)
+                _logger.LogInformation("[API-USER] Set active berhasil | UserId={UserId} | IsActive={IsActive} | Caller={Caller}", id, request.IsActive, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" {(request.IsActive ? "diaktifkan" : "dinonaktifkan")}.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal mengubah status."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat set active | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -278,12 +298,15 @@ public class UsersController : ControllerBase
             }
 
             var (ok, error) = await _userService.BlockAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-USER] Blokir user berhasil | UserId={UserId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"User \"{user.Display}\" diblokir.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal memblokir user."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat blokir user | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -311,12 +334,15 @@ public class UsersController : ControllerBase
             }
 
             var (ok, error) = await _userService.UnblockAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-USER] Buka blokir user berhasil | UserId={UserId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Blokir user \"{user.Display}\" dibuka.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal membuka blokir."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat buka blokir user | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -343,12 +369,15 @@ public class UsersController : ControllerBase
             }
 
             var (ok, error) = await _userService.ResetPasswordAsync(id, request.NewPassword, Caller);
+            if (ok)
+                _logger.LogInformation("[API-USER] Reset password berhasil | UserId={UserId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, $"Password user \"{user.Display}\" berhasil di-reset.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal reset password."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat reset password | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -385,12 +414,15 @@ public class UsersController : ControllerBase
             }
 
             var (ok, secretKey, error) = await _userService.RegenerateSecretKeyAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-USER] Regenerate secret key berhasil | UserId={UserId} | Caller={Caller}", id, Caller);
             return ok
                 ? ResponseHelper.Success(HttpContext, new { user.Username, secretKey }, "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal regenerasi secret key."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-USER] Exception saat regenerate secret key | UserId={UserId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }

@@ -11,10 +11,12 @@ namespace cobaproject.Controllers;
 public class CourierController : ControllerBase
 {
     private readonly ICourierService _courierService;
+    private readonly ILogger<CourierController> _logger;
 
-    public CourierController(ICourierService courierService)
+    public CourierController(ICourierService courierService, ILogger<CourierController> logger)
     {
         _courierService = courierService;
+        _logger = logger;
     }
 
     private string Caller => HttpContext.Items["Caller"]?.ToString() ?? "SYSTEM";
@@ -54,12 +56,18 @@ public class CourierController : ControllerBase
         try
         {
             var (courier, error) = await _courierService.CreateAsync(request, Caller);
-            return error is not null
-                ? ResponseHelper.ValidationError(HttpContext, [error])
-                : ResponseHelper.Success(HttpContext, courier);
+            if (error is not null)
+            {
+                _logger.LogWarning("[API-KURIR] Buat kurir gagal | Caller={Caller} | Error={Error}", Caller, error);
+                return ResponseHelper.ValidationError(HttpContext, [error]);
+            }
+
+            _logger.LogInformation("[API-KURIR] Buat kurir berhasil | CourierId={CourierId} | Caller={Caller}", courier!.Id, Caller);
+            return ResponseHelper.Success(HttpContext, courier);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-KURIR] Exception saat buat kurir | Caller={Caller}", Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -77,17 +85,21 @@ public class CourierController : ControllerBase
             }
             if (isConflict)
             {
+                _logger.LogWarning("[API-KURIR] Update kurir conflict | CourierId={CourierId} | Caller={Caller}", id, Caller);
                 return ResponseHelper.Conflict(HttpContext, errors: ["Ekspedisi telah diubah oleh proses lain (ID " + id + ")."]);
             }
             if (error is not null)
             {
+                _logger.LogWarning("[API-KURIR] Update kurir gagal | CourierId={CourierId} | Caller={Caller} | Error={Error}", id, Caller, error);
                 return ResponseHelper.ValidationError(HttpContext, [error]);
             }
 
+            _logger.LogInformation("[API-KURIR] Update kurir berhasil | CourierId={CourierId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Success(HttpContext, courier);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-KURIR] Exception saat update kurir | CourierId={CourierId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -99,12 +111,15 @@ public class CourierController : ControllerBase
         try
         {
             var (success, error) = await _courierService.SoftDeleteAsync(id, Caller);
+            if (success)
+                _logger.LogInformation("[API-KURIR] Delete kurir berhasil | CourierId={CourierId} | Caller={Caller}", id, Caller);
             return success
                 ? ResponseHelper.Success(HttpContext, new { Id = id }, "Ekspedisi dinonaktifkan.")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Ekspedisi tidak ditemukan."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-KURIR] Exception saat delete kurir | CourierId={CourierId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -116,12 +131,15 @@ public class CourierController : ControllerBase
         try
         {
             var (success, error) = await _courierService.ActivateAsync(id, Caller);
+            if (success)
+                _logger.LogInformation("[API-KURIR] Aktivasi kurir berhasil | CourierId={CourierId} | Caller={Caller}", id, Caller);
             return success
                 ? ResponseHelper.Success(HttpContext, new { Id = id }, "Ekspedisi diaktifkan kembali.")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Ekspedisi tidak ditemukan."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-KURIR] Exception saat aktivasi kurir | CourierId={CourierId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }

@@ -10,6 +10,7 @@ namespace cobaproject.Pages;
 public class ChangePasswordModel : PageModel
 {
     private readonly IUserService _userService;
+    private readonly ILogger<ChangePasswordModel> _logger;
 
     [BindProperty(SupportsGet = true)]
     [Required(ErrorMessage = "Username wajib diisi.")]
@@ -25,9 +26,10 @@ public class ChangePasswordModel : PageModel
     [Compare(nameof(NewPassword), ErrorMessage = "Konfirmasi password tidak sama.")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    public ChangePasswordModel(IUserService userService)
+    public ChangePasswordModel(IUserService userService, ILogger<ChangePasswordModel> logger)
     {
         _userService = userService;
+        _logger = logger;
     }
 
     public void OnGet()
@@ -44,10 +46,12 @@ public class ChangePasswordModel : PageModel
         var (success, error) = await _userService.ChangePasswordBlockedAsync(Username.Trim(), NewPassword);
         if (!success)
         {
+            _logger.LogWarning("[AUTH] Ganti password staf gagal | Username={Username} | Error={Error}", Username, error);
             TempData["ErrorMessage"] = error ?? "Gagal mengganti password.";
             return Page();
         }
 
+        _logger.LogInformation("[AUTH] Ganti password staf berhasil | Username={Username}", Username);
         TempData["SuccessMessage"] = "Password berhasil diganti. Silakan masuk dengan password baru.";
         return Redirect("/Panel/Masuk");
     }

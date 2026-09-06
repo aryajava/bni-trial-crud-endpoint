@@ -12,10 +12,12 @@ namespace cobaproject.Controllers;
 public class SettingController : ControllerBase
 {
     private readonly ISettingService _settingService;
+    private readonly ILogger<SettingController> _logger;
 
-    public SettingController(ISettingService settingService)
+    public SettingController(ISettingService settingService, ILogger<SettingController> logger)
     {
         _settingService = settingService;
+        _logger = logger;
     }
 
     private string Caller =>
@@ -48,12 +50,17 @@ public class SettingController : ControllerBase
             }
 
             var (ok, error) = await _settingService.UpdateAsync(key, request.Value, request.Version, Caller);
+            if (ok)
+                _logger.LogInformation("[API-SETTING] Update setting berhasil | Key={Key} | Caller={Caller}", key, Caller);
+            else
+                _logger.LogWarning("[API-SETTING] Update setting gagal | Key={Key} | Caller={Caller} | Error={Error}", key, Caller, error);
             return ok
                 ? ResponseHelper.Success(HttpContext, "Pengaturan disimpan.", "Berhasil")
                 : ResponseHelper.ValidationError(HttpContext, [error ?? "Gagal menyimpan pengaturan."]);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-SETTING] Exception saat update setting | Key={Key} | Caller={Caller}", key, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }

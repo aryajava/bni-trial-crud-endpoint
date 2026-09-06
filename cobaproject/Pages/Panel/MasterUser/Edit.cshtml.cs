@@ -14,6 +14,7 @@ namespace cobaproject.Pages.Users;
 public class EditModel : PageModel
 {
     private readonly IUserService _userService;
+    private readonly ILogger<EditModel> _logger;
 
     [BindProperty]
     public UpdateUserRequest Form { get; set; } = new();
@@ -31,9 +32,10 @@ public class EditModel : PageModel
         ?? HttpContext.Items["Caller"]?.ToString()
         ?? "SCREEN";
 
-    public EditModel(IUserService userService)
+    public EditModel(IUserService userService, ILogger<EditModel> logger)
     {
         _userService = userService;
+        _logger = logger;
     }
 
     public async Task<IActionResult> OnGetAsync(int id)
@@ -83,6 +85,7 @@ public class EditModel : PageModel
         var (user, isConflict) = await _userService.UpdateAsync(id, Form, Caller);
         if (isConflict)
         {
+            _logger.LogWarning("[USER] Edit user conflict | UserId={UserId} | Caller={Caller}", id, Caller);
             ModelState.AddModelError(string.Empty,
                 "Data user sudah diubah orang lain — form diperbarui dengan data terbaru, simpan lagi.");
             Form = new UpdateUserRequest
@@ -110,6 +113,7 @@ public class EditModel : PageModel
                 new ClaimsPrincipal(identity));
         }
 
+        _logger.LogInformation("[USER] Edit user berhasil | UserId={UserId} | Caller={Caller}", id, Caller);
         TempData["SuccessMessage"] = $"User \"{TargetUsername}\" berhasil disimpan.";
         return RedirectToPage("Index");
     }

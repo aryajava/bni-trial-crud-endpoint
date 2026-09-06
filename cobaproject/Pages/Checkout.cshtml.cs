@@ -17,6 +17,7 @@ public class CheckoutModel : PageModel
     private readonly IOrderService _orderService;
     private readonly ISettingService _settingService;
     private readonly ICourierService _courierService;
+    private readonly ILogger<CheckoutModel> _logger;
 
     public List<CartItemDto> Items { get; set; } = [];
     public decimal Subtotal { get; set; }
@@ -43,13 +44,15 @@ public class CheckoutModel : PageModel
         ICartService cartService,
         IOrderService orderService,
         ISettingService settingService,
-        ICourierService courierService)
+        ICourierService courierService,
+        ILogger<CheckoutModel> logger)
     {
         _customerService = customerService;
         _cartService = cartService;
         _orderService = orderService;
         _settingService = settingService;
         _courierService = courierService;
+        _logger = logger;
     }
 
     public async Task OnGetAsync(string? ids)
@@ -70,6 +73,7 @@ public class CheckoutModel : PageModel
         var verified = await _customerService.VerifyPasswordAsync(CustomerId, Password);
         if (!verified)
         {
+            _logger.LogWarning("[ORDER] Verifikasi password checkout gagal | CustomerId={CustomerId}", CustomerId);
             ModelState.AddModelError(nameof(Password), "Kata sandi tidak sesuai.");
             await LoadAsync();
             return Page();
@@ -79,6 +83,7 @@ public class CheckoutModel : PageModel
         var (order, error) = await _orderService.CheckoutAsync(CustomerId, Form, User.Identity!.Name!);
         if (order is null)
         {
+            _logger.LogWarning("[ORDER] Checkout gagal | CustomerId={CustomerId} | Error={Error}", CustomerId, error);
             StoreError = error ?? "Gagal membuat pesanan.";
             await LoadAsync();
             return Page();
@@ -91,6 +96,7 @@ public class CheckoutModel : PageModel
             Address = Form.Address
         }, User.Identity!.Name!);
 
+        _logger.LogInformation("[ORDER] Checkout berhasil | CustomerId={CustomerId} | OrderId={OrderId} | Total={Total}", CustomerId, order.Id, Total);
         TempData["SuccessMessage"] = $"Pesanan #{(long)order.Id} berhasil dibuat (status DIPROSES).";
         return Redirect("/PesananSaya");
     }

@@ -60,9 +60,9 @@ const string logTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss zzz}] [{Level:u3}] {
             _ = LogsPath(sub);
         }
 
-builder.Host.UseSerilog((context, services) =>
+builder.Host.UseSerilog((context, services, configuration) =>
 {
-    Log.Logger = new LoggerConfiguration()
+    configuration
         .MinimumLevel.Information()
         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
         .MinimumLevel.Override("System", LogEventLevel.Warning)
@@ -84,13 +84,15 @@ builder.Host.UseSerilog((context, services) =>
             .WriteTo.File(LogsPath("web"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .WriteTo.Logger(l => l
             .Filter.ByIncludingOnly(IsAuditSource)
-            .WriteTo.File(LogsPath("audit"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
-        .CreateLogger();
+            .WriteTo.File(LogsPath("audit"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate));
 
-        Log.Information("Log aplikasi siap — service/helper/lainnya tercatat di sini");
-        Log.ForContext("SourceContext", "cobaproject.Controllers").Information("Log api siap — controller/endpoint tercatat di sini");
-        Log.ForContext("SourceContext", "cobaproject.Pages").Information("Log web siap — halaman Razor tercatat di sini");
-        Log.ForContext("SourceContext", "Audit").Information("Log audit siap — jejak audit DB dicerminkan ke sini");
+    // Salin konfigurasi ke Log.Logger statis agar log startup + non-DI tetap berfungsi.
+    Log.Logger = configuration.CreateLogger();
+
+    Log.Information("Log aplikasi siap — service/helper/lainnya tercatat di sini");
+    Log.ForContext("SourceContext", "cobaproject.Controllers").Information("Log api siap — controller/endpoint tercatat di sini");
+    Log.ForContext("SourceContext", "cobaproject.Pages").Information("Log web siap — halaman Razor tercatat di sini");
+    Log.ForContext("SourceContext", "Audit").Information("Log audit siap — jejak audit DB dicerminkan ke sini");
 });
 
 static Func<LogEvent, bool> IsSourceOf(string prefix) => evt =>

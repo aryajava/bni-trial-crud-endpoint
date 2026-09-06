@@ -13,6 +13,7 @@ namespace cobaproject.Pages;
 public class MasukModel : PageModel
 {
     private readonly ICustomerService _customerService;
+    private readonly ILogger<MasukModel> _logger;
 
     [BindProperty]
     [Required(ErrorMessage = "Email wajib diisi.")]
@@ -23,9 +24,10 @@ public class MasukModel : PageModel
     [Required(ErrorMessage = "Kata sandi wajib diisi.")]
     public string Password { get; set; } = string.Empty;
 
-    public MasukModel(ICustomerService customerService)
+    public MasukModel(ICustomerService customerService, ILogger<MasukModel> logger)
     {
         _customerService = customerService;
+        _logger = logger;
     }
 
     public void OnGet()
@@ -44,10 +46,12 @@ public class MasukModel : PageModel
         {
             if (string.Equals(error, "blocked", StringComparison.OrdinalIgnoreCase))
             {
+                _logger.LogWarning("[AUTH] Login pelanggan diblokir | Email={Email}", Email);
                 TempData["ErrorMessage"] = "Akun Anda diblokir setelah beberapa kali gagal masuk. Ganti kata sandi untuk membuka blokir.";
                 return Redirect("/GantiKataSandi?email=" + Uri.EscapeDataString(Email.Trim()));
             }
 
+            _logger.LogWarning("[AUTH] Login pelanggan gagal | Email={Email} | Alasan={Reason}", Email, error ?? "invalid");
             TempData["ErrorMessage"] = "Email atau kata sandi salah.";
             return Page();
         }
@@ -60,6 +64,8 @@ public class MasukModel : PageModel
         ], CustomerAuth.CustomerScheme);
 
         await HttpContext.SignInAsync(CustomerAuth.CustomerScheme, new ClaimsPrincipal(identity));
+
+        _logger.LogInformation("[AUTH] Login pelanggan berhasil | Email={Email} | CustomerId={CustomerId}", Email, customer.Id);
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {

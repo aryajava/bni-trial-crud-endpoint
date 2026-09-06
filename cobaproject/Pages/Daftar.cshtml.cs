@@ -13,13 +13,15 @@ namespace cobaproject.Pages;
 public class DaftarModel : PageModel
 {
     private readonly ICustomerService _customerService;
+    private readonly ILogger<DaftarModel> _logger;
 
     [BindProperty]
     public RegisterCustomerRequest Form { get; set; } = new();
 
-    public DaftarModel(ICustomerService customerService)
+    public DaftarModel(ICustomerService customerService, ILogger<DaftarModel> logger)
     {
         _customerService = customerService;
+        _logger = logger;
     }
 
     public void OnGet()
@@ -36,6 +38,7 @@ public class DaftarModel : PageModel
         var (customer, error) = await _customerService.RegisterAsync(Form);
         if (customer is null)
         {
+            _logger.LogWarning("[AUTH] Registrasi pelanggan gagal | Email={Email} | Error={Error}", Form.Email, error);
             TempData["ErrorMessage"] = error ?? "Gagal mendaftar.";
             return Page();
         }
@@ -48,6 +51,8 @@ public class DaftarModel : PageModel
         ], CustomerAuth.CustomerScheme);
 
         await HttpContext.SignInAsync(CustomerAuth.CustomerScheme, new ClaimsPrincipal(identity));
+
+        _logger.LogInformation("[AUTH] Registrasi pelanggan berhasil | Email={Email} | CustomerId={CustomerId}", customer.Email, customer.Id);
 
         TempData["SuccessMessage"] = "Akun berhasil dibuat. Selamat berbelanja!";
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))

@@ -11,6 +11,7 @@ public class KeranjangModel : PageModel
 {
     private readonly ICartService _cartService;
     private readonly IProductService _productService;
+    private readonly ILogger<KeranjangModel> _logger;
 
     public List<CartItemDto> Items { get; set; } = [];
     public List<CartItemDto> UnavailableItems { get; set; } = [];
@@ -21,10 +22,11 @@ public class KeranjangModel : PageModel
 
     public int CustomerId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
-    public KeranjangModel(ICartService cartService, IProductService productService)
+    public KeranjangModel(ICartService cartService, IProductService productService, ILogger<KeranjangModel> logger)
     {
         _cartService = cartService;
         _productService = productService;
+        _logger = logger;
     }
 
     public async Task OnGetAsync()
@@ -78,6 +80,7 @@ public class KeranjangModel : PageModel
         }
 
         await _cartService.AddAsync(CustomerId, productId, Math.Max(1, qty));
+        _logger.LogInformation("[CART] Tambah produk | CustomerId={CustomerId} | ProductId={ProductId} | Qty={Qty}", CustomerId, productId, qty);
         TempData["SuccessMessage"] = "Produk ditambahkan ke keranjang.";
         return Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/Keranjang" : returnUrl);
     }
@@ -101,6 +104,7 @@ public class KeranjangModel : PageModel
         }
 
         await _cartService.RemoveAsync(CustomerId, productId);
+        _logger.LogInformation("[CART] Hapus produk | CustomerId={CustomerId} | ProductId={ProductId}", CustomerId, productId);
         TempData["SuccessMessage"] = "Produk dihapus dari keranjang.";
         return Redirect("/Keranjang");
     }
@@ -113,6 +117,7 @@ public class KeranjangModel : PageModel
         }
 
         await _cartService.ClearAsync(CustomerId);
+        _logger.LogInformation("[CART] Keranjang dikosongkan | CustomerId={CustomerId}", CustomerId);
         TempData["SuccessMessage"] = "Keranjang dikosongkan.";
         return Redirect("/Keranjang");
     }
@@ -137,6 +142,7 @@ public class KeranjangModel : PageModel
 
         // AddAsync menjumlahkan qty dengan item yang sudah ada di keranjang akun.
         await _cartService.MergeGuestCartAsync(CustomerId, items);
+        _logger.LogInformation("[CART] Merge keranjang tamu | CustomerId={CustomerId} | JumlahItem={Count}", CustomerId, items.Count);
         TempData["SuccessMessage"] = "Keranjang tamu digabung ke akun Anda.";
         return Redirect("/Keranjang");
     }

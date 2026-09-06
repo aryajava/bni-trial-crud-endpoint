@@ -11,10 +11,12 @@ namespace cobaproject.Controllers;
 public class CategoryController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
+    private readonly ILogger<CategoryController> _logger;
 
-    public CategoryController(ICategoryService categoryService)
+    public CategoryController(ICategoryService categoryService, ILogger<CategoryController> logger)
     {
         _categoryService = categoryService;
+        _logger = logger;
     }
 
     private string Caller =>
@@ -94,12 +96,18 @@ public class CategoryController : ControllerBase
             }
 
             var (category, error) = await _categoryService.CreateAsync(request, Caller);
-            return error is not null
-                ? ResponseHelper.ValidationError(HttpContext, [error])
-                : ResponseHelper.Success(HttpContext, category);
+            if (error is not null)
+            {
+                _logger.LogWarning("[API-KATEGORI] Buat kategori gagal | Caller={Caller} | Error={Error}", Caller, error);
+                return ResponseHelper.ValidationError(HttpContext, [error]);
+            }
+
+            _logger.LogInformation("[API-KATEGORI] Buat kategori berhasil | CategoryId={CategoryId} | Caller={Caller}", category!.Id, Caller);
+            return ResponseHelper.Success(HttpContext, category);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-KATEGORI] Exception saat buat kategori | Caller={Caller}", Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -123,14 +131,22 @@ public class CategoryController : ControllerBase
             if (category is null)
                 return ResponseHelper.NotFound(HttpContext);
             if (isConflict)
+            {
+                _logger.LogWarning("[API-KATEGORI] Update kategori conflict | CategoryId={CategoryId} | Caller={Caller}", id, Caller);
                 return ResponseHelper.Conflict(HttpContext, errors: ["Kategori telah diubah oleh proses lain (ID " + id + ")."]);
+            }
             if (error is not null)
+            {
+                _logger.LogWarning("[API-KATEGORI] Update kategori gagal | CategoryId={CategoryId} | Caller={Caller} | Error={Error}", id, Caller, error);
                 return ResponseHelper.ValidationError(HttpContext, [error]);
+            }
 
+            _logger.LogInformation("[API-KATEGORI] Update kategori berhasil | CategoryId={CategoryId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Success(HttpContext, category);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-KATEGORI] Exception saat update kategori | CategoryId={CategoryId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -147,10 +163,12 @@ public class CategoryController : ControllerBase
                     ? ResponseHelper.ValidationError(HttpContext, [error])
                     : ResponseHelper.NotFound(HttpContext);
 
+            _logger.LogInformation("[API-KATEGORI] Delete kategori berhasil | CategoryId={CategoryId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Success(HttpContext, new { Id = id }, "Kategori dinonaktifkan.");
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-KATEGORI] Exception saat delete kategori | CategoryId={CategoryId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }

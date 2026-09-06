@@ -10,6 +10,7 @@ namespace cobaproject.Pages;
 public class GantiKataSandiModel : PageModel
 {
     private readonly ICustomerService _customerService;
+    private readonly ILogger<GantiKataSandiModel> _logger;
 
     [BindProperty(SupportsGet = true)]
     [Required(ErrorMessage = "Email wajib diisi.")]
@@ -26,9 +27,10 @@ public class GantiKataSandiModel : PageModel
     [Compare(nameof(NewPassword), ErrorMessage = "Konfirmasi kata sandi tidak sama.")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    public GantiKataSandiModel(ICustomerService customerService)
+    public GantiKataSandiModel(ICustomerService customerService, ILogger<GantiKataSandiModel> logger)
     {
         _customerService = customerService;
+        _logger = logger;
     }
 
     public void OnGet()
@@ -45,10 +47,12 @@ public class GantiKataSandiModel : PageModel
         var (success, error) = await _customerService.ChangePasswordBlockedAsync(Email.Trim(), NewPassword);
         if (!success)
         {
+            _logger.LogWarning("[AUTH] Ganti password pelanggan gagal | Email={Email} | Error={Error}", Email, error);
             TempData["ErrorMessage"] = error ?? "Gagal mengganti kata sandi.";
             return Page();
         }
 
+        _logger.LogInformation("[AUTH] Ganti password pelanggan berhasil | Email={Email}", Email);
         TempData["SuccessMessage"] = "Kata sandi berhasil diganti. Silakan masuk.";
         return Redirect("/Masuk");
     }

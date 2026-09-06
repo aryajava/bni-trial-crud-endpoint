@@ -11,13 +11,15 @@ public class EditModel : PageModel
 {
     private readonly IProductService _productService;
     private readonly ICategoryService _categoryService;
+    private readonly ILogger<EditModel> _logger;
 
     public List<CategoryDto> Categories { get; set; } = [];
 
-    public EditModel(IProductService productService, ICategoryService categoryService)
+    public EditModel(IProductService productService, ICategoryService categoryService, ILogger<EditModel> logger)
     {
         _productService = productService;
         _categoryService = categoryService;
+        _logger = logger;
     }
 
     public int Id { get; set; }
@@ -62,6 +64,7 @@ public class EditModel : PageModel
 
         if (isConflict)
         {
+            _logger.LogWarning("[PRODUK] Edit produk conflict | ProductId={ProductId} | Caller={Caller}", id, Caller);
             ModelState.AddModelError(string.Empty,
                 $"Produk sudah diubah orang lain (versi sekarang {product.Version}). " +
                 "Form di bawah sudah diperbarui dengan data terbaru — periksa lalu simpan lagi.");
@@ -71,10 +74,12 @@ public class EditModel : PageModel
 
         if (!isSaved)
         {
+            _logger.LogWarning("[PRODUK] Edit produk gagal disimpan | ProductId={ProductId} | Caller={Caller}", id, Caller);
             TempData["ErrorMessage"] = pendingMessage ?? "Gagal menyimpan produk.";
             return RedirectToPage("Index");
         }
 
+        _logger.LogInformation("[PRODUK] Edit produk berhasil | ProductId={ProductId} | Title={Title} | Caller={Caller}", id, product.Title, Caller);
         TempData["SuccessMessage"] = pendingMessage is null
             ? $"Produk \"{product.Title}\" berhasil disimpan."
             : $"Produk \"{product.Title}\" berhasil disimpan. {pendingMessage}";

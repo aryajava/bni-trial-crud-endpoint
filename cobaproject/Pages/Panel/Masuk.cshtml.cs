@@ -69,6 +69,8 @@ public class LoginModel : PageModel
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
 
+        _logger.LogInformation("[AUTH] Login staf berhasil | Username={Username} | UserId={UserId} | Role={Role}", user.Username, user.Id, user.Role);
+
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
             return Redirect(returnUrl);

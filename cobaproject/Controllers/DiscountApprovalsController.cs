@@ -11,10 +11,12 @@ namespace cobaproject.Controllers;
 public class DiscountApprovalsController : ControllerBase
 {
     private readonly IDiscountApprovalService _approvalService;
+    private readonly ILogger<DiscountApprovalsController> _logger;
 
-    public DiscountApprovalsController(IDiscountApprovalService approvalService)
+    public DiscountApprovalsController(IDiscountApprovalService approvalService, ILogger<DiscountApprovalsController> logger)
     {
         _approvalService = approvalService;
+        _logger = logger;
     }
 
     private string Caller =>
@@ -51,12 +53,18 @@ public class DiscountApprovalsController : ControllerBase
             }
 
             var error = await _approvalService.DecideAsync(id, true, Caller, null, request.Version);
-            return error is null
-                ? ResponseHelper.Success(HttpContext, new { Id = id }, "Diskon disetujui dan berlaku pada produk.")
-                : DecisionError(context: HttpContext, error);
+            if (error is null)
+            {
+                _logger.LogInformation("[API-DISKON] Diskon disetujui | ApprovalId={ApprovalId} | Caller={Caller}", id, Caller);
+                return ResponseHelper.Success(HttpContext, new { Id = id }, "Diskon disetujui dan berlaku pada produk.");
+            }
+
+            _logger.LogWarning("[API-DISKON] Approve diskon gagal | ApprovalId={ApprovalId} | Caller={Caller} | Error={Error}", id, Caller, error);
+            return DecisionError(context: HttpContext, error);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-DISKON] Exception saat approve diskon | ApprovalId={ApprovalId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
@@ -77,12 +85,18 @@ public class DiscountApprovalsController : ControllerBase
             }
 
             var error = await _approvalService.DecideAsync(id, false, Caller, request.Reason, request.Version);
-            return error is null
-                ? ResponseHelper.Success(HttpContext, new { Id = id }, "Permintaan diskon ditolak.")
-                : DecisionError(context: HttpContext, error);
+            if (error is null)
+            {
+                _logger.LogInformation("[API-DISKON] Diskon ditolak | ApprovalId={ApprovalId} | Caller={Caller}", id, Caller);
+                return ResponseHelper.Success(HttpContext, new { Id = id }, "Permintaan diskon ditolak.");
+            }
+
+            _logger.LogWarning("[API-DISKON] Reject diskon gagal | ApprovalId={ApprovalId} | Caller={Caller} | Error={Error}", id, Caller, error);
+            return DecisionError(context: HttpContext, error);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "[API-DISKON] Exception saat reject diskon | ApprovalId={ApprovalId} | Caller={Caller}", id, Caller);
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
