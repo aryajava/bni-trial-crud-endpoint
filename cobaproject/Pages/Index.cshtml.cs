@@ -14,7 +14,7 @@ public class IndexModel : PageModel
 
     public List<CategoryDto> Categories { get; set; } = [];
     public PagedResult<ProductDto> Products { get; set; } = new();
-    public int Page { get; set; } = 1;
+    public new int Page { get; set; } = 1;
     public int PageSize { get; set; } = 12;
     public string? Search { get; set; }
     public string? Category { get; set; }

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Serilog;
 using Serilog.Events;
+using Serilog.Filters;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
 // Kunci kultur ke InvariantCulture agar angka selalu memakai titik desimal
@@ -73,11 +74,11 @@ builder.Host.UseSerilog((context, services) =>
     return Log.Logger;
 });
 
-static bool IsSourceOf(string prefix) => evt =>
+static Func<LogEvent, bool> IsSourceOf(string prefix) => evt =>
     evt.Properties.TryGetValue("SourceContext", out var sc)
     && sc.ToString().Trim('"').StartsWith(prefix, StringComparison.Ordinal);
 
-static bool IsAuditSource(Serilog.Events.LogEvent evt) =>
+static bool IsAuditSource(LogEvent evt) =>
     evt.Properties.TryGetValue("SourceContext", out var sc)
     && string.Equals(sc.ToString().Trim('"'), "Audit", StringComparison.Ordinal);
 
