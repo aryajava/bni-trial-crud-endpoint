@@ -45,12 +45,12 @@ Semua keputusan bisnis ditulis permanen (audit trail dua sisi, tabel DB, bukan f
 | `/Panel/PersetujuanDiskon` | OWNER+SA (lihat semua + putuskan) |
 | `/Panel/MasterUser` | OWNER+SA |
 | `/Panel/UserControl` | OWNER+SA |
-| `/Panel/Pelanggan` | OWNER+SA (blokir/buka; hapus-lunak & aktifkan kembali: SA) |
+|  OWNER+SA | OWNER+SA (blokir/buka; hapus-lunak & aktifkan kembali: SA) |
 | `/Panel/Pesanan` | ADMIN+OWNER+SA (DIPROSES→DIKIRIM; batalkan) |
 | `/Panel/LaporanPenjualan` | OWNER+SA |
 | `/Panel/Settings/PengaturanAplikasi` | **SA saja** (ambang blokir login) |
 | `/Panel/Settings/PengaturanToko` | OWNER+SA (ongkir tetap + pajak %) |
-| `/Panel/Settings/Audit` | **SA saja** |
+| `/Panel/Settings/Audit` | **SA saja** — tab: Aksi Pengurus · Akun Pelanggan · **Lalu Lintas HTTP** (`REQUEST_PRODUCT`/`RESPONSE_PRODUCT`) |
 
 ### 2.3 Peran (`MASTER_USER`)
 
@@ -158,7 +158,7 @@ Migrasi: dbup `Scripts/Script00XX_*.sql` — lanjutan dari 16 skrip yang ada; co
 | GET/POST/PUT/DELETE | `/api/users` (`/paged`, `/{id}`, role/active/reset-password/secret-key) | User pengurus |
 | POST | `/api/users/{id}/block` · `/unblock` | Blokir/buka (OWNER+SA, guard rank) |
 
-**Endpoint** (Blok 2 + tambahan): `GET /api/customers/paged` + `POST {id}/block|unblock` (OWNER+SA) + `{id}/deactivate|reactivate` (SA) + `{id}/reset-password` (OWNER+SA) · `GET /api/orders/paged` + `{id}` + `{id}/ship` + `{id}/cancel` (staff) · `GET /api/audit-logs/paged` (SA) · `GET /api/reports/sales` (OWNER+SA) · `GET /api/couriers/paged` + `/active`, `POST`, `PUT {id}`, `DELETE {id}`, `{id}/activate` (delete/activate: OWNER+SA).
+**Endpoint** (Blok 2 + tambahan): `GET /api/customers/paged` + `POST {id}/block|unblock` (OWNER+SA) + `{id}/deactivate|reactivate` (SA) + `{id}/reset-password` (OWNER+SA) · `GET /api/orders/paged` + `{id}` + `{id}/ship` + `{id}/cancel` (staff) · `GET /api/audit-logs/paged` + `customers/paged` + `http/paged` (SA) · `GET /api/reports/sales` (OWNER+SA) · `GET /api/couriers/paged` + `/active`, `POST`, `PUT {id}`, `DELETE {id}`, `{id}/activate` (delete/activate: OWNER+SA).
 
 Auth API: `X-Api-Key` (fallback `TEST123` → SYSTEM/OWNER; selain itu `SECRET_KEY` per user). Bypass: `/swagger`, `/openapi`, `/favicon.ico`. Halaman grid memakai **secret key user yang login** (pola Monitoring — lihat ADR-0004).
 

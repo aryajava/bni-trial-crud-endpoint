@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace cobaproject.Pages.Pelanggan;
 
-[Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
+[Authorize(Roles = UserRolePolicy.Sa)]
 public class IndexModel : PageModel
 {
     private readonly IUserService _userService;
@@ -33,6 +33,6 @@ public class IndexModel : PageModel
         var userKey = currentUserId > 0 ? await _userService.GetSecretKeyAsync(currentUserId) : null;
         ApiKey = string.IsNullOrWhiteSpace(userKey) ? _apiKeyConfig.Key : userKey;
 
-        ViewData["Title"] = "Pelanggan";
+        ViewData["Title"] = "Master Pelanggan";
     }
 }

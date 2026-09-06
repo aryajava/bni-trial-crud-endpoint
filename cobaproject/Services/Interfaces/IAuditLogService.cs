@@ -10,4 +10,6 @@ public interface IAuditLogService
     Task<PagedResult<AuditLogEntryDto>> GetPagedAsync(AuditLogQueryParams query);
 
     Task<PagedResult<CustomerAuditEntryDto>> GetCustomerPagedAsync(CustomerAuditQueryParams query);
+
+    Task<PagedResult<HttpLogEntryDto>> GetHttpPagedAsync(HttpLogQueryParams query);
 }

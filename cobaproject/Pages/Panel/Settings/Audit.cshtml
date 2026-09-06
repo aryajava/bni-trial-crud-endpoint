@@ -16,6 +16,9 @@
     <li class="nav-item">
         <button type="button" class="nav-link" id="tabCustomerBtn" data-target="customerPanel"><span class="material-icons">people</span> Akun Pelanggan</button>
     </li>
+    <li class="nav-item">
+        <button type="button" class="nav-link" id="tabHttpBtn" data-target="httpPanel"><span class="material-icons">swap_vert</span> Lalu Lintas HTTP</button>
+    </li>
 </ul>
 
 <div id="staffPanel">
@@ -150,6 +153,67 @@
     </div>
 </div>
 
+<div id="httpPanel" style="display:none;">
+    <div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="httpMethodSelect">Metode</label>
+            <select id="httpMethodSelect" data-pencarian class="form-select form-select-sm" style="width: 110px;">
+                <option value="">Semua</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+            </select>
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="httpSuccessSelect">Hasil</label>
+            <select id="httpSuccessSelect" data-pencarian class="form-select form-select-sm" style="width: 120px;">
+                <option value="">Semua</option>
+                <option value="1">Berhasil</option>
+                <option value="0">Gagal</option>
+            </select>
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="httpFromInput">Dari</label>
+            <input type="date" id="httpFromInput" class="form-control form-control-sm" style="width: 150px;" />
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="httpToInput">Sampai</label>
+            <input type="date" id="httpToInput" class="form-control form-control-sm" style="width: 150px;" />
+        </div>
+        <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 320px;">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="httpSearchInput">Cari</label>
+            <input type="text" id="httpSearchInput" class="form-control form-control-sm" placeholder="Path / Trace ID..." autocomplete="off" />
+        </div>
+    </div>
+    <div class="card card-soft">
+        <div class="card-body p-3">
+            <div class="table-wrap">
+                <table class="table table-data align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th><button type="button" class="th-sort" data-sort="id">ID <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="traceId">Trace ID <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="endpoint">Path <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="httpMethod">Metode <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="statusCode">Status <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th>Hasil</th>
+                            <th><button type="button" class="th-sort" data-sort="requestedAt">Waktu <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="elapsedMs">Durasi <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th class="col-aksi">Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="httpRows"></tbody>
+                </table>
+            </div>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                <div id="httpPageInfo" class="text-muted small"></div>
+                <ul id="httpPagination" class="pagination pagination-sm mb-0"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
@@ -187,6 +251,12 @@
                 if (state.from) q.set('from', state.from);
                 if (state.to) q.set('to', state.to);
                 if (state.search.trim()) q.set('search', state.search.trim());
+                if (cfg.extraQuery) {
+                    const extra = cfg.extraQuery();
+                    Object.entries(extra).forEach(([k, v]) => {
+                        if (v !== undefined && v !== null && v !== '') { q.set(k, v); }
+                    });
+                }
                 return q.toString();
             }
 
@@ -268,7 +338,7 @@
                 load();
             }
 
-            return { bind };
+            return { bind, load };
         }
 
         function prettyJson(raw) {
@@ -372,6 +442,78 @@
         });
         customerGrid.bind();
 
+        const httpDetailCache = {};
+
+        function tampilDetailHttp(row) {
+            const html =
+                '<div class="text-start small">' +
+                '<table class="table table-sm mb-2 small">' +
+                '<tr><th class="text-muted" style="width:110px;">Trace ID</th><td><code>' + esc(row.traceId) + '</code></td></tr>' +
+                '<tr><th class="text-muted">Path</th><td>' + esc(row.httpMethod) + ' ' + esc(row.endpoint) + '</td></tr>' +
+                '<tr><th class="text-muted">Status</th><td>' + esc(row.statusCode || '-') + ' · ' + (row.isSuccess ? '<span class="badge bg-success-subtle text-success-emphasis">Berhasil</span>' : '<span class="badge bg-danger-subtle text-danger-emphasis">Gagal</span>') + ' · ' + (row.elapsedMs != null ? row.elapsedMs + ' ms' : '-') + '</td></tr>' +
+                '<tr><th class="text-muted">IP</th><td>' + esc(row.ipAddress || '-') + '</td></tr>' +
+                '<tr><th class="text-muted">Diminta</th><td>' + formatTgl(row.requestedAt) + '</td></tr>' +
+                (row.respondedAt ? '<tr><th class="text-muted">Dibalas</th><td>' + formatTgl(row.respondedAt) + '</td></tr>' : '') +
+                '</table>' +
+                '<div class="mb-2"><strong>Header</strong><br><pre class="mb-1 p-2 bg-light rounded" style="max-height:140px;overflow:auto;font-size:11px;">' + esc(row.headers || '—') + '</pre></div>' +
+                (row.queryParams ? '<div class="mb-2"><strong>Query</strong><br><pre class="mb-1 p-2 bg-light rounded" style="font-size:11px;">' + esc(row.queryParams) + '</pre></div>' : '') +
+                '<div class="mb-2"><strong>Body Permintaan</strong><br><pre class="mb-1 p-2 bg-light rounded" style="max-height:160px;overflow:auto;font-size:11px;">' + esc(row.requestBody || '—') + '</pre></div>' +
+                '<div class="mb-2"><strong>Body Respons</strong><br><pre class="mb-1 p-2 bg-light rounded" style="max-height:160px;overflow:auto;font-size:11px;">' + esc(row.responseBody || '—') + '</pre></div>' +
+                '</div>';
+            Swal.fire({ title: 'Detail HTTP #' + row.id, html: html, width: 720, confirmButtonText: 'Tutup' });
+        }
+
+        const httpGrid = buatGrid({
+            url: '/api/audit-logs/http/paged',
+            colspan: 9,
+            rowsEl: document.getElementById('httpRows'),
+            pageInfoEl: document.getElementById('httpPageInfo'),
+            paginationEl: document.getElementById('httpPagination'),
+            searchEl: document.getElementById('httpSearchInput'),
+            entityEl: null,
+            actionEl: null,
+            fromEl: document.getElementById('httpFromInput'),
+            toEl: document.getElementById('httpToInput'),
+            extraQuery() {
+                return {
+                    httpMethod: document.getElementById('httpMethodSelect').value,
+                    isSuccess: document.getElementById('httpSuccessSelect').value
+                };
+            },
+            render(items) {
+                const tbody = document.getElementById('httpRows');
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr class="row-empty"><td colspan="9"><span class="material-icons">inbox</span> Tidak ada data.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items.map((a) => {
+                    httpDetailCache[a.id] = a;
+                    return '<tr>' +
+                        '<td class="td-id">' + a.id + '</td>' +
+                        '<td><code>' + esc(a.traceId) + '</code></td>' +
+                        '<td class="fw-semibold">' + esc(a.endpoint) + '</td>' +
+                        '<td>' + esc(a.httpMethod) + '</td>' +
+                        '<td class="td-nomor">' + esc(a.statusCode || '-') + '</td>' +
+                        '<td>' + (a.isSuccess === true ? '<span class="badge bg-success-subtle text-success-emphasis">Berhasil</span>' : (a.isSuccess === false ? '<span class="badge bg-danger-subtle text-danger-emphasis">Gagal</span>' : '<span class="text-muted">—</span>')) + '</td>' +
+                        '<td class="td-nomor">' + formatTgl(a.requestedAt) + '</td>' +
+                        '<td class="td-nomor">' + (a.elapsedMs != null ? a.elapsedMs + ' ms' : '-') + '</td>' +
+                        '<td><button class="btn btn-outline-info btn-sm btn-detail-http" data-id="' + a.id + '" title="Lihat isi permintaan/tanggapan"><span class="material-icons">visibility</span></button></td>' +
+                        '</tr>';
+                }).join('');
+            }
+        });
+        httpGrid.bind();
+
+        document.getElementById('httpMethodSelect').addEventListener('change', () => { httpGrid.load(); });
+        document.getElementById('httpSuccessSelect').addEventListener('change', () => { httpGrid.load(); });
+
+        document.getElementById('httpRows').addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-detail-http');
+            if (!btn) return;
+            const row = httpDetailCache[Number(btn.dataset.id)];
+            if (row) tampilDetailHttp(row);
+        });
+
         document.getElementById('tabStaffBtn').addEventListener('click', () => {
             document.getElementById('tabStaffBtn').classList.add('active');
             document.getElementById('tabCustomerBtn').classList.remove('active');
@@ -381,8 +523,18 @@
         document.getElementById('tabCustomerBtn').addEventListener('click', () => {
             document.getElementById('tabCustomerBtn').classList.add('active');
             document.getElementById('tabStaffBtn').classList.remove('active');
+            document.getElementById('tabHttpBtn').classList.remove('active');
             document.getElementById('customerPanel').style.display = '';
             document.getElementById('staffPanel').style.display = 'none';
+            document.getElementById('httpPanel').style.display = 'none';
+        });
+        document.getElementById('tabHttpBtn').addEventListener('click', () => {
+            document.getElementById('tabHttpBtn').classList.add('active');
+            document.getElementById('tabStaffBtn').classList.remove('active');
+            document.getElementById('tabCustomerBtn').classList.remove('active');
+            document.getElementById('httpPanel').style.display = '';
+            document.getElementById('staffPanel').style.display = 'none';
+            document.getElementById('customerPanel').style.display = 'none';
         });
     </script>
 }

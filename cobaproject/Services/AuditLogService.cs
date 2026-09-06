@@ -228,4 +228,101 @@ public class AuditLogService : IAuditLogService
             TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
         };
     }
+
+    private static readonly Dictionary<string, string> HttpSortColumns = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["id"] = "R.ID",
+        ["traceId"] = "R.TRACE_ID",
+        ["endpoint"] = "R.ENDPOINT",
+        ["httpMethod"] = "R.HTTP_METHOD",
+        ["statusCode"] = "RS.STATUS_CODE",
+        ["requestedAt"] = "R.REQUESTED_AT",
+        ["respondedAt"] = "RS.RESPONDED_AT",
+        ["elapsedMs"] = "RS.ELAPSED_MS"
+    };
+
+    public async Task<PagedResult<HttpLogEntryDto>> GetHttpPagedAsync(HttpLogQueryParams query)
+    {
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        if (!string.IsNullOrWhiteSpace(query.Path))
+        {
+            conditions.Add("R.ENDPOINT LIKE @Path ESCAPE '\\'");
+            parameters.Add("Path", $"%{EscapeLike(query.Path.Trim())}%");
+        }
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            conditions.Add("(R.TRACE_ID LIKE @Search ESCAPE '\\' OR R.ENDPOINT LIKE @Search ESCAPE '\\')");
+            parameters.Add("Search", $"%{EscapeLike(query.Search.Trim())}%");
+        }
+        if (!string.IsNullOrWhiteSpace(query.HttpMethod))
+        {
+            conditions.Add("R.HTTP_METHOD = @HttpMethod");
+            parameters.Add("HttpMethod", query.HttpMethod.Trim().ToUpperInvariant());
+        }
+        if (query.IsSuccess.HasValue)
+        {
+            conditions.Add("RS.IS_SUCCESS = @IsSuccess");
+            parameters.Add("IsSuccess", query.IsSuccess.Value);
+        }
+        if (query.From.HasValue)
+        {
+            conditions.Add("R.REQUESTED_AT >= @From");
+            parameters.Add("From", query.From.Value);
+        }
+        if (query.To.HasValue)
+        {
+            var to = query.To.Value;
+            if (to.TimeOfDay == TimeSpan.Zero)
+            {
+                to = to.Date.AddDays(1);
+            }
+            conditions.Add("R.REQUESTED_AT < @To");
+            parameters.Add("To", to);
+        }
+
+        var whereClause = conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(" AND ", conditions);
+        var sortColumn = !string.IsNullOrEmpty(query.SortBy)
+            && HttpSortColumns.TryGetValue(query.SortBy, out var column) ? column : "R.REQUESTED_AT";
+        var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var tieBreaker = sortColumn == "R.ID" ? string.Empty : ", R.ID DESC";
+        var offset = (page - 1) * pageSize;
+
+        parameters.Add("Offset", offset);
+        parameters.Add("PageSize", pageSize);
+
+        using var connection = new SqlConnection(_connectionString);
+
+        var total = await connection.ExecuteScalarAsync<int>($"""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.REQUEST_PRODUCT R
+            LEFT JOIN LOSCONSUMER.RESPONSE_PRODUCT RS ON RS.TRACE_ID = R.TRACE_ID
+            {whereClause};
+            """, parameters);
+
+        var rows = await connection.QueryAsync<HttpLogEntryDto>($"""
+            SELECT R.ID, R.TRACE_ID, R.ENDPOINT, R.HTTP_METHOD, R.HEADERS, R.QUERY_PARAMS,
+                   R.BODY AS REQUEST_BODY, R.IP_ADDRESS, R.REQUESTED_AT,
+                   RS.STATUS_CODE, RS.IS_SUCCESS, RS.MESSAGE AS RESPONSE_MESSAGE,
+                   RS.RESPONSE_BODY, RS.ELAPSED_MS, RS.RESPONDED_AT
+            FROM LOSCONSUMER.REQUEST_PRODUCT R
+            LEFT JOIN LOSCONSUMER.RESPONSE_PRODUCT RS ON RS.TRACE_ID = R.TRACE_ID
+            {whereClause}
+            ORDER BY {sortColumn} {sortOrder}{tieBreaker}
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            """, parameters);
+
+        return new PagedResult<HttpLogEntryDto>
+        {
+            Items = rows.ToList(),
+            Page = page,
+            PageSize = pageSize,
+            Total = total,
+            TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
+        };
+    }
 }

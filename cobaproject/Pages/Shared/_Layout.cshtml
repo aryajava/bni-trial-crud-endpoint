@@ -56,8 +56,8 @@
         }
         else if (isPelangganPages)
         {
-            breadcrumbTrail.Add(("Operasional", null));
-            breadcrumbTrail.Add(("Pelanggan", "/Panel/Pelanggan"));
+            breadcrumbTrail.Add(("Master", null));
+            breadcrumbTrail.Add(("Master Pelanggan", "/Panel/Pelanggan"));
         }
         else if (isLaporanPages)
         {
@@ -303,6 +303,12 @@
                         <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
                             <span class="material-icons">local_shipping</span> Master Ekspedisi
                         </a>
+                        @if (isSa)
+                        {
+                            <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
+                                <span class="material-icons">people</span> Master Pelanggan
+                            </a>
+                        }
                     }
                     <div class="nav-group-title">Operasional</div>
                     <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
@@ -310,10 +316,7 @@
                     </a>
                     @if (isOwner || isSa)
                     {
-                        <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
-                            <span class="material-icons">people</span> Pelanggan
-                        </a>
-                    }
+                        }
                     @if (isOwner || isSa)
                     {
                         <div class="nav-group-title">Maintenance</div>
@@ -458,6 +461,12 @@
                     <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
                         <span class="material-icons">local_shipping</span> Master Ekspedisi
                     </a>
+                    @if (isSa)
+                    {
+                        <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
+                            <span class="material-icons">people</span> Master Pelanggan
+                        </a>
+                    }
                 }
                 <div class="nav-group-title">Operasional</div>
                 <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
@@ -465,10 +474,7 @@
                 </a>
                 @if (isOwner || isSa)
                 {
-                    <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
-                        <span class="material-icons">people</span> Pelanggan
-                    </a>
-                }
+                    }
                 @if (isOwner || isSa)
                 {
                     <div class="nav-group-title">Maintenance</div>

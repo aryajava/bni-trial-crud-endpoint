@@ -46,4 +46,19 @@ public class AuditLogController : ControllerBase
             return ResponseHelper.Error(HttpContext, ex);
         }
     }
+
+    [HttpGet("http/paged")]
+    [Authorize(Roles = UserRolePolicy.Sa)]
+    public async Task<IResult> GetHttpPaged([FromQuery] HttpLogQueryParams query)
+    {
+        try
+        {
+            var result = await _auditLogService.GetHttpPagedAsync(query);
+            return ResponseHelper.Success(HttpContext, result);
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
 }
