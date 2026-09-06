@@ -22,11 +22,11 @@
     <div class="d-flex flex-wrap gap-2 mb-3">
         @if (!string.IsNullOrWhiteSpace(Model.Category))
         {
-            <a class="chip-kategori aktif" href="/?q=@qUrled">@Model.Category <span class="material-icons" style="font-size:14px;">close</span></a>
+            <a class="chip-kategori aktif" href="@Url.Page("Index", new { q = Model.Search, sort = Model.Sort })">@Model.Category <span class="material-icons" style="font-size:14px;">close</span></a>
         }
         @if (!string.IsNullOrWhiteSpace(Model.Search))
         {
-            <a class="chip-kategori aktif" href="/?kategori=@katUrled">"@Model.Search" <span class="material-icons" style="font-size:14px;">close</span></a>
+            <a class="chip-kategori aktif" href="@Url.Page("Index", new { kategori = Model.Category, sort = Model.Sort })">"@Model.Search" <span class="material-icons" style="font-size:14px;">close</span></a>
         }
         <a class="chip-kategori" href="/">Hapus semua</a>
     </div>
@@ -34,11 +34,11 @@
 
 <div class="d-lg-none mb-3">
     <div class="d-flex gap-2 overflow-auto pb-1" style="scrollbar-width:none;">
-        <a class="chip-kategori @(string.IsNullOrEmpty(Model.Category) ? "aktif" : "")" href="/?q=@qUrled">Semua</a>
+        <a class="chip-kategori @(string.IsNullOrEmpty(Model.Category) ? "aktif" : "")" href="@Url.Page("Index", new { q = Model.Search, sort = Model.Sort })">Semua</a>
         @foreach (var c in Model.Categories)
         {
             <a class="chip-kategori @(Model.Category == c.Name ? "aktif" : "")"
-               href="/?kategori=@Uri.EscapeDataString(c.Name)&q=@qUrled">@c.Name (@c.ProductCount)</a>
+               href="@Url.Page("Index", new { kategori = c.Name, q = Model.Search, sort = Model.Sort })">@c.Name (@c.ProductCount)</a>
         }
     </div>
 </div>
@@ -47,13 +47,13 @@
     <aside class="col-lg-3 d-none d-lg-block">
         <div class="card-toko p-2" style="position:sticky;top:76px;">
             <h2 class="fs-6 fw-semibold px-2 pt-2 pb-1 mb-1">Kategori</h2>
-            <a class="fil-kategori @(string.IsNullOrEmpty(Model.Category) ? "aktif" : "")" href="/?q=@qUrled">
+            <a class="fil-kategori @(string.IsNullOrEmpty(Model.Category) ? "aktif" : "")" href="@Url.Page("Index", new { q = Model.Search, sort = Model.Sort })">
                 <span>Semua</span><span class="jml">@Model.TotalAll</span>
             </a>
             @foreach (var c in Model.Categories)
             {
                 <a class="fil-kategori @(Model.Category == c.Name ? "aktif" : "")"
-                   href="/?kategori=@Uri.EscapeDataString(c.Name)&q=@qUrled">
+                   href="@Url.Page("Index", new { kategori = c.Name, q = Model.Search, sort = Model.Sort })">
                     <span>@c.Name</span><span class="jml">@c.ProductCount</span>
                 </a>
             }
@@ -61,7 +61,7 @@
     </aside>
 
     <div class="col-lg-9">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <div class="text-muted small">
                 @if (total == 0)
                 {
@@ -71,6 +71,11 @@
                 {
                     <span>Menampilkan @dari hingga @sampai dari @total produk</span>
                 }
+            </div>
+            <div class="d-flex gap-1" role="group" aria-label="Urutkan produk">
+                <a class="chip-kategori @(Model.Sort == "terbaru" ? "aktif" : "")" href="@Url.Page("Index", new { sort = "terbaru", q = Model.Search, kategori = Model.Category })">Terbaru</a>
+                <a class="chip-kategori @(Model.Sort == "termahal" ? "aktif" : "")" href="@Url.Page("Index", new { sort = "termahal", q = Model.Search, kategori = Model.Category })">Termahal</a>
+                <a class="chip-kategori @(Model.Sort == "termurah" ? "aktif" : "")" href="@Url.Page("Index", new { sort = "termurah", q = Model.Search, kategori = Model.Category })">Termurah</a>
             </div>
         </div>
 
@@ -170,7 +175,7 @@
     <nav class="mt-4" aria-label="Navigasi halaman">
         <ul class="pagination pagination-toko justify-content-center">
             <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page - 1, q = Model.Search, kategori = Model.Category })" aria-label="Halaman sebelumnya">
+                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page - 1, q = Model.Search, kategori = Model.Category, sort = Model.Sort })" aria-label="Halaman sebelumnya">
                     <span class="material-icons" style="font-size:18px;">chevron_left</span>
                 </a>
             </li>
@@ -179,7 +184,7 @@
                 if (item is int halaman)
                 {
                     <li class="page-item @(halaman == Model.Page ? "active" : "")">
-                        <a class="page-link" href="@Url.Page("Index", new { page = halaman, q = Model.Search, kategori = Model.Category })">@halaman</a>
+                        <a class="page-link" href="@Url.Page("Index", new { page = halaman, q = Model.Search, kategori = Model.Category, sort = Model.Sort })">@halaman</a>
                     </li>
                 }
                 else
@@ -188,7 +193,7 @@
                 }
             }
             <li class="page-item @(Model.Page >= Model.Products.TotalPages ? "disabled" : "")">
-                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page + 1, q = Model.Search, kategori = Model.Category })" aria-label="Halaman berikutnya">
+                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page + 1, q = Model.Search, kategori = Model.Category, sort = Model.Sort })" aria-label="Halaman berikutnya">
                     <span class="material-icons" style="font-size:18px;">chevron_right</span>
                 </a>
             </li>

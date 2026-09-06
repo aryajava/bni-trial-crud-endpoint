@@ -19,6 +19,7 @@ public class IndexModel : PageModel
     public int PageSize { get; set; } = 12;
     public string? Search { get; set; }
     public string? Category { get; set; }
+    public string Sort { get; set; } = "terbaru";
 
     public bool IsCustomer =>
         User.Identity?.IsAuthenticated == true
@@ -30,11 +31,19 @@ public class IndexModel : PageModel
         _categoryService = categoryService;
     }
 
-    public async Task OnGetAsync(int page = 1, string? q = null, string? kategori = null)
+    public async Task OnGetAsync(int page = 1, string? q = null, string? kategori = null, string? sort = null)
     {
         Page = Math.Max(1, page);
         Search = q;
         Category = kategori;
+        Sort = string.IsNullOrWhiteSpace(sort) ? "terbaru" : sort;
+
+        var (sortBy, sortOrder) = Sort switch
+        {
+            "termahal" => ("price", "desc"),
+            "termurah" => ("price", "asc"),
+            _ => ("createdAt", "desc")
+        };
 
         Categories = await _categoryService.GetActiveAsync();
 
@@ -42,8 +51,8 @@ public class IndexModel : PageModel
         {
             Page = Page,
             PageSize = PageSize,
-            SortBy = "createdAt",
-            SortOrder = "desc",
+            SortBy = sortBy,
+            SortOrder = sortOrder,
             Search = q,
             Category = kategori
         });
