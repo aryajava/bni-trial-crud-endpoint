@@ -21,7 +21,7 @@ public class CartService : ICartService
     {
         using var connection = new SqlConnection(_connectionString);
         var rows = await connection.QueryAsync<dynamic>("""
-            SELECT P.ID, P.TITLE, P.PRICE, P.DISCOUNT_PERCENT, P.STOCK, P.IS_ACTIVE, K.QUANTITY
+            SELECT P.ID, P.TITLE, P.PRICE, P.DISCOUNT_PERCENT, P.STOCK, P.IS_ACTIVE, K.QUANTITY, K.IS_SELECTED
             FROM LOSCONSUMER.TRX_CART_ITEM K
             JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = K.PRODUCT_ID
             WHERE K.CUSTOMER_ID = @CustomerId
@@ -43,7 +43,8 @@ public class CartService : ICartService
                 EffectivePrice = Harga.Efektif((decimal)r.PRICE, r.DISCOUNT_PERCENT as decimal?),
                 Stock = stock,
                 Quantity = qty,
-                IsAvailable = active && stock > 0
+                IsAvailable = active && stock > 0,
+                IsSelected = (bool)r.IS_SELECTED
             };
 
             // Qty keranjang otomatis menyesuaikan sisa stok — hanya untuk item tersedia.
@@ -77,7 +78,7 @@ public class CartService : ICartService
         return count;
     }
 
-    public async Task<(bool Success, string? Error)> AddAsync(int customerId, int productId, int quantity)
+    public async Task<(bool Success, string? Error)> AddAsync(int customerId, int productId, int quantity, bool isSelected = true)
     {
         using var connection = new SqlConnection(_connectionString);
         var product = await connection.QueryFirstOrDefaultAsync<dynamic>("""
@@ -104,6 +105,7 @@ public class CartService : ICartService
         var combined = Math.Clamp(existing + target, 1, (int)product.STOCK);
         if (existing > 0)
         {
+            // Baris lama: qty dijumlahkan, pilihan (IS_SELECTED) tidak diturunkan.
             await connection.ExecuteAsync("""
                 UPDATE LOSCONSUMER.TRX_CART_ITEM
                 SET QUANTITY = @Quantity
@@ -113,9 +115,9 @@ public class CartService : ICartService
         else
         {
             await connection.ExecuteAsync("""
-                INSERT INTO LOSCONSUMER.TRX_CART_ITEM (CUSTOMER_ID, PRODUCT_ID, QUANTITY)
-                VALUES (@CustomerId, @ProductId, @Quantity);
-                """, new { CustomerId = customerId, ProductId = productId, Quantity = combined });
+                INSERT INTO LOSCONSUMER.TRX_CART_ITEM (CUSTOMER_ID, PRODUCT_ID, QUANTITY, IS_SELECTED)
+                VALUES (@CustomerId, @ProductId, @Quantity, @IsSelected);
+                """, new { CustomerId = customerId, ProductId = productId, Quantity = combined, IsSelected = isSelected });
         }
 
         if (combined != existing + target)
@@ -123,6 +125,16 @@ public class CartService : ICartService
             return (true, $"Stok produk \"{(string)product.TITLE}\" tersisa {(int)product.STOCK} — jumlah dibatasi.");
         }
         return (true, null);
+    }
+
+    public async Task SetSelectedAsync(int customerId, int productId, bool selected)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.TRX_CART_ITEM
+            SET IS_SELECTED = @Selected
+            WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
+            """, new { Selected = selected, CustomerId = customerId, ProductId = productId });
     }
 
     public async Task SetQuantityAsync(int customerId, int productId, int quantity)
@@ -169,15 +181,11 @@ public class CartService : ICartService
             new { CustomerId = customerId });
     }
 
-    public async Task MergeGuestCartAsync(int customerId, List<(int ProductId, int Quantity)> items)
+    public async Task MergeGuestCartAsync(int customerId, List<(int ProductId, int Quantity, bool Selected)> items)
     {
         foreach (var item in items)
         {
-            var (ok, _) = await AddAsync(customerId, item.ProductId, item.Quantity);
-            if (!ok)
-            {
-                // tambah lagi di pembulatan berikutnya bila sebagian gagal
-            }
+            await AddAsync(customerId, item.ProductId, item.Quantity, item.Selected);
         }
     }
 }

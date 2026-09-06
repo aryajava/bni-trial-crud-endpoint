@@ -82,6 +82,7 @@ public class CartItemDto
     public int Quantity { get; set; }
     public bool IsAvailable { get; set; } = true;
     public bool QtyAdjusted { get; set; }
+    public bool IsSelected { get; set; } = true;
     public decimal Subtotal => EffectivePrice * Quantity;
 }
 

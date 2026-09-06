@@ -117,19 +117,21 @@ public class KeranjangModel : PageModel
         return Redirect("/Keranjang");
     }
 
-    public async Task<IActionResult> OnPostMergeAsync(int[] productIds, int[] qtys)
+    public async Task<IActionResult> OnPostMergeAsync(int[] productIds, int[] qtys, string[]? selected)
     {
         if (!IsCustomer)
         {
             return Redirect("/Masuk?ReturnUrl=/Keranjang");
         }
 
-        var items = new List<(int ProductId, int Quantity)>();
+        var items = new List<(int ProductId, int Quantity, bool Selected)>();
         for (var i = 0; i < productIds.Length && i < qtys.Length; i++)
         {
             if (qtys[i] > 0)
             {
-                items.Add((productIds[i], qtys[i]));
+                var dipilih = selected is not null && i < selected.Length
+                    && string.Equals(selected[i], "true", StringComparison.OrdinalIgnoreCase);
+                items.Add((productIds[i], qtys[i], dipilih));
             }
         }
 
@@ -137,5 +139,16 @@ public class KeranjangModel : PageModel
         await _cartService.MergeGuestCartAsync(CustomerId, items);
         TempData["SuccessMessage"] = "Keranjang tamu digabung ke akun Anda.";
         return Redirect("/Keranjang");
+    }
+
+    public async Task<IActionResult> OnPostSetSelectedAsync(int productId, bool selected)
+    {
+        if (!IsCustomer)
+        {
+            return Unauthorized();
+        }
+
+        await _cartService.SetSelectedAsync(CustomerId, productId, selected);
+        return Content("ok");
     }
 }

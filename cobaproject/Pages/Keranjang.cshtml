@@ -50,7 +50,7 @@
                                     @foreach (var item in Model.Items)
                                     {
                                         <tr>
-                                            <td><input type="checkbox" class="cek-pesan" name="ids" value="@item.ProductId" checked /></td>
+                                            <td><input type="checkbox" class="cek-pesan" name="ids" value="@item.ProductId" data-product-id="@item.ProductId" checked="@(item.IsSelected ? "checked" : null)" /></td>
                                             <td class="fw-semibold">@item.Title
                                                 @if (item.QtyAdjusted)
                                                 {
@@ -157,6 +157,7 @@
                     <table class="table align-middle mb-0">
                         <thead>
                             <tr>
+                                <th style="width:36px;"><input type="checkbox" id="cekSemuaTamu" checked title="Pilih semua" /></th>
                                 <th>Produk</th>
                                 <th class="td-nomor">Harga Satuan</th>
                                 <th class="text-center" style="width:110px;">Jumlah</th>
@@ -244,6 +245,7 @@
                                     ? '<span class="text-muted text-decoration-line-through small me-1">' + formatRp(p.price) + '</span><span class="text-primary fw-semibold">' + formatRp(p.effectivePrice) + '</span>'
                                     : formatRp(p.effectivePrice);
                                 rowsEl.insertAdjacentHTML('beforeend', '<tr>' +
+                                    '<td><input type="checkbox" class="cek-pesan-tamu" data-id="' + p.productId + '" ' + (item.selected !== false ? 'checked' : '') + ' /></td>' +
                                     '<td class="fw-semibold">' + String(p.title).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</td>' +
                                     '<td class="td-nomor">' + harga + '</td>' +
                                     '<td class="text-center"><span class="d-inline-flex align-items-center gap-1">' +
@@ -251,18 +253,28 @@
                                     '<span class="qty-nomor" data-id="' + p.productId + '">' + qty + '</span>' +
                                     '<button class="btn btn-sm btn-outline-secondary btn-qty" data-id="' + p.productId + '" data-delta="1">+</button>' +
                                     '</span></td>' +
-                                    '<td class="td-nomor fw-semibold qty-subtotal" data-id="' + p.productId + '">' + formatRp(subtotal) + '</td>' +
+                                    '<td class="td-nomor fw-semibold qty-subtotal" data-id="' + p.productId + '" data-subtotal="' + subtotal + '">' + formatRp(subtotal) + '</td>' +
                                     '<td><button class="btn btn-sm btn-outline-danger btn-hapus" data-id="' + p.productId + '" title="Hapus"><span class="material-icons">delete</span></button></td>' +
                                     '</tr>');
                             });
                             simpanGuest(items);
-                            document.getElementById('guestCartTotal').textContent = formatRp(total);
+                            hitungTotalTamu();
                             empty.classList.add('d-none');
                             body.classList.remove('d-none');
                             footer.classList.remove('d-none');
                             catatan.classList.remove('d-none');
                             muatBadge();
                         });
+                }
+
+                function hitungTotalTamu() {
+                    var total = 0;
+                    document.querySelectorAll('.cek-pesan-tamu:checked').forEach(function (cb) {
+                        var row = cb.closest('tr');
+                        var sub = row.querySelector('.qty-subtotal');
+                        total += Number(sub.dataset.subtotal || 0);
+                    });
+                    document.getElementById('guestCartTotal').textContent = formatRp(total);
                 }
 
                 rowsEl.addEventListener('click', function (e) {
@@ -282,6 +294,31 @@
                         render();
                     }
                 });
+
+                rowsEl.addEventListener('change', function (e) {
+                    var cb = e.target.closest('.cek-pesan-tamu');
+                    if (!cb) { return; }
+                    var items = bacaGuest();
+                    var item = items.find(function (i) { return i.productId === Number(cb.dataset.id); });
+                    if (item) {
+                        item.selected = cb.checked;
+                        simpanGuest(items);
+                        var cekSemuaTamu = document.getElementById('cekSemuaTamu');
+                        if (cekSemuaTamu && !cb.checked) { cekSemuaTamu.checked = false; }
+                        hitungTotalTamu();
+                    }
+                });
+
+                var cekSemuaTamu = document.getElementById('cekSemuaTamu');
+                if (cekSemuaTamu) {
+                    cekSemuaTamu.addEventListener('change', function () {
+                        var items = bacaGuest();
+                        items.forEach(function (i) { i.selected = cekSemuaTamu.checked; });
+                        simpanGuest(items);
+                        document.querySelectorAll('.cek-pesan-tamu').forEach(function (cb) { cb.checked = cekSemuaTamu.checked; });
+                        hitungTotalTamu();
+                    });
+                }
 
                 document.getElementById('btnGuestKosongkan').addEventListener('click', function () {
                     Swal.fire({
@@ -320,7 +357,7 @@
                         input.type = 'hidden'; input.name = name; input.value = value;
                         f.appendChild(input);
                     };
-                    tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); });
+                    tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); mk('selected', (i.selected !== false) ? 'true' : 'false'); });
                     document.body.appendChild(f);
                     f.submit();
                 }
@@ -348,16 +385,29 @@
                 function formatRpHalaman(n) {
                     return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID');
                 }
+                function simpanPilihan(productId, selected) {
+                    var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                    if (!tokenInput) { return; }
+                    var fd = new FormData();
+                    fd.append('__RequestVerificationToken', tokenInput.value);
+                    fd.append('productId', productId);
+                    fd.append('selected', selected ? 'true' : 'false');
+                    fetch('/Keranjang?handler=SetSelected', { method: 'POST', body: fd }).catch(function () { });
+                }
 
                 if (cekSemua) {
                     cekSemua.addEventListener('change', function () {
-                        checkboxes.forEach(function (cb) { cb.checked = cekSemua.checked; });
+                        checkboxes.forEach(function (cb) {
+                            cb.checked = cekSemua.checked;
+                            simpanPilihan(cb.dataset.productId, cb.checked);
+                        });
                         hitungTotal();
                     });
                 }
                 checkboxes.forEach(function (cb) {
                     cb.addEventListener('change', function () {
                         if (cekSemua && !cb.checked) { cekSemua.checked = false; }
+                        simpanPilihan(cb.dataset.productId, cb.checked);
                         hitungTotal();
                     });
                 });
