@@ -33,6 +33,7 @@
             --gk-primary-text: #2C5A80;
             --gk-border: #DFE4E9;
             --gk-surface: #F5F6F8;
+            --gk-muted: #6B7380;
             --bs-primary: var(--gk-primary);
             --bs-primary-rgb: 74, 123, 166;
         }
@@ -65,7 +66,7 @@
         }
         .card-produk .img-wrap img { max-height: 100%; max-width: 100%; object-fit: contain; }
         .judul-produk { font-weight: 600; color: #232A31; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.7em; }
-        .harga-asli { text-decoration: line-through; color: #8A929C; font-size: 13px; }
+        .harga-asli { text-decoration: line-through; color: var(--gk-muted); font-size: 13px; }
         .harga-efektif { color: var(--gk-primary-text); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
         .badge-diskon {
             position: absolute; top: 8px; left: 8px;
@@ -86,7 +87,7 @@
         }
         .fil-kategori:hover { background: #EEF2F6; }
         .fil-kategori.aktif { background: var(--gk-primary-soft); color: var(--gk-primary-text); font-weight: 600; border-color: #C9D9E8; }
-        .fil-kategori .jml { font-size: 12px; color: #7A838F; }
+        .fil-kategori .jml { font-size: 12px; color: var(--gk-muted); }
         .chip-kategori {
             white-space: nowrap; border: 1px solid var(--gk-border); border-radius: 999px;
             padding: 5px 12px; font-size: 13px; color: #3A4350; background: #fff;
@@ -101,6 +102,10 @@
         .pagination-toko .page-item.active .page-link { background: var(--gk-primary); border-color: var(--gk-primary); color: #fff; }
         .pagination-toko .page-item.disabled .page-link { color: #B7BEC7; background: #F1F3F5; }
         .ringkasan-total { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+        @@media (prefers-reduced-motion: reduce) {
+            .card-produk { transition: none; }
+            .card-produk:hover { transform: none; }
+        }
     </style>
 </head>
 <body>
