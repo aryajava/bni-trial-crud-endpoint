@@ -14,6 +14,7 @@ public class IndexModel : PageModel
 
     public List<CategoryDto> Categories { get; set; } = [];
     public PagedResult<ProductDto> Products { get; set; } = new();
+    public int TotalAll { get; set; }
     public new int Page { get; set; } = 1;
     public int PageSize { get; set; } = 12;
     public string? Search { get; set; }
@@ -46,6 +47,8 @@ public class IndexModel : PageModel
             Search = q,
             Category = kategori
         });
+
+        TotalAll = (await _productService.GetPagedAsync(new ProductQueryParams { Page = 1, PageSize = 1 })).Total;
 
         ViewData["Title"] = "Belanja";
     }

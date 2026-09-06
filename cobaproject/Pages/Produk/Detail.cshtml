@@ -7,7 +7,7 @@
 
 <div class="row g-4">
     <div class="col-md-5">
-        <div class="card">
+        <div class="card card-toko">
             <div class="card-body p-0 d-flex align-items-center justify-content-center" style="height: 320px; overflow: hidden;">
                 @if (!string.IsNullOrWhiteSpace(Model.Product.Image))
                 {
@@ -22,7 +22,7 @@
     </div>
     <div class="col-md-7">
         <h1 class="h3 mb-2">@Model.Product.Title</h1>
-        <div class="mb-1 text-muted small">Kategori: @(Model.Product.Category ?? "—")</div>
+        <div class="mb-1 text-muted small">Kategori: @(Model.Product.Category ?? "-")</div>
         <div class="mb-3">
             @if (Model.Product.DiscountPercent is > 0)
             {

@@ -5,7 +5,7 @@
     Layout = "_TokoLayout";
 }
 
-<div class="card">
+<div class="card card-toko">
     <div class="card-body">
         <h1 class="h4 mb-3"><span class="material-icons">shopping_cart</span> Keranjang</h1>
 
@@ -26,7 +26,7 @@
                 {
                     <div class="alert alert-warning py-2 small mb-3">
                         <span class="material-icons">info</span>
-                        @Model.UnavailableItems.Count item tidak tersedia (stok habis / produk nonaktif) — tidak ikut dipesan. Daftar di bagian bawah.
+                        @Model.UnavailableItems.Count item tidak tersedia (stok habis / produk nonaktif). Tidak ikut dipesan. Daftar di bagian bawah.
                     </div>
                 }
 
@@ -126,7 +126,7 @@
 
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="fs-5 fw-bold">Total: <span class="text-primary" id="cartTotal">Rp @Model.Items.Sum(i => i.Subtotal).ToString("N0")</span></div>
+                        <div class="ringkasan-total">Total: <span class="text-primary" id="cartTotal">Rp @Model.Items.Sum(i => i.Subtotal).ToString("N0")</span></div>
                         @if (Model.Items.Count > 0)
                         {
                             <form method="post" asp-page-handler="Clear" id="formKosongkan">
@@ -170,7 +170,7 @@
                 </div>
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 d-none" id="guestCartFooter">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="fs-5 fw-bold">Total: <span class="text-primary" id="guestCartTotal">Rp 0</span></div>
+                        <div class="ringkasan-total">Total: <span class="text-primary" id="guestCartTotal">Rp 0</span></div>
                         <button type="button" class="btn btn-outline-secondary btn-sm" id="btnGuestKosongkan"><span class="material-icons">delete_sweep</span> Kosongkan</button>
                     </div>
                     <div class="text-end">
