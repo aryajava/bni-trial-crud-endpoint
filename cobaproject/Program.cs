@@ -83,6 +83,11 @@ builder.Host.UseSerilog((context, services) =>
             .Filter.ByIncludingOnly(IsAuditSource)
             .WriteTo.File(LogsPath("audit"), rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .CreateLogger();
+
+        Log.Information("Log aplikasi siap — service/helper/lainnya tercatat di sini");
+        Log.ForContext("SourceContext", "cobaproject.Controllers").Information("Log api siap — controller/endpoint tercatat di sini");
+        Log.ForContext("SourceContext", "cobaproject.Pages").Information("Log web siap — halaman Razor tercatat di sini");
+        Log.ForContext("SourceContext", "Audit").Information("Log audit siap — jejak audit DB dicerminkan ke sini");
 });
 
 static Func<LogEvent, bool> IsSourceOf(string prefix) => evt =>
