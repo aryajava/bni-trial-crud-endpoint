@@ -9,24 +9,7 @@
     var sampai = Math.Min(Model.Page * Model.PageSize, total);
     var qUrled = Uri.EscapeDataString(Model.Search ?? "");
     var katUrled = Uri.EscapeDataString(Model.Category ?? "");
-    IEnumerable<object> Halaman()
-    {
-        var pages = new SortedSet<int> { 1, Model.Products.TotalPages };
-        for (var i = Model.Page - 2; i <= Model.Page + 2; i++)
-        {
-            if (i >= 1 && i <= Model.Products.TotalPages) pages.Add(i);
-        }
-        var urut = pages.ToList();
-        var hasil = new List<object>();
-        int? sebelumnya = null;
-        foreach (var p in urut)
-        {
-            if (sebelumnya.HasValue && p - sebelumnya.Value > 1) hasil.Add("...");
-            hasil.Add(p);
-            sebelumnya = p;
-        }
-        return hasil;
-    }
+
 }
 
 <div class="mb-3">
@@ -169,38 +152,50 @@
         }
 
         @if (Model.Products.TotalPages > 1)
-        {
-            <nav class="mt-4" aria-label="Navigasi halaman">
-                <ul class="pagination pagination-toko justify-content-center">
-                    <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                        <a class="page-link" href="/?page=@(Model.Page - 1)&q=@qUrled&kategori=@katUrled" aria-label="Halaman sebelumnya">
-                            <span class="material-icons" style="font-size:18px;">chevron_left</span>
-                        </a>
+{
+    var halamanItems = new List<object>();
+    var pages = new SortedSet<int> { 1, Model.Products.TotalPages };
+    for (var i = Model.Page - 2; i <= Model.Page + 2; i++)
+    {
+        if (i >= 1 && i <= Model.Products.TotalPages) pages.Add(i);
+    }
+    var urut = pages.ToList();
+    int? sebelumnya = null;
+    foreach (var h in urut)
+    {
+        if (sebelumnya.HasValue && h - sebelumnya.Value > 1) halamanItems.Add("...");
+        halamanItems.Add(h);
+        sebelumnya = h;
+    }
+    <nav class="mt-4" aria-label="Navigasi halaman">
+        <ul class="pagination pagination-toko justify-content-center">
+            <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page - 1, q = Model.Search, kategori = Model.Category })" aria-label="Halaman sebelumnya">
+                    <span class="material-icons" style="font-size:18px;">chevron_left</span>
+                </a>
+            </li>
+            @foreach (var item in halamanItems)
+            {
+                if (item is int halaman)
+                {
+                    <li class="page-item @(halaman == Model.Page ? "active" : "")">
+                        <a class="page-link" href="@Url.Page("Index", new { page = halaman, q = Model.Search, kategori = Model.Category })">@halaman</a>
                     </li>
-                    @foreach (var item in Halaman())
-                    {
-                        if (item is int halaman)
-                        {
-                            <li class="page-item @(halaman == Model.Page ? "active" : "")">
-                                <a class="page-link" href="/?page=@halaman&q=@qUrled&kategori=@katUrled">@halaman</a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="page-item disabled"><span class="page-link" style="border:none;background:transparent;">. . .</span></li>
-                        }
-                    }
-                    <li class="page-item @(Model.Page >= Model.Products.TotalPages ? "disabled" : "")">
-                        <a class="page-link" href="/?page=@(Model.Page + 1)&q=@qUrled&kategori=@katUrled" aria-label="Halaman berikutnya">
-                            <span class="material-icons" style="font-size:18px;">chevron_right</span>
-                        </a>
-                    </li>
-                </ul>
-                <p class="text-center text-muted small mt-2 mb-0">Halaman @Model.Page dari @Model.Products.TotalPages</p>
-            </nav>
-        }
-    </div>
-</div>
+                }
+                else
+                {
+                    <li class="page-item disabled"><span class="page-link" style="border:none;background:transparent;">. . .</span></li>
+                }
+            }
+            <li class="page-item @(Model.Page >= Model.Products.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page + 1, q = Model.Search, kategori = Model.Category })" aria-label="Halaman berikutnya">
+                    <span class="material-icons" style="font-size:18px;">chevron_right</span>
+                </a>
+            </li>
+        </ul>
+        <p class="text-center text-muted small mt-2 mb-0">Halaman @Model.Page dari @Model.Products.TotalPages</p>
+    </nav>
+}
 
 @section Scripts {
     <script>

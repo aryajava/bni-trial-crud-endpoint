@@ -190,7 +190,7 @@
                 Swal.fire({
                     title: 'Detail Pesanan #' + o.id,
                     html: '<div class="text-start small">' +
-                        '<div><strong>' + esc(o.customerName) + '</strong> — ' + esc(o.customerEmail) + '</div>' +
+                        '<div><strong>' + esc(o.customerName) + '</strong> - ' + esc(o.customerEmail) + (o.courierName ? '<div class="text-muted">Kurir: ' + esc(o.courierName) + '</div>' : '') + '</div>' +
                         '<div class="text-muted mb-2">' + esc(o.shipAddress || '') + '</div>' +
                         '<table class="table table-sm mb-2">' + baris + '</table>' +
                         '<div class="d-flex justify-content-between"><span>Subtotal</span><span>' + formatRp(o.subtotal) + '</span></div>' +

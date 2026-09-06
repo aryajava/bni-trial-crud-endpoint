@@ -20,10 +20,12 @@ public class CheckoutModel : PageModel
     private readonly ILogger<CheckoutModel> _logger;
 
     public List<CartItemDto> Items { get; set; } = [];
+    public List<CourierDto> Couriers { get; set; } = [];
     public decimal Subtotal { get; set; }
     public decimal ShippingFee { get; set; }
     public decimal TaxAmount { get; set; }
     public decimal Total { get; set; }
+    public decimal TaxPercent { get; set; }
     public int ExcludedCount { get; set; }
     public string? StoreError { get; set; }
 
@@ -33,6 +35,9 @@ public class CheckoutModel : PageModel
 
     [BindProperty]
     public string? SelectedIds { get; set; }
+
+    [BindProperty]
+    public int? CourierId { get; set; }
 
     [BindProperty]
     public CheckoutRequest Form { get; set; } = new();
@@ -80,6 +85,7 @@ public class CheckoutModel : PageModel
         }
 
         Form.SelectedIds ??= SelectedIds;
+        Form.CourierId ??= CourierId;
         var (order, error) = await _orderService.CheckoutAsync(CustomerId, Form, User.Identity!.Name!);
         if (order is null)
         {
@@ -123,8 +129,15 @@ public class CheckoutModel : PageModel
         }
 
         Subtotal = Math.Round(Items.Sum(i => i.Subtotal), 2);
-        ShippingFee = Math.Round(await _courierService.GetDefaultShippingFeeAsync(), 2);
+
+        Couriers = await _courierService.GetActiveAsync();
+        var courier = Couriers.FirstOrDefault(c => c.Id == CourierId)
+            ?? Couriers.FirstOrDefault();
+        CourierId = courier?.Id;
+        ShippingFee = Math.Round(courier?.ShippingFee ?? 0m, 2);
+
         var taxPercent = decimal.TryParse((await _settingService.GetAsync(SettingService.TaxPercent))?.Value, out var tax) ? tax : 0m;
+        TaxPercent = taxPercent;
         TaxAmount = Math.Round(Subtotal * taxPercent / 100m, 2);
         Total = Math.Round(Subtotal + ShippingFee + TaxAmount, 2);
 

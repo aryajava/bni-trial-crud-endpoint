@@ -64,12 +64,24 @@
                             </div>
                         }
                     </div>
+                    @if (Model.Couriers.Count > 0)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold mb-1" for="courierSelect">Ekspedisi</label>
+                            <select id="courierSelect" name="CourierId" class="form-select" style="border-radius:10px;" onchange="hitungRingkasan()">
+                                @foreach (var c in Model.Couriers)
+                                {
+                                    <option value="@c.Id" selected="@(c.Id == Model.CourierId)" data-ongkir="@c.ShippingFee">@c.Name - Rp @c.ShippingFee.ToString("N0")</option>
+                                }
+                            </select>
+                        </div>
+                    }
                     <hr />
-                    <div class="d-flex justify-content-between small"><span>Subtotal</span><span>Rp @Model.Subtotal.ToString("N0")</span></div>
-                    <div class="d-flex justify-content-between small"><span>Ongkir</span><span>Rp @Model.ShippingFee.ToString("N0")</span></div>
-                    <div class="d-flex justify-content-between small"><span>Pajak</span><span>Rp @Model.TaxAmount.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between small"><span>Subtotal</span><span id="sumSubtotal">Rp @Model.Subtotal.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between small"><span>Ongkir (@if (Model.Couriers.Count > 0) { <span id="sumCourier">@(Model.Couriers.FirstOrDefault(c => c.Id == Model.CourierId)?.Name)</span> } else { <text>default</text> })</span><span id="sumOngkir">Rp @Model.ShippingFee.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between small"><span>Pajak</span><span id="sumPajak">Rp @Model.TaxAmount.ToString("N0")</span></div>
                     <hr />
-                    <div class="d-flex justify-content-between fw-bold"><span>Total</span><span class="text-primary">Rp @Model.Total.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between fw-bold"><span>Total</span><span class="text-primary" id="sumTotal">Rp @Model.Total.ToString("N0")</span></div>
                 }
             </div>
         </div>
@@ -78,6 +90,23 @@
 
 @section Scripts {
     <script>
+        var RINGKASAN_SUBTOTAL = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Subtotal));
+        var RINGKASAN_PAJAK = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TaxPercent));
+
+        function formatRp(n) { return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID'); }
+
+        function hitungRingkasan() {
+            var sel = document.getElementById('courierSelect');
+            if (!sel) { return; }
+            var opt = sel.options[sel.selectedIndex];
+            var ongkir = Number(opt.dataset.ongkir || 0);
+            var pajak = Math.round(RINGKASAN_SUBTOTAL * RINGKASAN_PAJAK / 100 * 100) / 100;
+            document.getElementById('sumOngkir').textContent = formatRp(ongkir);
+            document.getElementById('sumPajak').textContent = formatRp(pajak);
+            document.getElementById('sumTotal').textContent = formatRp(RINGKASAN_SUBTOTAL + ongkir + pajak);
+            document.getElementById('sumCourier').textContent = opt.text.split(' - ')[0];
+        }
+
         document.getElementById('btnKonfirmasi').addEventListener('click', function (e) {
             e.preventDefault();
             var btn = this;

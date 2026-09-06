@@ -7,6 +7,7 @@ public interface ICourierService
     Task<List<CourierDto>> GetActiveAsync();
     Task<PagedResult<CourierDto>> GetPagedAsync(CourierQueryParams query);
     Task<CourierDto?> GetByIdAsync(int id);
+    Task<CourierDto?> GetDefaultAsync();
     Task<decimal> GetDefaultShippingFeeAsync();
 
     Task<(CourierDto? Courier, string? Error)> CreateAsync(CreateCourierRequest request, string createdBy);

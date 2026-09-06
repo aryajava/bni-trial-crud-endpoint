@@ -69,7 +69,14 @@ public class OrderService : IOrderService
         }
 
         var subtotal = Math.Round(items.Sum(i => i.Subtotal), 2);
-        var shipping = Math.Round(await _courierService.GetDefaultShippingFeeAsync(), 2);
+        var courier = request.CourierId.HasValue
+            ? await _courierService.GetByIdAsync(request.CourierId.Value)
+            : null;
+        if (courier is null || !courier.IsActive)
+        {
+            courier = await _courierService.GetDefaultAsync();
+        }
+        var shipping = Math.Round(courier?.ShippingFee ?? 0m, 2);
         var taxPercent = decimal.TryParse((await _settingService.GetAsync(SettingService.TaxPercent))?.Value, out var tax)
             ? tax : 0m;
         var taxAmount = Math.Round(subtotal * taxPercent / 100m, 2);
@@ -93,10 +100,12 @@ public class OrderService : IOrderService
         var orderId = await connection.ExecuteScalarAsync<long>("""
             INSERT INTO LOSCONSUMER.TRX_ORDER
                 (CUSTOMER_ID, STATUS, SUBTOTAL, SHIPPING_FEE, TAX_AMOUNT, TOTAL_AMOUNT,
+                 COURIER_ID, COURIER_NAME,
                  SHIP_NAME, SHIP_PHONE, SHIP_ADDRESS, NOTE, CREATED_BY, VERSION)
             OUTPUT INSERTED.ID
             VALUES
                 (@CustomerId, 'DIPROSES', @Subtotal, @Shipping, @Tax, @Total,
+                 @CourierId, @CourierName,
                  @ShipName, @ShipPhone, @ShipAddress, @Note, @CreatedBy, 1);
             """, new
         {
@@ -105,7 +114,8 @@ public class OrderService : IOrderService
             Shipping = shipping,
             Tax = taxAmount,
             Total = total,
-            ShipName = request.Name,
+            CourierId = courier?.Id,
+            CourierName = courier?.Name,
             ShipPhone = request.Phone,
             ShipAddress = request.Address,
             Note = request.Note,
@@ -425,6 +435,8 @@ public class OrderService : IOrderService
         ShippingFee = (decimal)row.SHIPPING_FEE,
         TaxAmount = (decimal)row.TAX_AMOUNT,
         TotalAmount = (decimal)row.TOTAL_AMOUNT,
+        CourierId = row.COURIER_ID as int?,
+        CourierName = row.COURIER_NAME as string,
         ShipName = row.SHIP_NAME as string,
         ShipPhone = row.SHIP_PHONE as string,
         ShipAddress = row.SHIP_ADDRESS as string,
@@ -451,6 +463,8 @@ public class OrderService : IOrderService
         ShippingFee = (decimal)row.SHIPPING_FEE,
         TaxAmount = (decimal)row.TAX_AMOUNT,
         TotalAmount = (decimal)row.TOTAL_AMOUNT,
+        CourierId = row.COURIER_ID as int?,
+        CourierName = row.COURIER_NAME as string,
         ShipName = row.SHIP_NAME as string,
         ShipPhone = row.SHIP_PHONE as string,
         ShipAddress = row.SHIP_ADDRESS as string,

@@ -49,14 +49,19 @@ public class CourierService : ICourierService
 
     public async Task<decimal> GetDefaultShippingFeeAsync()
     {
+        var courier = await GetDefaultAsync();
+        return courier?.ShippingFee ?? 0m;
+    }
+
+    public async Task<CourierDto?> GetDefaultAsync()
+    {
         using var connection = new SqlConnection(_connectionString);
-        var fee = await connection.ExecuteScalarAsync<decimal?>("""
-            SELECT TOP 1 SHIPPING_FEE
-            FROM LOSCONSUMER.MASTER_COURIER
-            WHERE IS_ACTIVE = 1
-            ORDER BY ID;
+        return await connection.QueryFirstOrDefaultAsync<CourierDto>($"""
+            SELECT TOP 1 {SelectColumns}
+            FROM LOSCONSUMER.MASTER_COURIER C
+            WHERE C.IS_ACTIVE = 1
+            ORDER BY C.ID;
             """);
-        return fee ?? 0m;
     }
 
     public async Task<PagedResult<CourierDto>> GetPagedAsync(CourierQueryParams query)

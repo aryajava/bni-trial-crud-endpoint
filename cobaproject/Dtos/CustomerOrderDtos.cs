@@ -122,6 +122,8 @@ public class OrderDto
     public decimal ShippingFee { get; set; }
     public decimal TaxAmount { get; set; }
     public decimal TotalAmount { get; set; }
+    public int? CourierId { get; set; }
+    public string? CourierName { get; set; }
     public string? ShipName { get; set; }
     public string? ShipPhone { get; set; }
     public string? ShipAddress { get; set; }
@@ -166,6 +168,9 @@ public class CheckoutRequest
 
     /// <summary>Daftar ProductId terpilih (koma-pisah); kosong = semua item tersedia.</summary>
     public string? SelectedIds { get; set; }
+
+    /// <summary>Ekspedisi yang dipilih pembeli; kosong = ekspedisi aktif pertama.</summary>
+    public int? CourierId { get; set; }
 }
 
 public class CancelOrderRequest
