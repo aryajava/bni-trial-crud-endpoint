@@ -66,8 +66,11 @@ builder.Host.UseSerilog((context, services) =>
         .MinimumLevel.Information()
         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
         .MinimumLevel.Override("System", LogEventLevel.Warning)
-        // Terminal hanya menampilkan warning & error — aktivitas penuh ada di file.
-        .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Warning)
+        // Terminal hanya menampilkan log dotnet/host (Microsoft.*, System.*, atau fatal tanpa
+        // sumber) pada level Warning+ — isi file log aplikasi/web/api/audit tidak ikut tercetak.
+        .WriteTo.Logger(l => l
+            .Filter.ByIncludingOnly(IsConsoleWorthy)
+            .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Warning))
         // Akar logs/ dengan grup asal: aplikasi (service/helper/lainnya), web (halaman),
         // api (controller), audit (jejak audit DB dicerminkan ke file).
         .WriteTo.Logger(l => l
@@ -102,6 +105,17 @@ static bool IsOtherSource(LogEvent evt) =>
     !IsSourceOf("cobaproject.Controllers")(evt)
     && !IsSourceOf("cobaproject.Pages")(evt)
     && !IsAuditSource(evt);
+
+static bool IsConsoleWorthy(LogEvent evt)
+{
+    if (!evt.Properties.TryGetValue("SourceContext", out var sc))
+    {
+        return true;
+    }
+    var source = sc.ToString().Trim('"');
+    return source.StartsWith("Microsoft", StringComparison.Ordinal)
+        || source.StartsWith("System", StringComparison.Ordinal);
+}
 
 // Add services to the container.
 // SuppressModelStateInvalidFilter: controller menangani ModelState sendiri
