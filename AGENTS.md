@@ -29,3 +29,10 @@ Issues live in GitHub Issues (gh CLI). See `docs/agents/issue-tracker.md`.
 ### Domain docs
 
 Single-context layout (CONTEXT.md + docs/adr/ at repo root). See `docs/agents/domain.md`.
+
+## UI & Verifikasi (aturan wajib)
+
+- Setiap pekerjaan tampilan wajib memuat skill `taste-skill` (design-taste-frontend) dan mematuhi aturan estetika & tipografinya: anti-slop, satu aksen warna, kontras WCAG AA, konsistensi bentuk/radius, tanpa em-dash, kualitas copy. Untuk dashboard/data-table/multi-step (di luar fokus utama skill), ambil prinsipnya: satu palet, hierarki jelas, tidak ada pola "template AI".
+- Verifikasi data dan dampak mutasi memakai `graphify query` (graphify-out/).
+- Validasi state & edge case lewat pola `grill-with-docs` sebelum mengeksekusi.
+- Sebelum menulis komponen baru, periksa komponen/pola yang sudah ada dengan `codegraph explore`.
