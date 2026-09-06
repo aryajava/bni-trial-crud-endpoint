@@ -31,9 +31,9 @@ public class IndexModel : PageModel
         _categoryService = categoryService;
     }
 
-    public async Task OnGetAsync(int page = 1, string? q = null, string? kategori = null, string? sort = null)
+    public async Task OnGetAsync(int hal = 1, string? q = null, string? kategori = null, string? sort = null)
     {
-        Page = Math.Max(1, page);
+        Page = Math.Max(1, hal);
         Search = q;
         Category = kategori;
         Sort = string.IsNullOrWhiteSpace(sort) ? "terbaru" : sort;

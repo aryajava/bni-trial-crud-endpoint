@@ -175,7 +175,7 @@
     <nav class="mt-4" aria-label="Navigasi halaman">
         <ul class="pagination pagination-toko justify-content-center">
             <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page - 1, q = Model.Search, kategori = Model.Category, sort = Model.Sort })" aria-label="Halaman sebelumnya">
+                <a class="page-link" href="@Url.Page("Index", new { hal = Model.Page - 1, q = Model.Search, kategori = Model.Category, sort = Model.Sort })" aria-label="Halaman sebelumnya">
                     <span class="material-icons" style="font-size:18px;">chevron_left</span>
                 </a>
             </li>
@@ -184,7 +184,7 @@
                 if (item is int halaman)
                 {
                     <li class="page-item @(halaman == Model.Page ? "active" : "")">
-                        <a class="page-link" href="@Url.Page("Index", new { page = halaman, q = Model.Search, kategori = Model.Category, sort = Model.Sort })">@halaman</a>
+                        <a class="page-link" href="@Url.Page("Index", new { hal = halaman, q = Model.Search, kategori = Model.Category, sort = Model.Sort })">@halaman</a>
                     </li>
                 }
                 else
@@ -193,7 +193,7 @@
                 }
             }
             <li class="page-item @(Model.Page >= Model.Products.TotalPages ? "disabled" : "")">
-                <a class="page-link" href="@Url.Page("Index", new { page = Model.Page + 1, q = Model.Search, kategori = Model.Category, sort = Model.Sort })" aria-label="Halaman berikutnya">
+                <a class="page-link" href="@Url.Page("Index", new { hal = Model.Page + 1, q = Model.Search, kategori = Model.Category, sort = Model.Sort })" aria-label="Halaman berikutnya">
                     <span class="material-icons" style="font-size:18px;">chevron_right</span>
                 </a>
             </li>
