@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Serilog;
+using Serilog.Events;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
 // Kunci kultur ke InvariantCulture agar angka selalu memakai titik desimal
@@ -42,8 +43,43 @@ static void SetMessagesIndonesia(MvcOptions options)
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
+const string logTemplate = "[{Timestamp:yyyy-MM-dd HH:mm:ss zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}";
+
+builder.Host.UseSerilog((context, services) =>
+{
+    Log.Logger = new LoggerConfiguration()
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .MinimumLevel.Override("System", LogEventLevel.Warning)
+        // Terminal hanya menampilkan warning & error — aktivitas penuh ada di file.
+        .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Warning)
+        // Akar logs/ dengan grup asal: aplikasi (service/helper/lainnya), web (halaman),
+        // api (controller), audit (jejak audit DB dicerminkan ke file).
+        .WriteTo.Logger(l => l
+            .Filter.ByExcluding(IsSourceOf("cobaproject.Controllers"))
+            .Filter.ByExcluding(IsSourceOf("cobaproject.Pages"))
+            .Filter.ByExcluding(IsAuditSource)
+            .WriteTo.File("logs/aplikasi/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+        .WriteTo.Logger(l => l
+            .Filter.ByIncluding(IsSourceOf("cobaproject.Controllers"))
+            .WriteTo.File("logs/api/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+        .WriteTo.Logger(l => l
+            .Filter.ByIncluding(IsSourceOf("cobaproject.Pages"))
+            .WriteTo.File("logs/web/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+        .WriteTo.Logger(l => l
+            .Filter.ByIncluding(IsAuditSource)
+            .WriteTo.File("logs/audit/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
+        .CreateLogger();
+    return Log.Logger;
+});
+
+static bool IsSourceOf(string prefix) => evt =>
+    evt.Properties.TryGetValue("SourceContext", out var sc)
+    && sc.ToString().Trim('"').StartsWith(prefix, StringComparison.Ordinal);
+
+static bool IsAuditSource(Serilog.Events.LogEvent evt) =>
+    evt.Properties.TryGetValue("SourceContext", out var sc)
+    && string.Equals(sc.ToString().Trim('"'), "Audit", StringComparison.Ordinal);
 
 // Add services to the container.
 // SuppressModelStateInvalidFilter: controller menangani ModelState sendiri

@@ -6,6 +6,7 @@ using cobaproject.Services.Interfaces;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace cobaproject.Services;
 
@@ -390,6 +391,10 @@ public class CustomerService : ICustomerService
         catch (Exception)
         {
         }
+
+        Log.ForContext("SourceContext", "Audit")
+            .Information("[CUSTOMER] {Action} | CustomerId={CustomerId} | Actor={Actor} | Reason={Reason}",
+                action, customerId, actor, reason ?? "-");
     }
 
     private static async Task<int> GetLoginFailThresholdAsync(SqlConnection connection)

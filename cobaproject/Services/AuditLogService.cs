@@ -5,6 +5,7 @@ using cobaproject.Services.Interfaces;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace cobaproject.Services;
 
@@ -54,6 +55,10 @@ public class AuditLogService : IAuditLogService
         {
             // Audit tidak boleh menggagalkan operasi bisnis.
         }
+
+        Log.ForContext("SourceContext", "Audit")
+            .Information("[{Entity}] {Action} | ID={EntityId} | Actor={Actor} | Trace={TraceId} | Reason={Reason}",
+                entity, action, entityId ?? "-", Actor, TraceId ?? "-", reason ?? "-");
     }
 
     public static string Json(object? value) =>
