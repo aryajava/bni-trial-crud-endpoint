@@ -81,7 +81,7 @@
         }
         else if (isEkspedisiPages)
         {
-            breadcrumbTrail.Add(("Pengaturan", null));
+            breadcrumbTrail.Add(("Master", null));
             breadcrumbTrail.Add(("Master Ekspedisi", "/Panel/Ekspedisi"));
         }
         else if (isAuditPages)
@@ -298,6 +298,12 @@
                             <span class="material-icons">category</span> Master Kategori
                         </a>
                     }
+                    @if (isOwner || isSa)
+                    {
+                        <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
+                            <span class="material-icons">local_shipping</span> Master Ekspedisi
+                        </a>
+                    }
                     <div class="nav-group-title">Operasional</div>
                     <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
                         <span class="material-icons">receipt_long</span> Pesanan
@@ -342,9 +348,6 @@
                         }
                         <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
                             <span class="material-icons">store</span> Pengaturan Toko
-                        </a>
-                        <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
-                            <span class="material-icons">local_shipping</span> Master Ekspedisi
                         </a>
                         <a class="nav-link @(isAuditPages ? "active" : "")" href="/Panel/Settings/Audit">
                             <span class="material-icons">security</span> Audit Log
@@ -450,6 +453,12 @@
                         <span class="material-icons">category</span> Master Kategori
                     </a>
                 }
+                @if (isOwner || isSa)
+                {
+                    <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
+                        <span class="material-icons">local_shipping</span> Master Ekspedisi
+                    </a>
+                }
                 <div class="nav-group-title">Operasional</div>
                 <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
                     <span class="material-icons">receipt_long</span> Pesanan
@@ -494,9 +503,6 @@
                     </a>
                     @if (isSa)
                     {
-                        <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
-                            <span class="material-icons">local_shipping</span> Master Ekspedisi
-                        </a>
                         <a class="nav-link @(isAuditPages ? "active" : "")" href="/Panel/Settings/Audit">
                             <span class="material-icons">security</span> Audit Log
                         </a>
