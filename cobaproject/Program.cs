@@ -57,21 +57,18 @@ builder.Host.UseSerilog((context, services) =>
         // Akar logs/ dengan grup asal: aplikasi (service/helper/lainnya), web (halaman),
         // api (controller), audit (jejak audit DB dicerminkan ke file).
         .WriteTo.Logger(l => l
-            .Filter.ByExcluding(IsSourceOf("cobaproject.Controllers"))
-            .Filter.ByExcluding(IsSourceOf("cobaproject.Pages"))
-            .Filter.ByExcluding(IsAuditSource)
+            .Filter.ByIncludingOnly(IsOtherSource)
             .WriteTo.File("logs/aplikasi/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .WriteTo.Logger(l => l
-            .Filter.ByIncluding(IsSourceOf("cobaproject.Controllers"))
+            .Filter.ByIncludingOnly(Serilog.Filters.Matching.FromSource("cobaproject.Controllers"))
             .WriteTo.File("logs/api/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .WriteTo.Logger(l => l
-            .Filter.ByIncluding(IsSourceOf("cobaproject.Pages"))
+            .Filter.ByIncludingOnly(Serilog.Filters.Matching.FromSource("cobaproject.Pages"))
             .WriteTo.File("logs/web/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .WriteTo.Logger(l => l
-            .Filter.ByIncluding(IsAuditSource)
+            .Filter.ByIncludingOnly(IsAuditSource)
             .WriteTo.File("logs/audit/log-.log", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate))
         .CreateLogger();
-    return Log.Logger;
 });
 
 static Func<LogEvent, bool> IsSourceOf(string prefix) => evt =>
@@ -81,6 +78,11 @@ static Func<LogEvent, bool> IsSourceOf(string prefix) => evt =>
 static bool IsAuditSource(LogEvent evt) =>
     evt.Properties.TryGetValue("SourceContext", out var sc)
     && string.Equals(sc.ToString().Trim('"'), "Audit", StringComparison.Ordinal);
+
+static bool IsOtherSource(LogEvent evt) =>
+    !IsSourceOf("cobaproject.Controllers")(evt)
+    && !IsSourceOf("cobaproject.Pages")(evt)
+    && !IsAuditSource(evt);
 
 // Add services to the container.
 // SuppressModelStateInvalidFilter: controller menangani ModelState sendiri
