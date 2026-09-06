@@ -1,0 +1,335 @@
+From 01d6ed95c1a1e1b64de7ebb462fc22852a7b5d7b Mon Sep 17 00:00:00 2001
+From: aryajava <muhammad.aryajava@gmail.com>
+Date: Mon, 7 Sep 2026 02:07:44 +0700
+Subject: [PATCH] =?UTF-8?q?feat:=20checkbox=20keranjang=20tamu=20+=20pilih?=
+ =?UTF-8?q?an=20persisten=20(IS=5FSELECTED)=20=E2=80=94=20merge=20membawa?=
+ =?UTF-8?q?=20flag=20pilihan,=20akun=20sinkron=20via=20SetSelected?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ cobaproject/Dtos/CustomerOrderDtos.cs         |  1 +
+ cobaproject/Pages/Keranjang.cshtml            | 60 +++++++++++++++++--
+ cobaproject/Pages/Keranjang.cshtml.cs         | 19 +++++-
+ .../Script0023_AddIsSelectedToCartItem.sql    |  7 +++
+ cobaproject/Services/CartService.cs           | 32 ++++++----
+ .../Services/Interfaces/ICartService.cs       |  5 +-
+ 6 files changed, 102 insertions(+), 22 deletions(-)
+ create mode 100644 cobaproject/Scripts/Script0023_AddIsSelectedToCartItem.sql
+
+diff --git a/cobaproject/Dtos/CustomerOrderDtos.cs b/cobaproject/Dtos/CustomerOrderDtos.cs
+index 3869849..2651df4 100644
+--- a/cobaproject/Dtos/CustomerOrderDtos.cs
++++ b/cobaproject/Dtos/CustomerOrderDtos.cs
+@@ -82,6 +82,7 @@ public class CartItemDto
+     public int Quantity { get; set; }
+     public bool IsAvailable { get; set; } = true;
+     public bool QtyAdjusted { get; set; }
++    public bool IsSelected { get; set; } = true;
+     public decimal Subtotal => EffectivePrice * Quantity;
+ }
+ 
+diff --git a/cobaproject/Pages/Keranjang.cshtml b/cobaproject/Pages/Keranjang.cshtml
+index 029f3ea..1863dac 100644
+--- a/cobaproject/Pages/Keranjang.cshtml
++++ b/cobaproject/Pages/Keranjang.cshtml
+@@ -50,7 +50,7 @@
+                                     @foreach (var item in Model.Items)
+                                     {
+                                         <tr>
+-                                            <td><input type="checkbox" class="cek-pesan" name="ids" value="@item.ProductId" checked /></td>
++                                            <td><input type="checkbox" class="cek-pesan" name="ids" value="@item.ProductId" data-product-id="@item.ProductId" checked="@(item.IsSelected ? "checked" : null)" /></td>
+                                             <td class="fw-semibold">@item.Title
+                                                 @if (item.QtyAdjusted)
+                                                 {
+@@ -157,6 +157,7 @@
+                     <table class="table align-middle mb-0">
+                         <thead>
+                             <tr>
++                                <th style="width:36px;"><input type="checkbox" id="cekSemuaTamu" checked title="Pilih semua" /></th>
+                                 <th>Produk</th>
+                                 <th class="td-nomor">Harga Satuan</th>
+                                 <th class="text-center" style="width:110px;">Jumlah</th>
+@@ -244,6 +245,7 @@
+                                     ? '<span class="text-muted text-decoration-line-through small me-1">' + formatRp(p.price) + '</span><span class="text-primary fw-semibold">' + formatRp(p.effectivePrice) + '</span>'
+                                     : formatRp(p.effectivePrice);
+                                 rowsEl.insertAdjacentHTML('beforeend', '<tr>' +
++                                    '<td><input type="checkbox" class="cek-pesan-tamu" data-id="' + p.productId + '" ' + (item.selected !== false ? 'checked' : '') + ' /></td>' +
+                                     '<td class="fw-semibold">' + String(p.title).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</td>' +
+                                     '<td class="td-nomor">' + harga + '</td>' +
+                                     '<td class="text-center"><span class="d-inline-flex align-items-center gap-1">' +
+@@ -251,12 +253,12 @@
+                                     '<span class="qty-nomor" data-id="' + p.productId + '">' + qty + '</span>' +
+                                     '<button class="btn btn-sm btn-outline-secondary btn-qty" data-id="' + p.productId + '" data-delta="1">+</button>' +
+                                     '</span></td>' +
+-                                    '<td class="td-nomor fw-semibold qty-subtotal" data-id="' + p.productId + '">' + formatRp(subtotal) + '</td>' +
++                                    '<td class="td-nomor fw-semibold qty-subtotal" data-id="' + p.productId + '" data-subtotal="' + subtotal + '">' + formatRp(subtotal) + '</td>' +
+                                     '<td><button class="btn btn-sm btn-outline-danger btn-hapus" data-id="' + p.productId + '" title="Hapus"><span class="material-icons">delete</span></button></td>' +
+                                     '</tr>');
+                             });
+                             simpanGuest(items);
+-                            document.getElementById('guestCartTotal').textContent = formatRp(total);
++                            hitungTotalTamu();
+                             empty.classList.add('d-none');
+                             body.classList.remove('d-none');
+                             footer.classList.remove('d-none');
+@@ -265,6 +267,16 @@
+                         });
+                 }
+ 
++                function hitungTotalTamu() {
++                    var total = 0;
++                    document.querySelectorAll('.cek-pesan-tamu:checked').forEach(function (cb) {
++                        var row = cb.closest('tr');
++                        var sub = row.querySelector('.qty-subtotal');
++                        total += Number(sub.dataset.subtotal || 0);
++                    });
++                    document.getElementById('guestCartTotal').textContent = formatRp(total);
++                }
++
+                 rowsEl.addEventListener('click', function (e) {
+                     var qtyBtn = e.target.closest('.btn-qty');
+                     var hapus = e.target.closest('.btn-hapus');
+@@ -283,6 +295,31 @@
+                     }
+                 });
+ 
++                rowsEl.addEventListener('change', function (e) {
++                    var cb = e.target.closest('.cek-pesan-tamu');
++                    if (!cb) { return; }
++                    var items = bacaGuest();
++                    var item = items.find(function (i) { return i.productId === Number(cb.dataset.id); });
++                    if (item) {
++                        item.selected = cb.checked;
++                        simpanGuest(items);
++                        var cekSemuaTamu = document.getElementById('cekSemuaTamu');
++                        if (cekSemuaTamu && !cb.checked) { cekSemuaTamu.checked = false; }
++                        hitungTotalTamu();
++                    }
++                });
++
++                var cekSemuaTamu = document.getElementById('cekSemuaTamu');
++                if (cekSemuaTamu) {
++                    cekSemuaTamu.addEventListener('change', function () {
++                        var items = bacaGuest();
++                        items.forEach(function (i) { i.selected = cekSemuaTamu.checked; });
++                        simpanGuest(items);
++                        document.querySelectorAll('.cek-pesan-tamu').forEach(function (cb) { cb.checked = cekSemuaTamu.checked; });
++                        hitungTotalTamu();
++                    });
++                }
++
+                 document.getElementById('btnGuestKosongkan').addEventListener('click', function () {
+                     Swal.fire({
+                         title: 'Kosongkan keranjang?',
+@@ -320,7 +357,7 @@
+                         input.type = 'hidden'; input.name = name; input.value = value;
+                         f.appendChild(input);
+                     };
+-                    tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); });
++                    tamu.forEach(function (i) { mk('productIds', i.productId); mk('qtys', i.qty); mk('selected', (i.selected !== false) ? 'true' : 'false'); });
+                     document.body.appendChild(f);
+                     f.submit();
+                 }
+@@ -348,16 +385,29 @@
+                 function formatRpHalaman(n) {
+                     return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID');
+                 }
++                function simpanPilihan(productId, selected) {
++                    var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
++                    if (!tokenInput) { return; }
++                    var fd = new FormData();
++                    fd.append('__RequestVerificationToken', tokenInput.value);
++                    fd.append('productId', productId);
++                    fd.append('selected', selected ? 'true' : 'false');
++                    fetch('/Keranjang?handler=SetSelected', { method: 'POST', body: fd }).catch(function () { });
++                }
+ 
+                 if (cekSemua) {
+                     cekSemua.addEventListener('change', function () {
+-                        checkboxes.forEach(function (cb) { cb.checked = cekSemua.checked; });
++                        checkboxes.forEach(function (cb) {
++                            cb.checked = cekSemua.checked;
++                            simpanPilihan(cb.dataset.productId, cb.checked);
++                        });
+                         hitungTotal();
+                     });
+                 }
+                 checkboxes.forEach(function (cb) {
+                     cb.addEventListener('change', function () {
+                         if (cekSemua && !cb.checked) { cekSemua.checked = false; }
++                        simpanPilihan(cb.dataset.productId, cb.checked);
+                         hitungTotal();
+                     });
+                 });
+diff --git a/cobaproject/Pages/Keranjang.cshtml.cs b/cobaproject/Pages/Keranjang.cshtml.cs
+index 455ae67..2821ff2 100644
+--- a/cobaproject/Pages/Keranjang.cshtml.cs
++++ b/cobaproject/Pages/Keranjang.cshtml.cs
+@@ -117,19 +117,21 @@ public class KeranjangModel : PageModel
+         return Redirect("/Keranjang");
+     }
+ 
+-    public async Task<IActionResult> OnPostMergeAsync(int[] productIds, int[] qtys)
++    public async Task<IActionResult> OnPostMergeAsync(int[] productIds, int[] qtys, string[]? selected)
+     {
+         if (!IsCustomer)
+         {
+             return Redirect("/Masuk?ReturnUrl=/Keranjang");
+         }
+ 
+-        var items = new List<(int ProductId, int Quantity)>();
++        var items = new List<(int ProductId, int Quantity, bool Selected)>();
+         for (var i = 0; i < productIds.Length && i < qtys.Length; i++)
+         {
+             if (qtys[i] > 0)
+             {
+-                items.Add((productIds[i], qtys[i]));
++                var dipilih = selected is not null && i < selected.Length
++                    && string.Equals(selected[i], "true", StringComparison.OrdinalIgnoreCase);
++                items.Add((productIds[i], qtys[i], dipilih));
+             }
+         }
+ 
+@@ -138,4 +140,15 @@ public class KeranjangModel : PageModel
+         TempData["SuccessMessage"] = "Keranjang tamu digabung ke akun Anda.";
+         return Redirect("/Keranjang");
+     }
++
++    public async Task<IActionResult> OnPostSetSelectedAsync(int productId, bool selected)
++    {
++        if (!IsCustomer)
++        {
++            return Unauthorized();
++        }
++
++        await _cartService.SetSelectedAsync(CustomerId, productId, selected);
++        return Content("ok");
++    }
+ }
+\ No newline at end of file
+diff --git a/cobaproject/Scripts/Script0023_AddIsSelectedToCartItem.sql b/cobaproject/Scripts/Script0023_AddIsSelectedToCartItem.sql
+new file mode 100644
+index 0000000..97b1fc4
+--- /dev/null
++++ b/cobaproject/Scripts/Script0023_AddIsSelectedToCartItem.sql
+@@ -0,0 +1,7 @@
++-- Script0023: TRX_CART_ITEM.IS_SELECTED — pilihan item pesanan bertahan di server
++-- (checkbox keranjang: tamu → localStorage, akun → server; default semua terpilih)
++IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('LOSCONSUMER.TRX_CART_ITEM') AND name = 'IS_SELECTED')
++BEGIN
++    ALTER TABLE LOSCONSUMER.TRX_CART_ITEM
++        ADD IS_SELECTED BIT NOT NULL CONSTRAINT DF_TRX_CART_ITEM_IS_SELECTED DEFAULT (1);
++END;
+\ No newline at end of file
+diff --git a/cobaproject/Services/CartService.cs b/cobaproject/Services/CartService.cs
+index 4f56a80..94d89d0 100644
+--- a/cobaproject/Services/CartService.cs
++++ b/cobaproject/Services/CartService.cs
+@@ -21,7 +21,7 @@ public class CartService : ICartService
+     {
+         using var connection = new SqlConnection(_connectionString);
+         var rows = await connection.QueryAsync<dynamic>("""
+-            SELECT P.ID, P.TITLE, P.PRICE, P.DISCOUNT_PERCENT, P.STOCK, P.IS_ACTIVE, K.QUANTITY
++            SELECT P.ID, P.TITLE, P.PRICE, P.DISCOUNT_PERCENT, P.STOCK, P.IS_ACTIVE, K.QUANTITY, K.IS_SELECTED
+             FROM LOSCONSUMER.TRX_CART_ITEM K
+             JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = K.PRODUCT_ID
+             WHERE K.CUSTOMER_ID = @CustomerId
+@@ -43,7 +43,8 @@ public class CartService : ICartService
+                 EffectivePrice = Harga.Efektif((decimal)r.PRICE, r.DISCOUNT_PERCENT as decimal?),
+                 Stock = stock,
+                 Quantity = qty,
+-                IsAvailable = active && stock > 0
++                IsAvailable = active && stock > 0,
++                IsSelected = (bool)r.IS_SELECTED
+             };
+ 
+             // Qty keranjang otomatis menyesuaikan sisa stok — hanya untuk item tersedia.
+@@ -77,7 +78,7 @@ public class CartService : ICartService
+         return count;
+     }
+ 
+-    public async Task<(bool Success, string? Error)> AddAsync(int customerId, int productId, int quantity)
++    public async Task<(bool Success, string? Error)> AddAsync(int customerId, int productId, int quantity, bool isSelected = true)
+     {
+         using var connection = new SqlConnection(_connectionString);
+         var product = await connection.QueryFirstOrDefaultAsync<dynamic>("""
+@@ -104,6 +105,7 @@ public class CartService : ICartService
+         var combined = Math.Clamp(existing + target, 1, (int)product.STOCK);
+         if (existing > 0)
+         {
++            // Baris lama: qty dijumlahkan, pilihan (IS_SELECTED) tidak diturunkan.
+             await connection.ExecuteAsync("""
+                 UPDATE LOSCONSUMER.TRX_CART_ITEM
+                 SET QUANTITY = @Quantity
+@@ -113,9 +115,9 @@ public class CartService : ICartService
+         else
+         {
+             await connection.ExecuteAsync("""
+-                INSERT INTO LOSCONSUMER.TRX_CART_ITEM (CUSTOMER_ID, PRODUCT_ID, QUANTITY)
+-                VALUES (@CustomerId, @ProductId, @Quantity);
+-                """, new { CustomerId = customerId, ProductId = productId, Quantity = combined });
++                INSERT INTO LOSCONSUMER.TRX_CART_ITEM (CUSTOMER_ID, PRODUCT_ID, QUANTITY, IS_SELECTED)
++                VALUES (@CustomerId, @ProductId, @Quantity, @IsSelected);
++                """, new { CustomerId = customerId, ProductId = productId, Quantity = combined, IsSelected = isSelected });
+         }
+ 
+         if (combined != existing + target)
+@@ -125,6 +127,16 @@ public class CartService : ICartService
+         return (true, null);
+     }
+ 
++    public async Task SetSelectedAsync(int customerId, int productId, bool selected)
++    {
++        using var connection = new SqlConnection(_connectionString);
++        await connection.ExecuteAsync("""
++            UPDATE LOSCONSUMER.TRX_CART_ITEM
++            SET IS_SELECTED = @Selected
++            WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
++            """, new { Selected = selected, CustomerId = customerId, ProductId = productId });
++    }
++
+     public async Task SetQuantityAsync(int customerId, int productId, int quantity)
+     {
+         using var connection = new SqlConnection(_connectionString);
+@@ -169,15 +181,11 @@ public class CartService : ICartService
+             new { CustomerId = customerId });
+     }
+ 
+-    public async Task MergeGuestCartAsync(int customerId, List<(int ProductId, int Quantity)> items)
++    public async Task MergeGuestCartAsync(int customerId, List<(int ProductId, int Quantity, bool Selected)> items)
+     {
+         foreach (var item in items)
+         {
+-            var (ok, _) = await AddAsync(customerId, item.ProductId, item.Quantity);
+-            if (!ok)
+-            {
+-                // tambah lagi di pembulatan berikutnya bila sebagian gagal
+-            }
++            await AddAsync(customerId, item.ProductId, item.Quantity, item.Selected);
+         }
+     }
+ }
+\ No newline at end of file
+diff --git a/cobaproject/Services/Interfaces/ICartService.cs b/cobaproject/Services/Interfaces/ICartService.cs
+index 07b3178..161737a 100644
+--- a/cobaproject/Services/Interfaces/ICartService.cs
++++ b/cobaproject/Services/Interfaces/ICartService.cs
+@@ -6,9 +6,10 @@ public interface ICartService
+ {
+     Task<List<CartItemDto>> GetAsync(int customerId);
+     Task<int> CountAsync(int customerId);
+-    Task<(bool Success, string? Error)> AddAsync(int customerId, int productId, int quantity);
++    Task<(bool Success, string? Error)> AddAsync(int customerId, int productId, int quantity, bool isSelected = true);
+     Task SetQuantityAsync(int customerId, int productId, int quantity);
++    Task SetSelectedAsync(int customerId, int productId, bool selected);
+     Task RemoveAsync(int customerId, int productId);
+     Task ClearAsync(int customerId);
+-    Task MergeGuestCartAsync(int customerId, List<(int ProductId, int Quantity)> items);
++    Task MergeGuestCartAsync(int customerId, List<(int ProductId, int Quantity, bool Selected)> items);
+ }
+\ No newline at end of file
+-- 
+2.53.0
+

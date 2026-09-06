@@ -8,27 +8,12 @@
     <div class="card-body">
         <h5 class="card-title mb-3">Pengaturan Toko</h5>
         <p class="text-muted small mb-4">
-            Ongkir dan pajak berlaku global untuk <strong>semua</strong> pesanan; nilai di-snapshot saat pesanan dibuat,
-            jadi mengubahnya tidak mengubah pesanan lama.
+            Pajak berlaku global untuk <strong>semua</strong> pesanan; nilai di-snapshot saat pesanan dibuat,
+            jadi mengubahnya tidak mengubah pesanan lama. Ongkir dikelola per ekspedisi di
+            <a href="/Panel/Ekspedisi">Master Ekspedisi</a>.
         </p>
 
-        <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
-
-        <form method="post" class="w-100 mb-4" style="max-width: 420px;">
-            <input type="hidden" name="jenis" value="ongkir" />
-            <div class="mb-3">
-                <label class="form-label" for="Ongkir">Ongkir (Rupiah tetap)</label>
-                <input type="number" class="form-control" id="Ongkir" name="Ongkir"
-                       value="@Model.Ongkir" min="0" step="0.01" inputmode="decimal" data-rupiah data-rupiah-target="Ongkir" />
-                <span class="field-error">@Html.ValidationMessage("Ongkir")</span>
-                <div class="form-text">Biaya kirim yang ditambahkan ke total setiap pesanan.</div>
-            </div>
-            <input type="hidden" name="OngkirVersion" value="@Model.OngkirVersion" />
-            <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">save</span> Simpan Ongkir</button>
-        </form>
-
         <form method="post" class="w-100" style="max-width: 420px;">
-            <input type="hidden" name="jenis" value="pajak" />
             <div class="mb-3">
                 <label class="form-label" for="Pajak">Pajak (persen dari subtotal)</label>
                 <input type="number" class="form-control" id="Pajak" name="Pajak"
@@ -43,7 +28,6 @@
 </div>
 
 @section Scripts {
-    <partial name="_RupiahScriptsPartial" />
     <partial name="_BilanganScriptsPartial" />
     <partial name="_ToastScriptsPartial" />
 }

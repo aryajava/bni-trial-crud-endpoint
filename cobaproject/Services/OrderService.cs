@@ -27,17 +27,20 @@ public class OrderService : IOrderService
     private readonly string _connectionString;
     private readonly ICartService _cartService;
     private readonly ISettingService _settingService;
+    private readonly ICourierService _courierService;
     private readonly IAuditLogService _audit;
 
     public OrderService(
         IOptions<DatabaseConfig> config,
         ICartService cartService,
         ISettingService settingService,
+        ICourierService courierService,
         IAuditLogService auditLogService)
     {
         _connectionString = config.Value.DefaultConnection;
         _cartService = cartService;
         _settingService = settingService;
+        _courierService = courierService;
         _audit = auditLogService;
     }
 
@@ -65,8 +68,7 @@ public class OrderService : IOrderService
         }
 
         var subtotal = Math.Round(items.Sum(i => i.Subtotal), 2);
-        var shipping = decimal.TryParse((await _settingService.GetAsync(SettingService.ShippingFee))?.Value, out var fee)
-            ? Math.Round(fee, 2) : 0m;
+        var shipping = Math.Round(await _courierService.GetDefaultShippingFeeAsync(), 2);
         var taxPercent = decimal.TryParse((await _settingService.GetAsync(SettingService.TaxPercent))?.Value, out var tax)
             ? tax : 0m;
         var taxAmount = Math.Round(subtotal * taxPercent / 100m, 2);

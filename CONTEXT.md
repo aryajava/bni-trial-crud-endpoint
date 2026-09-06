@@ -38,6 +38,10 @@ _Avoid_: harga efektif, harga jual, harga promo
 Proses di mana pengubahan besaran diskon suatu produk diajukan, lalu diputuskan (disetujui/ditolak) oleh Pemilik Toko; hanya satu permintaan menunggu per produk.
 _Avoid_: approval, pengajuan diskon, request diskon
 
+**Ekspedisi**:
+Layanan pengiriman yang tersedia bagi pembeli; masing-masing memiliki biaya ongkir sendiri. Pembeli akan memilih salah satu ekspedisi saat checkout; selama pilihan itu belum tersedia, checkout memakai ekspedisi aktif pertama.
+_Avoid_: kurir, jasa kirim, shipping, courier
+
 ### Belanja
 
 **Keranjang**:

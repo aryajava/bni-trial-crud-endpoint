@@ -91,7 +91,8 @@ Snapshot per pesanan: `SUBTOTAL`, `SHIPPING_FEE`, `TAX_AMOUNT`, `TOTAL_AMOUNT` +
 
 ### Pengaturan ongkir & pajak
 
-Global di `APP_SETTING` (`SHIPPING_FEE` Rp tetap, `TAX_PERCENT` %): diubah OWNER/SA di Pengaturan Toko, berlaku untuk semua pesanan, nilai disnapshot per pesanan.
+Ongkir **per ekspedisi** di `MASTER_COURIER` (`SHIPPING_FEE`): dikelola OWNER/SA di "Master Ekspedisi"; selama pemilihan ekspedisi oleh pembeli belum tersedia, checkout memakai **ekspedisi aktif pertama** (urut ID). Pajak global di `APP_SETTING` (`TAX_PERCENT` %). Nilai keduanya di-snapshot per pesanan.
+➜ **Ekspedisi** (daftar lengkap diadopsi tanda desain berikutnya: pembeli memilih ekspedisi saat checkout — lihat kontrak `Ekspedisi` di CONTEXT.md).
 
 ---
 
@@ -132,6 +133,7 @@ Redaksi: `password`/`secretKey`/`X-Api-Key` → `***`. Kedua tabel audit **tanpa
 
 | Tabel | Keterangan |
 |---|---|
+| `MASTER_COURIER` | Ekspedisi (nama unik, ongkir per ekspedisi); seed: Kurir Toko 10000, J&T 15000 |
 | `MASTER_CUSTOMER` | Akun pelanggan (email unik, bcrypt, nama, HP, alamat, lockout, audit) |
 | `TRX_CART_ITEM` | Keranjang server (CUSTOMER_ID, PRODUCT_ID, QUANTITY; unik per pasangan) |
 | `TRX_ORDER`, `TRX_ORDER_ITEM` | Pesanan + snapshot baris |
@@ -156,7 +158,7 @@ Migrasi: dbup `Scripts/Script00XX_*.sql` — lanjutan dari 16 skrip yang ada; co
 | GET/POST/PUT/DELETE | `/api/users` (`/paged`, `/{id}`, role/active/reset-password/secret-key) | User pengurus |
 | POST | `/api/users/{id}/block` · `/unblock` | Blokir/buka (OWNER+SA, guard rank) |
 
-**Endpoint masa depan** (dibangun bersama bloknya): ~~...~~ **Sudah dibuat (Blok 2)**: `GET /api/customers/paged` + `POST {id}/block|unblock` (OWNER+SA) + `{id}/deactivate|reactivate` (SA) + `{id}/reset-password` (OWNER+SA) · `GET /api/orders/paged` + `{id}` + `{id}/ship` + `{id}/cancel` (staff) · `GET /api/audit-logs/paged` (SA) · `GET /api/reports/sales` (OWNER+SA).
+**Endpoint** (Blok 2 + tambahan): `GET /api/customers/paged` + `POST {id}/block|unblock` (OWNER+SA) + `{id}/deactivate|reactivate` (SA) + `{id}/reset-password` (OWNER+SA) · `GET /api/orders/paged` + `{id}` + `{id}/ship` + `{id}/cancel` (staff) · `GET /api/audit-logs/paged` (SA) · `GET /api/reports/sales` (OWNER+SA) · `GET /api/couriers/paged` + `/active`, `POST`, `PUT {id}`, `DELETE {id}`, `{id}/activate` (delete/activate: OWNER+SA).
 
 Auth API: `X-Api-Key` (fallback `TEST123` → SYSTEM/OWNER; selain itu `SECRET_KEY` per user). Bypass: `/swagger`, `/openapi`, `/favicon.ico`. Halaman grid memakai **secret key user yang login** (pola Monitoring — lihat ADR-0004).
 

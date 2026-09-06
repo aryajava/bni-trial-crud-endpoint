@@ -12,12 +12,6 @@ public class PengaturanTokoModel : PageModel
     private readonly ISettingService _settingService;
 
     [BindProperty]
-    public decimal Ongkir { get; set; }
-
-    [BindProperty]
-    public int OngkirVersion { get; set; }
-
-    [BindProperty]
     public decimal Pajak { get; set; }
 
     [BindProperty]
@@ -35,14 +29,9 @@ public class PengaturanTokoModel : PageModel
         await LoadAsync();
     }
 
-    public async Task<IActionResult> OnPostAsync(string jenis)
+    public async Task<IActionResult> OnPostAsync()
     {
-        if (jenis == "ongkir" && (Ongkir < 0 || Ongkir > 999_999_999))
-        {
-            ModelState.AddModelError(nameof(Ongkir), "Ongkir harus angka 0 atau lebih.");
-        }
-
-        if (jenis == "pajak" && (Pajak < 0 || Pajak > 100))
+        if (Pajak < 0 || Pajak > 100)
         {
             ModelState.AddModelError(nameof(Pajak), "Pajak harus angka antara 0 dan 100.");
         }
@@ -53,11 +42,8 @@ public class PengaturanTokoModel : PageModel
             return Page();
         }
 
-        var (key, value, version) = jenis == "ongkir"
-            ? (SettingService.ShippingFee, Ongkir.ToString(), OngkirVersion)
-            : (SettingService.TaxPercent, Pajak.ToString(), PajakVersion);
-
-        var (ok, error) = await _settingService.UpdateAsync(key, value, version, Caller);
+        var (ok, error) = await _settingService.UpdateAsync(
+            SettingService.TaxPercent, Pajak.ToString(), PajakVersion, Caller);
         if (!ok)
         {
             ModelState.AddModelError(string.Empty, error ?? "Gagal menyimpan pengaturan.");
@@ -71,10 +57,6 @@ public class PengaturanTokoModel : PageModel
 
     private async Task LoadAsync()
     {
-        var ongkir = await _settingService.GetAsync(SettingService.ShippingFee);
-        Ongkir = decimal.TryParse(ongkir?.Value, out var fee) ? fee : 0;
-        OngkirVersion = ongkir?.Version ?? 1;
-
         var pajak = await _settingService.GetAsync(SettingService.TaxPercent);
         Pajak = decimal.TryParse(pajak?.Value, out var tax) ? tax : 0;
         PajakVersion = pajak?.Version ?? 1;

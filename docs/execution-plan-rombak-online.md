@@ -48,5 +48,5 @@
 - [x] `/Panel/LaporanPenjualan` (terlaris & jarang terjual, 7/30 hari/sepanjang masa) + KPI Dashboard (pesanan hari ini & menunggu proses)
 
 ### 2E. Penutup
-- [ ] Sinkron PRD/addendum ✅ (kecuali §11 ditandai selesai), uji alur end-to-end di mesin Windows, build + smoke test
-- [ ] Sisa tertunda dari Blok 1: konversi grid client-side Kategori/MasterUser/UserControl + Produk grid pakai secret key user (Q49)
+- [x] Sinkron PRD (ekspedisi/ongkir per kurir, endpoint couriers), uji alur end-to-end di mesin Windows, build + smoke test
+- [ ] Sisa tertunda: konversi grid client-side Kategori/MasterUser/UserControl + Produk grid pakai secret key user (Q49) · checkout pilih Ekspedisi oleh pembeli (fitur berikutnya)

@@ -16,6 +16,7 @@ public class CheckoutModel : PageModel
     private readonly ICartService _cartService;
     private readonly IOrderService _orderService;
     private readonly ISettingService _settingService;
+    private readonly ICourierService _courierService;
 
     public List<CartItemDto> Items { get; set; } = [];
     public decimal Subtotal { get; set; }
@@ -41,12 +42,14 @@ public class CheckoutModel : PageModel
         ICustomerService customerService,
         ICartService cartService,
         IOrderService orderService,
-        ISettingService settingService)
+        ISettingService settingService,
+        ICourierService courierService)
     {
         _customerService = customerService;
         _cartService = cartService;
         _orderService = orderService;
         _settingService = settingService;
+        _courierService = courierService;
     }
 
     public async Task OnGetAsync(string? ids)
@@ -114,7 +117,7 @@ public class CheckoutModel : PageModel
         }
 
         Subtotal = Math.Round(Items.Sum(i => i.Subtotal), 2);
-        ShippingFee = decimal.TryParse((await _settingService.GetAsync(SettingService.ShippingFee))?.Value, out var fee) ? Math.Round(fee, 2) : 0m;
+        ShippingFee = Math.Round(await _courierService.GetDefaultShippingFeeAsync(), 2);
         var taxPercent = decimal.TryParse((await _settingService.GetAsync(SettingService.TaxPercent))?.Value, out var tax) ? tax : 0m;
         TaxAmount = Math.Round(Subtotal * taxPercent / 100m, 2);
         Total = Math.Round(Subtotal + ShippingFee + TaxAmount, 2);
