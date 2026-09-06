@@ -6,69 +6,146 @@
 
 <div class="page-header">
     <h1><span class="material-icons">security</span> Audit Log</h1>
-    <p class="text-muted small mb-0">Jejak aksi pengurus (siapa, kapan, nilai sebelum-sesudah) — baca-saja.</p>
+    <p class="text-muted small mb-0">Jejak audit pengurus (siapa, kapan, nilai sebelum-sesudah) dan siklus hidup akun pelanggan — baca-saja.</p>
 </div>
 
-<div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
-    <div class="d-flex flex-column gap-1">
-        <label class="cluster-label text-secondary fw-semibold mb-0" for="entitySelect">Entitas</label>
-        <select id="entitySelect" data-pencarian class="form-select form-select-sm" style="width: 180px;">
-            <option value="">Semua Entitas</option>
-            <option value="PRODUCT">PRODUCT</option>
-            <option value="CATEGORY">CATEGORY</option>
-            <option value="USER">USER</option>
-            <option value="DISCOUNT_APPROVAL">DISCOUNT_APPROVAL</option>
-            <option value="ORDER">ORDER</option>
-            <option value="SETTING">SETTING</option>
-        </select>
-    </div>
-    <div class="d-flex flex-column gap-1">
-        <label class="cluster-label text-secondary fw-semibold mb-0" for="actionSelect">Aksi</label>
-        <select id="actionSelect" data-pencarian class="form-select form-select-sm" style="width: 180px;">
-            <option value="">Semua Aksi</option>
-            <option value="CREATE">CREATE</option>
-            <option value="UPDATE">UPDATE</option>
-            <option value="DELETE">DELETE</option>
-            <option value="APPROVE">APPROVE</option>
-            <option value="REJECT">REJECT</option>
-            <option value="LOGIN">LOGIN</option>
-            <option value="LOGIN_FAILED">LOGIN_FAILED</option>
-            <option value="BLOCK">BLOCK</option>
-            <option value="UNBLOCK">UNBLOCK</option>
-            <option value="RESET_PASSWORD">RESET_PASSWORD</option>
-            <option value="CHANGE_ROLE">CHANGE_ROLE</option>
-            <option value="SETTING_CHANGED">SETTING_CHANGED</option>
-            <option value="ORDER_SHIPPED">ORDER_SHIPPED</option>
-            <option value="ORDER_CANCELLED">ORDER_CANCELLED</option>
-        </select>
-    </div>
-    <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 320px;">
-        <label class="cluster-label text-secondary fw-semibold mb-0" for="searchInput">Cari</label>
-        <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Pelaku / alasan..." autocomplete="off" />
-    </div>
-</div>
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <button type="button" class="nav-link active" id="tabStaffBtn" data-target="staffPanel"><span class="material-icons">admin_panel_settings</span> Aksi Pengurus</button>
+    </li>
+    <li class="nav-item">
+        <button type="button" class="nav-link" id="tabCustomerBtn" data-target="customerPanel"><span class="material-icons">people</span> Akun Pelanggan</button>
+    </li>
+</ul>
 
-<div class="card card-soft">
-    <div class="card-body p-3">
-        <div class="table-wrap">
-            <table class="table table-data align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th><button type="button" class="th-sort" data-sort="id">ID <span class="material-icons sort-ic">swap_vert</span></button></th>
-                        <th><button type="button" class="th-sort" data-sort="entity">Entitas <span class="material-icons sort-ic">swap_vert</span></button></th>
-                        <th>ID Record</th>
-                        <th><button type="button" class="th-sort" data-sort="action">Aksi <span class="material-icons sort-ic">swap_vert</span></button></th>
-                        <th><button type="button" class="th-sort" data-sort="actor">Pelaku <span class="material-icons sort-ic">swap_vert</span></button></th>
-                        <th><button type="button" class="th-sort" data-sort="actedAt">Waktu <span class="material-icons sort-ic">swap_vert</span></button></th>
-                        <th>Alasan</th>
-                    </tr>
-                </thead>
-                <tbody id="auditRows"></tbody>
-            </table>
+<div id="staffPanel">
+    <div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="entitySelect">Entitas</label>
+            <select id="entitySelect" data-pencarian class="form-select form-select-sm" style="width: 180px;">
+                <option value="">Semua Entitas</option>
+                <option value="PRODUCT">PRODUCT</option>
+                <option value="CATEGORY">CATEGORY</option>
+                <option value="COURIER">COURIER</option>
+                <option value="USER">USER</option>
+                <option value="DISCOUNT_APPROVAL">DISCOUNT_APPROVAL</option>
+                <option value="ORDER">ORDER</option>
+                <option value="SETTING">SETTING</option>
+            </select>
         </div>
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-            <div id="pageInfo" class="text-muted small"></div>
-            <ul id="pagination" class="pagination pagination-sm mb-0"></ul>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="actionSelect">Aksi</label>
+            <select id="actionSelect" data-pencarian class="form-select form-select-sm" style="width: 180px;">
+                <option value="">Semua Aksi</option>
+                <option value="CREATE">CREATE</option>
+                <option value="UPDATE">UPDATE</option>
+                <option value="DELETE">DELETE</option>
+                <option value="APPROVE">APPROVE</option>
+                <option value="REJECT">REJECT</option>
+                <option value="LOGIN">LOGIN</option>
+                <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+                <option value="BLOCK">BLOCK</option>
+                <option value="UNBLOCK">UNBLOCK</option>
+                <option value="RESET_PASSWORD">RESET_PASSWORD</option>
+                <option value="CHANGE_ROLE">CHANGE_ROLE</option>
+                <option value="SETTING_CHANGED">SETTING_CHANGED</option>
+                <option value="ORDER_SHIPPED">ORDER_SHIPPED</option>
+                <option value="ORDER_CANCELLED">ORDER_CANCELLED</option>
+            </select>
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="staffFromInput">Dari</label>
+            <input type="date" id="staffFromInput" class="form-control form-control-sm" style="width: 150px;" />
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="staffToInput">Sampai</label>
+            <input type="date" id="staffToInput" class="form-control form-control-sm" style="width: 150px;" />
+        </div>
+        <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 320px;">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="staffSearchInput">Cari</label>
+            <input type="text" id="staffSearchInput" class="form-control form-control-sm" placeholder="Pelaku / alasan..." autocomplete="off" />
+        </div>
+    </div>
+    <div class="card card-soft">
+        <div class="card-body p-3">
+            <div class="table-wrap">
+                <table class="table table-data align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th><button type="button" class="th-sort" data-sort="id">ID <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="entity">Entitas <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th>ID Record</th>
+                            <th><button type="button" class="th-sort" data-sort="action">Aksi <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="actor">Pelaku <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="actedAt">Waktu <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th>Alasan</th>
+                            <th class="col-aksi">Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffRows"></tbody>
+                </table>
+            </div>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                <div id="staffPageInfo" class="text-muted small"></div>
+                <ul id="staffPagination" class="pagination pagination-sm mb-0"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="customerPanel" style="display:none;">
+    <div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="custActionSelect">Aksi</label>
+            <select id="custActionSelect" data-pencarian class="form-select form-select-sm" style="width: 190px;">
+                <option value="">Semua Aksi</option>
+                <option value="REGISTER">REGISTER</option>
+                <option value="LOGIN">LOGIN</option>
+                <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+                <option value="PROFILE_UPDATED">PROFILE_UPDATED</option>
+                <option value="PASSWORD_CHANGED">PASSWORD_CHANGED</option>
+                <option value="BLOCKED">BLOCKED</option>
+                <option value="UNBLOCKED">UNBLOCKED</option>
+                <option value="DEACTIVATED">DEACTIVATED</option>
+                <option value="REACTIVATED">REACTIVATED</option>
+                <option value="RESET_PASSWORD">RESET_PASSWORD</option>
+            </select>
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="custFromInput">Dari</label>
+            <input type="date" id="custFromInput" class="form-control form-control-sm" style="width: 150px;" />
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="custToInput">Sampai</label>
+            <input type="date" id="custToInput" class="form-control form-control-sm" style="width: 150px;" />
+        </div>
+        <div class="d-flex flex-column gap-1 flex-grow-1" style="max-width: 320px;">
+            <label class="cluster-label text-secondary fw-semibold mb-0" for="custSearchInput">Cari</label>
+            <input type="text" id="custSearchInput" class="form-control form-control-sm" placeholder="Email / nama / pelaku..." autocomplete="off" />
+        </div>
+    </div>
+    <div class="card card-soft">
+        <div class="card-body p-3">
+            <div class="table-wrap">
+                <table class="table table-data align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th><button type="button" class="th-sort" data-sort="id">ID <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="customerId">ID Pelanggan <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="customerEmail">Pelanggan <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="action">Aksi <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="actor">Pelaku <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th><button type="button" class="th-sort" data-sort="actedAt">Waktu <span class="material-icons sort-ic">swap_vert</span></button></th>
+                            <th>Alasan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerRows"></tbody>
+                </table>
+            </div>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                <div id="customerPageInfo" class="text-muted small"></div>
+                <ul id="customerPagination" class="pagination pagination-sm mb-0"></ul>
+            </div>
         </div>
     </div>
 </div>
@@ -78,9 +155,6 @@
         const API_KEY_HEADER = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKeyHeader));
         const API_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ApiKey));
 
-        const state = { page: 1, pageSize: 20, sortBy: '', sortOrder: 'desc', entity: '', action: '', search: '', totalPages: 0 };
-        const $ = (id) => document.getElementById(id);
-
         function esc(s) {
             return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
@@ -89,120 +163,226 @@
             const d = new Date(iso);
             return isNaN(d.getTime()) ? '-' : d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
-        function badgeAksi(action) {
-            const ringan = ['LOGIN', 'LOGIN_FAILED'];
-            const bahaya = ['DELETE', 'REJECT', 'BLOCK', 'RESET_PASSWORD', 'CHANGE_ROLE', 'ORDER_CANCELLED'];
+        function badgeAksi(action, kumpulan) {
+            const bahaya = kumpulan.bahaya || [];
+            const ringan = kumpulan.ringan || [];
             let kelas = 'bg-primary-subtle text-primary-emphasis';
             if (ringan.includes(action)) kelas = 'bg-secondary-subtle text-secondary-emphasis';
-            if (action === 'CREATE') kelas = 'bg-success-subtle text-success-emphasis';
+            if (kumpulan.buat && action === 'CREATE') kelas = 'bg-success-subtle text-success-emphasis';
+            if (kumpulan.daftarBaru && action === 'REGISTER') kelas = 'bg-success-subtle text-success-emphasis';
             if (bahaya.includes(action)) kelas = 'bg-danger-subtle text-danger-emphasis';
             return '<span class="badge ' + kelas + '">' + esc(action) + '</span>';
         }
 
-        function buildQuery() {
-            const q = new URLSearchParams();
-            q.set('page', state.page);
-            q.set('pageSize', state.pageSize);
-            if (state.sortBy) { q.set('sortBy', state.sortBy); q.set('sortOrder', state.sortOrder); }
-            if (state.entity) q.set('entity', state.entity);
-            if (state.action) q.set('action', state.action);
-            if (state.search.trim()) q.set('search', state.search.trim());
-            return q.toString();
-        }
+        function buatGrid(cfg) {
+            const state = { page: 1, pageSize: 20, sortBy: '', sortOrder: 'desc', search: '', action: '', entity: '', from: '', to: '', totalPages: 0 };
 
-        function renderRows(items) {
-            const tbody = $('auditRows');
-            if (!items || items.length === 0) {
-                tbody.innerHTML = '<tr class="row-empty"><td colspan="7"><span class="material-icons">inbox</span> Tidak ada data.</td></tr>';
-                return;
+            function buildQuery() {
+                const q = new URLSearchParams();
+                q.set('page', state.page);
+                q.set('pageSize', state.pageSize);
+                if (state.sortBy) { q.set('sortBy', state.sortBy); q.set('sortOrder', state.sortOrder); }
+                if (state.entity) q.set('entity', state.entity);
+                if (state.action) q.set('action', state.action);
+                if (state.from) q.set('from', state.from);
+                if (state.to) q.set('to', state.to);
+                if (state.search.trim()) q.set('search', state.search.trim());
+                return q.toString();
             }
-            tbody.innerHTML = items.map((a) =>
-                '<tr>' +
-                '<td class="td-id">' + a.id + '</td>' +
-                '<td class="fw-semibold">' + esc(a.entity) + '</td>' +
-                '<td class="td-nomor">' + esc(a.entityId || '-') + '</td>' +
-                '<td>' + badgeAksi(a.action) + '</td>' +
-                '<td>' + esc(a.actor) + '</td>' +
-                '<td class="td-nomor">' + formatTgl(a.actedAt) + '</td>' +
-                '<td class="text-muted"><small>' + esc(a.reason || '-') + '</small></td>' +
-                '</tr>').join('');
-        }
 
-        function buildPages(current, total) {
-            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-            const c = [1, total];
-            for (let i = current - 2; i <= current + 2; i++) if (i >= 1 && i <= total) c.push(i);
-            return [...new Set(c)].sort((a, b) => a - b);
-        }
-
-        function renderPagination() {
-            const total = Math.max(1, state.totalPages);
-            const parts = [];
-            parts.push('<li class="page-item ' + (state.page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page - 1) + '"><span class="material-icons">chevron_left</span></a></li>');
-            for (const p of buildPages(state.page, state.totalPages)) {
-                parts.push('<li class="page-item ' + (p === state.page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            function buildPages(current, total) {
+                if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+                const c = [1, total];
+                for (let i = current - 2; i <= current + 2; i++) if (i >= 1 && i <= total) c.push(i);
+                return [...new Set(c)].sort((a, b) => a - b);
             }
-            parts.push('<li class="page-item ' + (state.page >= total ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page + 1) + '"><span class="material-icons">chevron_right</span></a></li>');
-            $('pagination').innerHTML = parts.join('');
-        }
 
-        function updateSortIndicators() {
-            document.querySelectorAll('.th-sort').forEach((btn) => {
-                const active = btn.dataset.sort === state.sortBy;
-                btn.classList.toggle('active', active);
-                const ic = btn.querySelector('.sort-ic');
-                if (ic) ic.textContent = active ? (state.sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'swap_vert';
-            });
-        }
-
-        async function loadData() {
-            const tbody = $('auditRows');
-            tbody.innerHTML = '<tr class="row-loading"><td colspan="7"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
-            try {
-                const res = await fetch('/api/audit-logs/paged?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
-                const json = await res.json().catch(() => null);
-                if (!res.ok || !json.isSuccess) throw new Error((json && json.message) || ('HTTP ' + res.status));
-                renderRows(json.data.items);
-                state.totalPages = json.data.totalPages || 0;
-                $('pageInfo').textContent = json.data.total === 0
-                    ? 'Hal 0 dari 0 (0 data)'
-                    : 'Hal ' + json.data.page + ' dari ' + json.data.totalPages + ' (' + json.data.total + ' data)';
-                renderPagination();
-            } catch (err) {
-                tbody.innerHTML = '<tr class="row-empty"><td colspan="7">Gagal memuat data: ' + esc(err.message) + '</td></tr>';
-            } finally {
-                updateSortIndicators();
-            }
-        }
-
-        let searchTimer = null;
-        document.addEventListener('DOMContentLoaded', () => {
-            $('searchInput').addEventListener('input', () => {
-                clearTimeout(searchTimer);
-                searchTimer = setTimeout(() => { state.search = $('searchInput').value; state.page = 1; loadData(); }, 350);
-            });
-            $('entitySelect').addEventListener('change', (e) => { state.entity = e.target.value; state.page = 1; loadData(); });
-            $('actionSelect').addEventListener('change', (e) => { state.action = e.target.value; state.page = 1; loadData(); });
-            document.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
-                const col = btn.dataset.sort;
-                if (state.sortBy === col) {
-                    if (state.sortOrder === 'asc') state.sortOrder = 'desc';
-                    else { state.sortBy = ''; state.sortOrder = 'desc'; }
-                } else { state.sortBy = col; state.sortOrder = 'asc'; }
-                state.page = 1;
-                loadData();
-            }));
-            $('pagination').addEventListener('click', (e) => {
-                const link = e.target.closest('.page-link');
-                if (!link || link.closest('.disabled')) return;
-                e.preventDefault();
-                const page = Number(link.dataset.page);
-                if (page >= 1 && page <= state.totalPages && page !== state.page) {
-                    state.page = page;
-                    loadData();
+            function renderPagination() {
+                const total = Math.max(1, state.totalPages);
+                const parts = [];
+                parts.push('<li class="page-item ' + (state.page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page - 1) + '"><span class="material-icons">chevron_left</span></a></li>');
+                for (const p of buildPages(state.page, state.totalPages)) {
+                    parts.push('<li class="page-item ' + (p === state.page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
                 }
-            });
-            loadData();
+                parts.push('<li class="page-item ' + (state.page >= total ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (state.page + 1) + '"><span class="material-icons">chevron_right</span></a></li>');
+                cfg.paginationEl.innerHTML = parts.join('');
+            }
+
+            function updateSortIndicators() {
+                cfg.rowsEl.parentElement.querySelectorAll('.th-sort').forEach((btn) => {
+                    const active = btn.dataset.sort === state.sortBy;
+                    btn.classList.toggle('active', active);
+                    const ic = btn.querySelector('.sort-ic');
+                    if (ic) ic.textContent = active ? (state.sortOrder === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'swap_vert';
+                });
+            }
+
+            async function load() {
+                cfg.rowsEl.innerHTML = '<tr class="row-loading"><td colspan="' + cfg.colspan + '"><span class="material-icons spinner-icon">autorenew</span> Memuat data...</td></tr>';
+                try {
+                    const res = await fetch(cfg.url + '?' + buildQuery(), { headers: { [API_KEY_HEADER]: API_KEY } });
+                    const json = await res.json().catch(() => null);
+                    if (!res.ok || !json.isSuccess) throw new Error((json && json.message) || ('HTTP ' + res.status));
+                    cfg.render(json.data.items);
+                    state.totalPages = json.data.totalPages || 0;
+                    cfg.pageInfoEl.textContent = json.data.total === 0
+                        ? 'Hal 0 dari 0 (0 data)'
+                        : 'Hal ' + json.data.page + ' dari ' + json.data.totalPages + ' (' + json.data.total + ' data)';
+                    renderPagination();
+                } catch (err) {
+                    cfg.rowsEl.innerHTML = '<tr class="row-empty"><td colspan="' + cfg.colspan + '">Gagal memuat data: ' + esc(err.message) + '</td></tr>';
+                } finally {
+                    updateSortIndicators();
+                }
+            }
+
+            function bind() {
+                let timer = null;
+                cfg.searchEl.addEventListener('input', () => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => { state.search = cfg.searchEl.value; state.page = 1; load(); }, 350);
+                });
+                if (cfg.entityEl) cfg.entityEl.addEventListener('change', (e) => { state.entity = e.target.value; state.page = 1; load(); });
+                if (cfg.actionEl) cfg.actionEl.addEventListener('change', (e) => { state.action = e.target.value; state.page = 1; load(); });
+                if (cfg.fromEl) cfg.fromEl.addEventListener('change', (e) => { state.from = e.target.value; state.page = 1; load(); });
+                if (cfg.toEl) cfg.toEl.addEventListener('change', (e) => { state.to = e.target.value; state.page = 1; load(); });
+                cfg.rowsEl.parentElement.querySelectorAll('.th-sort').forEach((btn) => btn.addEventListener('click', () => {
+                    const col = btn.dataset.sort;
+                    if (state.sortBy === col) {
+                        if (state.sortOrder === 'asc') state.sortOrder = 'desc';
+                        else { state.sortBy = ''; state.sortOrder = 'desc'; }
+                    } else { state.sortBy = col; state.sortOrder = 'asc'; }
+                    state.page = 1;
+                    load();
+                }));
+                cfg.paginationEl.addEventListener('click', (e) => {
+                    const link = e.target.closest('.page-link');
+                    if (!link || link.closest('.disabled')) return;
+                    e.preventDefault();
+                    const page = Number(link.dataset.page);
+                    if (page >= 1 && page <= state.totalPages && page !== state.page) {
+                        state.page = page;
+                        load();
+                    }
+                });
+                load();
+            }
+
+            return { bind };
+        }
+
+        function prettyJson(raw) {
+            if (!raw || raw === 'null') return '<span class="text-muted">—</span>';
+            try {
+                const obj = JSON.parse(raw);
+                return '<pre class="mb-0 p-2 bg-light rounded" style="max-height:200px;overflow:auto;font-size:12px;">' + esc(JSON.stringify(obj, null, 2)) + '</pre>';
+            } catch (e) {
+                return '<pre class="mb-0 p-2 bg-light rounded" style="max-height:200px;overflow:auto;font-size:12px;">' + esc(raw) + '</pre>';
+            }
+        }
+
+        const staffDetailCache = {};
+
+        function tampilDetailStaff(row) {
+            const html =
+                '<div class="text-start small">' +
+                '<table class="table table-sm mb-2 small">' +
+                '<tr><th class="text-muted" style="width:120px;">Entitas</th><td>' + esc(row.entity) + ' #' + esc(row.entityId || '-') + '</td></tr>' +
+                '<tr><th class="text-muted">Aksi</th><td>' + badgeAksi(row.action, { bahaya: ['DELETE', 'REJECT', 'BLOCK', 'RESET_PASSWORD', 'CHANGE_ROLE', 'ORDER_CANCELLED'], ringan: ['LOGIN', 'LOGIN_FAILED'], buat: true }) + '</td></tr>' +
+                '<tr><th class="text-muted">Pelaku</th><td>' + esc(row.actor) + '</td></tr>' +
+                '<tr><th class="text-muted">Waktu</th><td>' + formatTgl(row.actedAt) + '</td></tr>' +
+                (row.reason ? '<tr><th class="text-muted">Alasan</th><td>' + esc(row.reason) + '</td></tr>' : '') +
+                (row.traceId ? '<tr><th class="text-muted">Trace ID</th><td><code>' + esc(row.traceId) + '</code></td></tr>' : '') +
+                '</table>' +
+                '<div class="mb-2"><strong>Sebelum</strong><br>' + prettyJson(row.oldSnapshot) + '</div>' +
+                '<div><strong>Sesudah</strong><br>' + prettyJson(row.newSnapshot) + '</div>' +
+                '</div>';
+            Swal.fire({ title: 'Detail Audit #' + row.id, html: html, width: 640, confirmButtonText: 'Tutup' });
+        }
+
+        const staffGrid = buatGrid({
+            url: '/api/audit-logs/paged',
+            colspan: 8,
+            rowsEl: document.getElementById('staffRows'),
+            pageInfoEl: document.getElementById('staffPageInfo'),
+            paginationEl: document.getElementById('staffPagination'),
+            searchEl: document.getElementById('staffSearchInput'),
+            entityEl: document.getElementById('entitySelect'),
+            actionEl: document.getElementById('actionSelect'),
+            fromEl: document.getElementById('staffFromInput'),
+            toEl: document.getElementById('staffToInput'),
+            render(items) {
+                const tbody = document.getElementById('staffRows');
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr class="row-empty"><td colspan="8"><span class="material-icons">inbox</span> Tidak ada data.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items.map((a) => {
+                    staffDetailCache[a.id] = a;
+                    return '<tr>' +
+                        '<td class="td-id">' + a.id + '</td>' +
+                        '<td class="fw-semibold">' + esc(a.entity) + '</td>' +
+                        '<td class="td-nomor">' + esc(a.entityId || '-') + '</td>' +
+                        '<td>' + badgeAksi(a.action, { bahaya: ['DELETE', 'REJECT', 'BLOCK', 'RESET_PASSWORD', 'CHANGE_ROLE', 'ORDER_CANCELLED'], ringan: ['LOGIN', 'LOGIN_FAILED'], buat: true }) + '</td>' +
+                        '<td>' + esc(a.actor) + '</td>' +
+                        '<td class="td-nomor">' + formatTgl(a.actedAt) + '</td>' +
+                        '<td class="text-muted"><small>' + esc(a.reason || '-') + '</small></td>' +
+                        '<td><button class="btn btn-outline-info btn-sm btn-detail-staff" data-id="' + a.id + '" title="Lihat sebelum-sesudah"><span class="material-icons">visibility</span></button></td>' +
+                        '</tr>';
+                }).join('');
+            }
+        });
+        staffGrid.bind();
+
+        document.getElementById('staffRows').addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-detail-staff');
+            if (!btn) return;
+            const row = staffDetailCache[Number(btn.dataset.id)];
+            if (row) tampilDetailStaff(row);
+        });
+
+        const customerGrid = buatGrid({
+            url: '/api/audit-logs/customers/paged',
+            colspan: 7,
+            rowsEl: document.getElementById('customerRows'),
+            pageInfoEl: document.getElementById('customerPageInfo'),
+            paginationEl: document.getElementById('customerPagination'),
+            searchEl: document.getElementById('custSearchInput'),
+            entityEl: null,
+            actionEl: document.getElementById('custActionSelect'),
+            fromEl: document.getElementById('custFromInput'),
+            toEl: document.getElementById('custToInput'),
+            render(items) {
+                const tbody = document.getElementById('customerRows');
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr class="row-empty"><td colspan="7"><span class="material-icons">inbox</span> Tidak ada data.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items.map((a) =>
+                    '<tr>' +
+                    '<td class="td-id">' + a.id + '</td>' +
+                    '<td class="td-nomor">' + a.customerId + '</td>' +
+                    '<td class="fw-semibold">' + esc(a.customerEmail) + '</td>' +
+                    '<td>' + badgeAksi(a.action, { bahaya: ['BLOCKED', 'DEACTIVATED', 'RESET_PASSWORD'], ringan: ['LOGIN', 'LOGIN_FAILED'], daftarBaru: true }) + '</td>' +
+                    '<td>' + esc(a.actor) + '</td>' +
+                    '<td class="td-nomor">' + formatTgl(a.actedAt) + '</td>' +
+                    '<td class="text-muted"><small>' + esc(a.reason || '-') + '</small></td>' +
+                    '</tr>').join('');
+            }
+        });
+        customerGrid.bind();
+
+        document.getElementById('tabStaffBtn').addEventListener('click', () => {
+            document.getElementById('tabStaffBtn').classList.add('active');
+            document.getElementById('tabCustomerBtn').classList.remove('active');
+            document.getElementById('staffPanel').style.display = '';
+            document.getElementById('customerPanel').style.display = 'none';
+        });
+        document.getElementById('tabCustomerBtn').addEventListener('click', () => {
+            document.getElementById('tabCustomerBtn').classList.add('active');
+            document.getElementById('tabStaffBtn').classList.remove('active');
+            document.getElementById('customerPanel').style.display = '';
+            document.getElementById('staffPanel').style.display = 'none';
         });
     </script>
 }

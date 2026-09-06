@@ -98,8 +98,13 @@ public class AuditLogService : IAuditLogService
         }
         if (query.To.HasValue)
         {
-            conditions.Add("A.ACTED_AT <= @To");
-            parameters.Add("To", query.To.Value);
+            var to = query.To.Value;
+            if (to.TimeOfDay == TimeSpan.Zero)
+            {
+                to = to.Date.AddDays(1);
+            }
+            conditions.Add("A.ACTED_AT < @To");
+            parameters.Add("To", to);
         }
 
         var whereClause = conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(" AND ", conditions);
@@ -141,4 +146,86 @@ public class AuditLogService : IAuditLogService
 
     private static string EscapeLike(string value) =>
         value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+
+    private static readonly Dictionary<string, string> CustomerSortColumns = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["id"] = "A.ID",
+        ["customerId"] = "A.CUSTOMER_ID",
+        ["action"] = "A.ACTION",
+        ["actor"] = "A.ACTOR",
+        ["actedAt"] = "A.ACTED_AT"
+    };
+
+    public async Task<PagedResult<CustomerAuditEntryDto>> GetCustomerPagedAsync(CustomerAuditQueryParams query)
+    {
+        var page = Math.Max(1, query.Page);
+        var pageSize = Math.Clamp(query.PageSize, 1, 100);
+
+        var conditions = new List<string>();
+        var parameters = new DynamicParameters();
+
+        if (!string.IsNullOrWhiteSpace(query.Action))
+        {
+            conditions.Add("A.ACTION = @Action");
+            parameters.Add("Action", query.Action.Trim().ToUpperInvariant());
+        }
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            conditions.Add("(A.ACTOR LIKE @Search ESCAPE '\\' OR C.EMAIL LIKE @Search ESCAPE '\\' OR C.NAME LIKE @Search ESCAPE '\\')");
+            parameters.Add("Search", $"%{EscapeLike(query.Search.Trim())}%");
+        }
+        if (query.From.HasValue)
+        {
+            conditions.Add("A.ACTED_AT >= @From");
+            parameters.Add("From", query.From.Value);
+        }
+        if (query.To.HasValue)
+        {
+            var to = query.To.Value;
+            if (to.TimeOfDay == TimeSpan.Zero)
+            {
+                to = to.Date.AddDays(1);
+            }
+            conditions.Add("A.ACTED_AT < @To");
+            parameters.Add("To", to);
+        }
+
+        var whereClause = conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(" AND ", conditions);
+        var sortColumn = !string.IsNullOrEmpty(query.SortBy)
+            && CustomerSortColumns.TryGetValue(query.SortBy, out var column) ? column : "A.ACTED_AT";
+        var sortOrder = query.SortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) ? "DESC" : "ASC";
+        var tieBreaker = sortColumn == "A.ID" ? string.Empty : ", A.ID";
+        var offset = (page - 1) * pageSize;
+
+        parameters.Add("Offset", offset);
+        parameters.Add("PageSize", pageSize);
+
+        using var connection = new SqlConnection(_connectionString);
+
+        var total = await connection.ExecuteScalarAsync<int>($"""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.TRX_CUSTOMER_AUDIT_TRAIL A
+            JOIN LOSCONSUMER.MASTER_CUSTOMER C ON C.ID = A.CUSTOMER_ID
+            {whereClause};
+            """, parameters);
+
+        var rows = await connection.QueryAsync<CustomerAuditEntryDto>($"""
+            SELECT A.ID, A.CUSTOMER_ID, C.EMAIL AS CUSTOMER_EMAIL, A.ACTION, A.ACTOR, A.ACTED_AT,
+                   A.DETAIL, A.REASON
+            FROM LOSCONSUMER.TRX_CUSTOMER_AUDIT_TRAIL A
+            JOIN LOSCONSUMER.MASTER_CUSTOMER C ON C.ID = A.CUSTOMER_ID
+            {whereClause}
+            ORDER BY {sortColumn} {sortOrder}{tieBreaker}
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            """, parameters);
+
+        return new PagedResult<CustomerAuditEntryDto>
+        {
+            Items = rows.ToList(),
+            Page = page,
+            PageSize = pageSize,
+            Total = total,
+            TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
+        };
+    }
 }

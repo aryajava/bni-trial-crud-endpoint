@@ -65,10 +65,24 @@ public class CustomerAuditEntryDto
 {
     public long Id { get; set; }
     public int CustomerId { get; set; }
+    public string CustomerEmail { get; set; } = string.Empty;
     public string Action { get; set; } = string.Empty;
     public string Actor { get; set; } = string.Empty;
     public DateTime ActedAt { get; set; }
+    public string? Detail { get; set; }
     public string? Reason { get; set; }
+}
+
+public class CustomerAuditQueryParams : PageRequest
+{
+    [System.ComponentModel.Description("Filter aksi (REGISTER, LOGIN, BLOCKED, ...).")]
+    public string? Action { get; set; }
+
+    [System.ComponentModel.Description("Batas bawah rentang waktu (inclusive).")]
+    public DateTime? From { get; set; }
+
+    [System.ComponentModel.Description("Batas atas rentang waktu; bila hanya tanggal, mencakup hingga akhir hari.")]
+    public DateTime? To { get; set; }
 }
 
 public class CartItemDto

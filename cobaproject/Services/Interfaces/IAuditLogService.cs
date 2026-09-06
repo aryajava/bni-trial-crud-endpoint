@@ -8,4 +8,6 @@ public interface IAuditLogService
         string? oldSnapshot = null, string? newSnapshot = null, string? reason = null);
 
     Task<PagedResult<AuditLogEntryDto>> GetPagedAsync(AuditLogQueryParams query);
+
+    Task<PagedResult<CustomerAuditEntryDto>> GetCustomerPagedAsync(CustomerAuditQueryParams query);
 }
