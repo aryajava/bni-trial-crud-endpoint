@@ -48,6 +48,10 @@ _Avoid_: kurir, jasa kirim, shipping, courier
 Kumpulan produk yang dikumpulkan pelanggan untuk dibeli; untuk tamu tersimpan di browser, untuk pelanggan yang sudah masuk tersimpan di akunnya; keranjang tidak memengaruhi stok produk.
 _Avoid_: cart, troli, bakul
 
+**Konfirmasi Pesanan**:
+Tahap akhir belanja di mana pelanggan mengisi alamat kirim, memilih ekspedisi, dan membuktikan identitasnya: konfirmasi kata sandi akun dan, bila pengurus toko telah mengatur kunci reCAPTCHA, lolos verifikasi Google reCAPTCHA. Pesanan tercipta hanya bila keduanya lolos.
+_Avoid_: checkout, buat pesanan, confirm order
+
 **Pesanan**:
 Catatan pembelian yang dibuat pelanggan saat menyelesaikan checkout; stok berkurang saat pesanan dibuat, dan harga dihitung ulang dari Harga Setelah Diskon pada saat itu. Berstatus DIPROSES → DIKIRIM → DITERIMA, atau DIBATALKAN — pembatalan hanya dapat dilakukan saat masih DIPROSES, dan saat dibatalkan stok dikembalikan. Qty di Keranjang pengguna lain otomatis menyesuaikan sisa stok.
 _Avoid_: order, transaksi, nota

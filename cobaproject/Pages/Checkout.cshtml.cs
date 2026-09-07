@@ -17,6 +17,7 @@ public class CheckoutModel : PageModel
     private readonly IOrderService _orderService;
     private readonly ISettingService _settingService;
     private readonly ICourierService _courierService;
+    private readonly IRecaptchaService _recaptchaService;
     private readonly ILogger<CheckoutModel> _logger;
 
     public List<CartItemDto> Items { get; set; } = [];
@@ -40,6 +41,11 @@ public class CheckoutModel : PageModel
     public int? CourierId { get; set; }
 
     [BindProperty]
+    public string? RecaptchaToken { get; set; }
+
+    public string? RecaptchaSiteKey { get; set; }
+
+    [BindProperty]
     public CheckoutRequest Form { get; set; } = new();
 
     public int CustomerId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
@@ -50,6 +56,7 @@ public class CheckoutModel : PageModel
         IOrderService orderService,
         ISettingService settingService,
         ICourierService courierService,
+        IRecaptchaService recaptchaService,
         ILogger<CheckoutModel> logger)
     {
         _customerService = customerService;
@@ -57,6 +64,7 @@ public class CheckoutModel : PageModel
         _orderService = orderService;
         _settingService = settingService;
         _courierService = courierService;
+        _recaptchaService = recaptchaService;
         _logger = logger;
     }
 
@@ -71,6 +79,16 @@ public class CheckoutModel : PageModel
     {
         if (!ModelState.IsValid)
         {
+            await LoadAsync();
+            return Page();
+        }
+
+        var (captchaAktif, captchaLolos, captchaError) = await _recaptchaService.VerifyAsync(
+            RecaptchaToken, HttpContext.Connection.RemoteIpAddress?.ToString());
+        if (captchaAktif && !captchaLolos)
+        {
+            _logger.LogWarning("[RECAPTCHA] Verifikasi checkout gagal | CustomerId={CustomerId} | Error={Error}", CustomerId, captchaError);
+            ModelState.AddModelError(nameof(RecaptchaToken), captchaError ?? "Verifikasi keamanan gagal.");
             await LoadAsync();
             return Page();
         }
@@ -148,5 +166,7 @@ public class CheckoutModel : PageModel
             if (string.IsNullOrWhiteSpace(Form.Phone)) Form.Phone = profile.Phone ?? string.Empty;
             if (string.IsNullOrWhiteSpace(Form.Address)) Form.Address = profile.Address ?? string.Empty;
         }
+
+        RecaptchaSiteKey = (await _settingService.GetAsync(SettingService.RecaptchaSiteKey))?.Value.Trim();
     }
 }

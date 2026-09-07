@@ -12,12 +12,16 @@ public class SettingService : ISettingService
     public const string LoginFailThreshold = "LOGIN_FAIL_THRESHOLD";
     public const string ShippingFee = "SHIPPING_FEE";
     public const string TaxPercent = "TAX_PERCENT";
+    public const string RecaptchaSiteKey = "RECAPTCHA_SITE_KEY";
+    public const string RecaptchaSecretKey = "RECAPTCHA_SECRET_KEY";
 
     private static readonly Dictionary<string, string> Labels = new()
     {
         [LoginFailThreshold] = "Ambang Blokir Login",
         [ShippingFee] = "Ongkir",
-        [TaxPercent] = "Pajak"
+        [TaxPercent] = "Pajak",
+        [RecaptchaSiteKey] = "Kunci Situs reCAPTCHA",
+        [RecaptchaSecretKey] = "Kunci Rahasia reCAPTCHA"
     };
 
     private readonly string _connectionString;
