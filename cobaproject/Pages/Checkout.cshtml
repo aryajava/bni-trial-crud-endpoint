@@ -65,9 +65,10 @@
                                     </div>
                                     @if (Model.AltchaAktif)
                                     {
-                                        <div class="mb-3" id="altchaSlot">
+                                        <div class="mb-1">
                                             <div class="text-muted small mb-1">Verifikasi keamanan</div>
-                                            <span class="field-error">@Html.ValidationMessage("AltchaPayload")</span>
+                                            <div id="altchaSlot"></div>
+                                            <span class="field-error" id="altchaError">@Html.ValidationMessage("AltchaPayload")</span>
                                         </div>
                                     }
                                 </div>
@@ -175,7 +176,7 @@
                             btnKonfirmasiFinal.disabled = false;
                         }
                     });
-                    altchaSlot.insertBefore(w, altchaSlot.firstChild);
+                    altchaSlot.appendChild(w);
                 });
                 modalKonfirmasi.addEventListener('hidden.bs.modal', function () {
                     altchaSlot.innerHTML = '';

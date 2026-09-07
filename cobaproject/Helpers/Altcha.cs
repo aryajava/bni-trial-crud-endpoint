@@ -72,7 +72,7 @@ public static class Altcha
                 return false;
             }
 
-            var parts = p.Salt.Split('?', 2);
+            var parts = p.Salt.Split(new[] { '?', '/' }, 2);
             if (parts.Length != 2 || !parts[1].StartsWith("expires=", StringComparison.Ordinal))
             {
                 return false;
