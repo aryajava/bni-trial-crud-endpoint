@@ -93,7 +93,7 @@ public class AuditLogService : IAuditLogService
         }
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            conditions.Add("(A.ACTOR LIKE @Search ESCAPE '\\' OR A.REASON LIKE @Search ESCAPE '\\')");
+            conditions.Add("(A.ACTOR LIKE @Search ESCAPE '\\' OR A.REASON LIKE @Search ESCAPE '\\' OR A.ENTITY LIKE @Search ESCAPE '\\' OR A.ACTION LIKE @Search ESCAPE '\\')");
             parameters.Add("Search", $"%{EscapeLike(query.Search.Trim())}%");
         }
         if (query.From.HasValue)
@@ -176,7 +176,7 @@ public class AuditLogService : IAuditLogService
         }
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            conditions.Add("(A.ACTOR LIKE @Search ESCAPE '\\' OR C.EMAIL LIKE @Search ESCAPE '\\' OR C.NAME LIKE @Search ESCAPE '\\')");
+            conditions.Add("(A.ACTOR LIKE @Search ESCAPE '\\' OR C.EMAIL LIKE @Search ESCAPE '\\' OR C.NAME LIKE @Search ESCAPE '\\' OR A.ACTION LIKE @Search ESCAPE '\\' OR A.DETAIL LIKE @Search ESCAPE '\\')");
             parameters.Add("Search", $"%{EscapeLike(query.Search.Trim())}%");
         }
         if (query.From.HasValue)
