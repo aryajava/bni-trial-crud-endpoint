@@ -37,26 +37,41 @@
                         <input asp-for="Form.Note" class="form-control" placeholder="Contoh: hubungi sebelum kirim" />
                         @Html.ValidationMessageFor(m => m.Form.Note, null, new { @class = "field-error" })
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" asp-for="Password">Konfirmasi Kata Sandi</label>
-                        <input asp-for="Password" type="password" class="form-control" style="border-radius:10px;" autocomplete="current-password" placeholder="Kata sandi akun Anda" />
-                        @Html.ValidationMessageFor(m => m.Password, null, new { @class = "field-error" })
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(Model.RecaptchaSiteKey))
-                    {
-                        <div id="recaptchaBox" class="mb-3">
-                            <div class="g-recaptcha d-inline-block"
-                                 data-sitekey="@Model.RecaptchaSiteKey"
-                                 data-callback="onRecaptchaSelesai"
-                                 data-expired-callback="onRecaptchaKedaluwarsa"
-                                 data-hl="id"></div>
-                            <input type="hidden" name="RecaptchaToken" />
-                            <span class="field-error">@Html.ValidationMessage("RecaptchaToken")</span>
-                        </div>
-                    }
-                    <button class="btn btn-primary" type="submit" id="btnKonfirmasi" style="border-radius:10px;">
+                    <button class="btn btn-primary" type="button" id="btnBukaKonfirmasi" data-bs-toggle="modal" data-bs-target="#modalKonfirmasi" style="border-radius:10px;">
                         <span class="material-icons">check_circle</span> Buat Pesanan
                     </button>
+
+                    <div class="modal fade" id="modalKonfirmasi" tabindex="-1" aria-labelledby="modalKonfirmasiJudul" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content" style="border-radius:14px;">
+                                <div class="modal-header">
+                                    <h2 class="modal-title h5 mb-0" id="modalKonfirmasiJudul">Konfirmasi Pesanan</h2>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="text-muted small mb-3">Periksa kembali alamat pengiriman dan ringkasan pesanan sebelum mengonfirmasi.</p>
+                                    <div class="mb-3">
+                                        <label class="form-label" asp-for="Password">Konfirmasi Kata Sandi</label>
+                                        <input asp-for="Password" type="password" class="form-control" style="border-radius:10px;" autocomplete="current-password" placeholder="Kata sandi akun Anda" />
+                                        @Html.ValidationMessageFor(m => m.Password, null, new { @class = "field-error" })
+                                    </div>
+                                    @if (Model.AltchaAktif)
+                                    {
+                                        <div class="mb-3" id="altchaSlot">
+                                            <div class="text-muted small mb-1">Verifikasi keamanan</div>
+                                            <span class="field-error">@Html.ValidationMessage("AltchaPayload")</span>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" style="border-radius:10px;">Batal</button>
+                                    <button type="submit" class="btn btn-primary btn-sm" id="btnKonfirmasiFinal" style="border-radius:10px;">
+                                        <span class="material-icons">check_circle</span> Ya, Buat Pesanan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -124,33 +139,38 @@
             document.getElementById('sumCourier').textContent = opt.text.split(' - ')[0];
         }
 
-        window.onRecaptchaSelesai = function () {
-            var btn = document.getElementById('btnKonfirmasi');
-            if (btn) { btn.disabled = false; }
-        };
+        var modalKonfirmasi = document.getElementById('modalKonfirmasi');
+        var altchaSlot = document.getElementById('altchaSlot');
+        var btnKonfirmasiFinal = document.getElementById('btnKonfirmasiFinal');
 
-        window.onRecaptchaKedaluwarsa = function () {
-            var btn = document.getElementById('btnKonfirmasi');
-            if (btn) { btn.disabled = true; }
-        };
+        var ALTCHA_AKTIF = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AltchaAktif));
 
-        var formCheckout = document.querySelector('form[method="post"]');
-        var btnKonfirmasi = document.getElementById('btnKonfirmasi');
-        var recaptchaBox = document.getElementById('recaptchaBox');
-        if (recaptchaBox && btnKonfirmasi) {
-            btnKonfirmasi.disabled = true;
-        }
-
-        if (formCheckout) {
-            formCheckout.addEventListener('submit', function () {
-                var token = document.querySelector('textarea[name="g-recaptcha-response"]');
-                var hidden = document.querySelector('input[name="RecaptchaToken"]');
-                if (hidden && token) { hidden.value = token.value || ''; }
-            });
+        if (modalKonfirmasi) {
+            if (ALTCHA_AKTIF && altchaSlot && btnKonfirmasiFinal) {
+                btnKonfirmasiFinal.disabled = true;
+                modalKonfirmasi.addEventListener('show.bs.modal', function () {
+                    altchaSlot.innerHTML = '';
+                    var w = document.createElement('altcha-widget');
+                    w.setAttribute('challenge', '/Checkout?handler=Altcha');
+                    w.setAttribute('type', 'checkbox');
+                    w.setAttribute('hidelogo', 'true');
+                    w.setAttribute('hidefooter', 'true');
+                    w.addEventListener('statechange', function (ev) {
+                        if (ev.detail && ev.detail.state === 'verified') {
+                            btnKonfirmasiFinal.disabled = false;
+                        }
+                    });
+                    altchaSlot.insertBefore(w, altchaSlot.firstChild);
+                });
+                modalKonfirmasi.addEventListener('hidden.bs.modal', function () {
+                    altchaSlot.innerHTML = '';
+                    btnKonfirmasiFinal.disabled = true;
+                });
+            }
         }
     </script>
-    @if (!string.IsNullOrWhiteSpace(Model.RecaptchaSiteKey))
+    @if (Model.AltchaAktif)
     {
-        <script src="https://www.google.com/recaptcha/api.js?hl=id" async defer></script>
+        <script src="/js/altcha.min.js" type="module"></script>
     }
 }

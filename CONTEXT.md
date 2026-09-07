@@ -49,7 +49,7 @@ Kumpulan produk yang dikumpulkan pelanggan untuk dibeli; untuk tamu tersimpan di
 _Avoid_: cart, troli, bakul
 
 **Konfirmasi Pesanan**:
-Tahap akhir belanja di mana pelanggan mengisi alamat kirim, memilih ekspedisi, dan membuktikan identitasnya: konfirmasi kata sandi akun dan, bila pengurus toko telah mengatur kunci reCAPTCHA, lolos verifikasi Google reCAPTCHA. Pesanan tercipta hanya bila keduanya lolos.
+Tahap akhir belanja di mana pelanggan mengisi alamat kirim, memilih ekspedisi, dan membuktikan identitasnya: konfirmasi kata sandi akun dan, bila pengurus toko telah mengaturnya, lolos verifikasi CAPTCHA yang dijalankan aplikasi sendiri tanpa layanan pihak ketiga. Pesanan tercipta hanya bila keduanya lolos.
 _Avoid_: checkout, buat pesanan, confirm order
 
 **Pesanan**:

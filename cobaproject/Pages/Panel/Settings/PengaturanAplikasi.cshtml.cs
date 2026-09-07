@@ -18,16 +18,10 @@ public class PengaturanAplikasiModel : PageModel
     public int AmbangBlokirVersion { get; set; }
 
     [BindProperty]
-    public string? RecaptchaSiteKey { get; set; }
+    public string? AltchaHmacKey { get; set; }
 
     [BindProperty]
-    public int RecaptchaSiteKeyVersion { get; set; }
-
-    [BindProperty]
-    public string? RecaptchaSecretKey { get; set; }
-
-    [BindProperty]
-    public int RecaptchaSecretKeyVersion { get; set; }
+    public int AltchaHmacKeyVersion { get; set; }
 
     public PengaturanAplikasiModel(ISettingService settingService)
     {
@@ -57,12 +51,10 @@ public class PengaturanAplikasiModel : PageModel
         var (ok, error) = await _settingService.UpdateAsync(
             SettingService.LoginFailThreshold, AmbangBlokir.ToString(), AmbangBlokirVersion, Caller);
         var (okSite, errorSite) = await _settingService.UpdateAsync(
-            SettingService.RecaptchaSiteKey, RecaptchaSiteKey ?? string.Empty, RecaptchaSiteKeyVersion, Caller);
-        var (okSecret, errorSecret) = await _settingService.UpdateAsync(
-            SettingService.RecaptchaSecretKey, RecaptchaSecretKey ?? string.Empty, RecaptchaSecretKeyVersion, Caller);
-        if (!ok || !okSite || !okSecret)
+            SettingService.AltchaHmacKey, AltchaHmacKey ?? string.Empty, AltchaHmacKeyVersion, Caller);
+        if (!ok || !okSite)
         {
-            ModelState.AddModelError(string.Empty, error ?? errorSite ?? errorSecret ?? "Gagal menyimpan pengaturan.");
+            ModelState.AddModelError(string.Empty, error ?? errorSite ?? "Gagal menyimpan pengaturan.");
             await LoadAsync();
             return Page();
         }
@@ -77,12 +69,8 @@ public class PengaturanAplikasiModel : PageModel
         AmbangBlokir = int.TryParse(setting?.Value, out var threshold) ? threshold : 5;
         AmbangBlokirVersion = setting?.Version ?? 1;
 
-        var siteKey = await _settingService.GetAsync(SettingService.RecaptchaSiteKey);
-        RecaptchaSiteKey = siteKey?.Value ?? string.Empty;
-        RecaptchaSiteKeyVersion = siteKey?.Version ?? 1;
-
-        var secretKey = await _settingService.GetAsync(SettingService.RecaptchaSecretKey);
-        RecaptchaSecretKey = secretKey?.Value ?? string.Empty;
-        RecaptchaSecretKeyVersion = secretKey?.Version ?? 1;
+        var siteKey = await _settingService.GetAsync(SettingService.AltchaHmacKey);
+        AltchaHmacKey = siteKey?.Value ?? string.Empty;
+        AltchaHmacKeyVersion = siteKey?.Version ?? 1;
     }
 }

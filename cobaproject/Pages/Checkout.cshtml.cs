@@ -17,7 +17,6 @@ public class CheckoutModel : PageModel
     private readonly IOrderService _orderService;
     private readonly ISettingService _settingService;
     private readonly ICourierService _courierService;
-    private readonly IRecaptchaService _recaptchaService;
     private readonly ILogger<CheckoutModel> _logger;
 
     public List<CartItemDto> Items { get; set; } = [];
@@ -40,10 +39,11 @@ public class CheckoutModel : PageModel
     [BindProperty]
     public int? CourierId { get; set; }
 
-    [BindProperty]
-    public string? RecaptchaToken { get; set; }
+    /// <summary>Payload ALTCHA dari widget (nama field bawaan widget: "altcha").</summary>
+    [BindProperty(Name = "altcha")]
+    public string? AltchaPayload { get; set; }
 
-    public string? RecaptchaSiteKey { get; set; }
+    public bool AltchaAktif { get; set; }
 
     [BindProperty]
     public CheckoutRequest Form { get; set; } = new();
@@ -56,7 +56,6 @@ public class CheckoutModel : PageModel
         IOrderService orderService,
         ISettingService settingService,
         ICourierService courierService,
-        IRecaptchaService recaptchaService,
         ILogger<CheckoutModel> logger)
     {
         _customerService = customerService;
@@ -64,7 +63,6 @@ public class CheckoutModel : PageModel
         _orderService = orderService;
         _settingService = settingService;
         _courierService = courierService;
-        _recaptchaService = recaptchaService;
         _logger = logger;
     }
 
@@ -83,12 +81,10 @@ public class CheckoutModel : PageModel
             return Page();
         }
 
-        var (captchaAktif, captchaLolos, captchaError) = await _recaptchaService.VerifyAsync(
-            RecaptchaToken, HttpContext.Connection.RemoteIpAddress?.ToString());
-        if (captchaAktif && !captchaLolos)
+        if (AltchaAktif && !Altcha.Verify(KunciAltcha, AltchaPayload))
         {
-            _logger.LogWarning("[RECAPTCHA] Verifikasi checkout gagal | CustomerId={CustomerId} | Error={Error}", CustomerId, captchaError);
-            ModelState.AddModelError(nameof(RecaptchaToken), captchaError ?? "Verifikasi keamanan gagal.");
+            _logger.LogWarning("[ALTCHA] Verifikasi checkout gagal | CustomerId={CustomerId}", CustomerId);
+            ModelState.AddModelError(nameof(AltchaPayload), "Verifikasi keamanan gagal. Muat ulang halaman, lalu coba lagi.");
             await LoadAsync();
             return Page();
         }
@@ -167,6 +163,21 @@ public class CheckoutModel : PageModel
             if (string.IsNullOrWhiteSpace(Form.Address)) Form.Address = profile.Address ?? string.Empty;
         }
 
-        RecaptchaSiteKey = (await _settingService.GetAsync(SettingService.RecaptchaSiteKey))?.Value.Trim();
+        KunciAltcha = (await _settingService.GetAsync(SettingService.AltchaHmacKey))?.Value.Trim() ?? string.Empty;
+        AltchaAktif = KunciAltcha.Length >= 16;
     }
+
+    /// <summary>Endpoin challenge ALTCHA untuk widget (satu challenge per permintaan).</summary>
+    public IActionResult OnGetAltcha()
+    {
+        var json = Altcha.BuatChallenge(KunciAltcha);
+        if (json is null)
+        {
+            return NotFound();
+        }
+        Response.Headers.CacheControl = "no-store";
+        return Content(json, "application/json");
+    }
+
+    private string KunciAltcha { get; set; } = string.Empty;
 }

@@ -159,7 +159,6 @@ builder.Services.AddScoped<IRequestLogService, RequestLogService>();
 builder.Services.AddScoped<IResponseLogService, ResponseLogService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<ISettingService, SettingService>();
-        builder.Services.AddScoped<IRecaptchaService, RecaptchaService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
