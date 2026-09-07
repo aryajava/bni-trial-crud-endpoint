@@ -168,9 +168,10 @@ public class CheckoutModel : PageModel
     }
 
     /// <summary>Endpoin challenge ALTCHA untuk widget (satu challenge per permintaan).</summary>
-    public IActionResult OnGetAltcha()
+    public async Task<IActionResult> OnGetAltcha()
     {
-        var json = Altcha.BuatChallenge(KunciAltcha);
+        var kunci = (await _settingService.GetAsync(SettingService.AltchaHmacKey))?.Value.Trim() ?? string.Empty;
+        var json = Altcha.BuatChallenge(kunci);
         if (json is null)
         {
             return NotFound();
