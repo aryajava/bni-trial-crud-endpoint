@@ -128,12 +128,22 @@ public class CheckoutModel : PageModel
         }
 
         await LoadAsync();
-        var perubahan = CekPerubahan();
-        if (perubahan.Count > 0)
+        var (hilang, stokTurun, harga) = CekPerubahan();
+        if (hilang.Count > 0)
         {
-            _logger.LogWarning("[ORDER] Harga/stok berubah saat konfirmasi | CustomerId={CustomerId} | {Perubahan}", CustomerId, string.Join("; ", perubahan));
-            TempData["InfoMessage"] = "Harga atau stok berubah. Tinjau kembali ringkasan pesanan.";
-            StoreError = "Konfirmasi dibatalkan karena: " + string.Join("; ", perubahan);
+            TempData["InfoMessage"] = $"Produk tidak tersedia: {string.Join(", ", hilang)}. Pesanan dibatalkan; silakan berbelanja kembali.";
+            return Redirect("/");
+        }
+        if (stokTurun.Count > 0)
+        {
+            TempData["InfoMessage"] = $"Stok berubah: {string.Join(", ", stokTurun)}. Periksa kembali keranjang Anda.";
+            return Redirect("/Keranjang");
+        }
+        if (harga.Count > 0)
+        {
+            _logger.LogWarning("[ORDER] Harga berubah saat konfirmasi | CustomerId={CustomerId} | {Perubahan}", CustomerId, string.Join("; ", harga));
+            TempData["InfoMessage"] = "Harga berubah. Tinjau kembali ringkasan pesanan.";
+            StoreError = "Konfirmasi dibatalkan karena: " + string.Join("; ", harga);
             return Page();
         }
 
@@ -266,26 +276,29 @@ public class CheckoutModel : PageModel
     }
 
     /// <summary>Bandingkan snapshot yang dilihat user dengan kondisi terkini keranjang (harga & stok turun).</summary>
-    private List<string> CekPerubahan()
+    private (List<string> Hilang, List<string> StokTurun, List<string> Harga) CekPerubahan()
     {
-        var hasil = new List<string>();
+        var hilang = new List<string>();
+        var stokTurun = new List<string>();
+        var harga = new List<string>();
         foreach (var snap in Snap ?? [])
         {
             var item = Items.FirstOrDefault(x => x.ProductId == snap.ProductId);
             if (item is null)
             {
-                hasil.Add($"Produk #{snap.ProductId} tidak tersedia lagi");
+                var nama = SemuaKeranjang.FirstOrDefault(i => i.ProductId == snap.ProductId)?.Title;
+                hilang.Add(nama is null ? $"Produk #{snap.ProductId}" : $"\"{nama}\"");
                 continue;
             }
             if (snap.UnitPrice.HasValue && item.EffectivePrice != snap.UnitPrice.Value)
             {
-                hasil.Add($"\"{item.Title}\": harga Rp {snap.UnitPrice.Value:N0} → Rp {item.EffectivePrice:N0}");
+                harga.Add($"\"{item.Title}\": harga Rp {snap.UnitPrice.Value:N0} → Rp {item.EffectivePrice:N0}");
             }
             if (snap.Stock.HasValue && item.Stock < snap.Stock.Value)
             {
-                hasil.Add($"\"{item.Title}\": stok {snap.Stock.Value} → {item.Stock}");
+                stokTurun.Add($"\"{item.Title}\"");
             }
         }
-        return hasil;
+        return (hilang, stokTurun, harga);
     }
 }
