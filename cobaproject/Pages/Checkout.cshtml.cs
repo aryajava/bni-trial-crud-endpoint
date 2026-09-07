@@ -66,11 +66,17 @@ public class CheckoutModel : PageModel
         _logger = logger;
     }
 
-    public async Task OnGetAsync(string? ids)
+    public async Task<IActionResult> OnGetAsync(string? ids)
     {
         SelectedIds = ids;
         await LoadAsync();
+        if (Items.Count == 0)
+        {
+            TempData["InfoMessage"] = "Tidak ada produk untuk dipesan. Mulai berbelanja dulu.";
+            return Redirect("/");
+        }
         ViewData["Title"] = "Checkout";
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -79,6 +85,13 @@ public class CheckoutModel : PageModel
         {
             await LoadAsync();
             return Page();
+        }
+
+        await LoadAsync();
+        if (Items.Count == 0)
+        {
+            TempData["InfoMessage"] = "Tidak ada produk untuk dipesan. Mulai berbelanja dulu.";
+            return Redirect("/");
         }
 
         if (AltchaAktif && !Altcha.Verify(KunciAltcha, AltchaPayload))

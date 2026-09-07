@@ -1,0 +1,10 @@
+@{
+    string Badge(string status) => status switch
+    {
+        "DIPROSES" => "badge bg-warning-subtle text-warning-emphasis",
+        "DIKIRIM" => "badge bg-info-subtle text-info-emphasis",
+        "DITERIMA" => "badge bg-success-subtle text-success-emphasis",
+        _ => "badge bg-danger-subtle text-danger-emphasis"
+    };
+}
+<span class="@Badge(Model.Status)">@Model.Status</span>

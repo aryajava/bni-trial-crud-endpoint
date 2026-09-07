@@ -51,7 +51,7 @@
                                     {
                                         <tr>
                                             <td><input type="checkbox" class="cek-pesan" name="ids" value="@item.ProductId" data-product-id="@item.ProductId" checked="@(item.IsSelected ? "checked" : null)" /></td>
-                                            <td class="fw-semibold">@item.Title
+                                            <td class="fw-semibold"><a class="text-decoration-none" href="/Produk/Detail/@item.ProductId">@item.Title</a>
                                                 @if (item.QtyAdjusted)
                                                 {
                                                     <div class="text-warning small">Qty disesuaikan: stok tersisa @item.Stock</div>
@@ -245,7 +245,7 @@
                                     : formatRp(p.effectivePrice);
                                 rowsEl.insertAdjacentHTML('beforeend', '<tr>' +
                                     '<td><input type="checkbox" class="cek-pesan-tamu" data-id="' + p.productId + '" ' + (item.selected !== false ? 'checked' : '') + ' /></td>' +
-                                    '<td class="fw-semibold">' + String(p.title).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</td>' +
+                                    '<td class="fw-semibold"><a class="text-decoration-none" href="/Produk/Detail/' + p.productId + '">' + String(p.title).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</a></td>' +
                                     '<td class="td-nomor">' + harga + '</td>' +
                                     '<td class="text-center"><span class="d-inline-flex align-items-center gap-1">' +
                                     '<button class="btn btn-sm btn-outline-secondary btn-qty" data-id="' + p.productId + '" data-delta="-1">-</button>' +

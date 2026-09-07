@@ -91,8 +91,15 @@
                         @foreach (var item in Model.Items)
                         {
                             <div class="d-flex justify-content-between small mb-1">
-                                <span>@item.Title <span class="text-muted">x@(item.Quantity)</span></span>
-                                <span>Rp @item.Subtotal.ToString("N0")</span>
+                                <span>@item.Title
+                                    <span class="text-muted d-block">
+                                        @if (item.DiscountPercent is > 0)
+                                        {
+                                            <span class="text-decoration-line-through me-1">Rp @item.Price.ToString("N0")</span>
+                                        }@item.EffectivePrice.ToString("N0") × @item.Quantity
+                                    </span>
+                                </span>
+                                <span class="fw-semibold td-nomor">Rp @item.Subtotal.ToString("N0")</span>
                             </div>
                         }
                     </div>

@@ -1,0 +1,90 @@
+@page "{id:long}"
+@model cobaproject.Pages.PesananSaya.DetailModel
+@{
+    Layout = "_TokoLayout";
+}
+
+@if (Model.Order is null)
+{
+    <p class="text-muted small">Pesanan tidak ditemukan.</p>
+}
+else
+{
+    <div class="mb-3">
+        <a class="small text-decoration-none" href="/PesananSaya">
+            <span class="material-icons" style="font-size:16px;vertical-align:-3px;">arrow_back</span> Kembali ke Pesanan Saya
+        </a>
+    </div>
+
+    <div class="card card-toko">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                    <h1 class="h4 mb-1">Pesanan #@Model.Order.Id</h1>
+                    <partial name="_StatusBadge" model="@Model.Order" />
+                    <span class="text-muted small ms-2">@Model.Order.DiprosesAt.ToString("dd MMM yyyy HH:mm")</span>
+                </div>
+                <div class="text-end">
+                    <div class="fs-4 fw-bold text-primary td-nomor">Rp @Model.Order.TotalAmount.ToString("N0")</div>
+                    <div class="text-muted small">Termasuk ongkir & pajak</div>
+                </div>
+            </div>
+
+            <dl class="row small mb-3">
+                <dt class="col-sm-3 text-secondary">Penerima</dt>
+                <dd class="col-sm-9">@Model.Order.ShipName (@Model.Order.ShipPhone)</dd>
+                <dt class="col-sm-3 text-secondary">Alamat Kirim</dt>
+                <dd class="col-sm-9">@Model.Order.ShipAddress</dd>
+                @if (!string.IsNullOrWhiteSpace(Model.Order.CourierName))
+                {
+                    <dt class="col-sm-3 text-secondary">Ekspedisi</dt>
+                    <dd class="col-sm-9">@Model.Order.CourierName</dd>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Order.Note))
+                {
+                    <dt class="col-sm-3 text-secondary">Catatan</dt>
+                    <dd class="col-sm-9">@Model.Order.Note</dd>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Order.BatalReason))
+                {
+                    <dt class="col-sm-3 text-secondary">Alasan Batal</dt>
+                    <dd class="col-sm-9">@Model.Order.BatalReason</dd>
+                }
+            </dl>
+
+            <div class="table-wrap">
+                <table class="table table-data align-middle mb-2">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th class="td-nomor">Harga Satuan</th>
+                            <th class="text-center" style="width:90px;">Jumlah</th>
+                            <th class="td-nomor text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Order.Items)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.Title</td>
+                                <td class="td-nomor">Rp @item.UnitPrice.ToString("N0")</td>
+                                <td class="text-center td-nomor">@item.Quantity</td>
+                                <td class="td-nomor fw-semibold text-end">Rp @item.Subtotal.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <div style="width:260px;">
+                    <div class="d-flex justify-content-between small text-muted"><span>Subtotal</span><span class="td-nomor">Rp @Model.Order.Subtotal.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between small text-muted"><span>Ongkir</span><span class="td-nomor">Rp @Model.Order.ShippingFee.ToString("N0")</span></div>
+                    <div class="d-flex justify-content-between small text-muted"><span>Pajak</span><span class="td-nomor">Rp @Model.Order.TaxAmount.ToString("N0")</span></div>
+                    <hr class="my-2" />
+                    <div class="d-flex justify-content-between fw-bold"><span>Total</span><span class="td-nomor">Rp @Model.Order.TotalAmount.ToString("N0")</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
