@@ -80,7 +80,7 @@
                                                 <form method="post" asp-page-handler="Remove">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="productId" value="@item.ProductId" />
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus" style="border-radius:10px;"><span class="material-icons">delete</span></button>
+                                                    <button type="button" class="btn btn-outline-danger btn-sm btn-hapus-item" data-nama="@item.Title" title="Hapus" style="border-radius:10px;"><span class="material-icons">delete</span></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -112,7 +112,7 @@
                                                 <form method="post" asp-page-handler="Remove">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="productId" value="@item.ProductId" />
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus" style="border-radius:10px;"><span class="material-icons">delete</span></button>
+                                                    <button type="button" class="btn btn-outline-danger btn-sm btn-hapus-item" data-nama="@item.Title" title="Hapus" style="border-radius:10px;"><span class="material-icons">delete</span></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -288,9 +288,19 @@
                             render();
                         }
                     } else if (hapus) {
-                        var items = bacaGuest();
-                        simpanGuest(items.filter(function (i) { return i.productId !== Number(hapus.dataset.id); }));
-                        render();
+                        Swal.fire({
+                            title: 'Hapus produk dari keranjang?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ya, hapus',
+                            cancelButtonText: 'Batal'
+                        }).then(function (r) {
+                            if (r.isConfirmed) {
+                                var items = bacaGuest();
+                                simpanGuest(items.filter(function (i) { return i.productId !== Number(hapus.dataset.id); }));
+                                render();
+                            }
+                        });
                     }
                 });
 
@@ -456,6 +466,21 @@
                     });
                 }
                 document.querySelectorAll('.qty-auto').forEach(muatQty);
+
+                document.querySelectorAll('.btn-hapus-item').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        Swal.fire({
+                            title: 'Hapus produk dari keranjang?',
+                            text: btn.dataset.nama,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ya, hapus',
+                            cancelButtonText: 'Batal'
+                        }).then(function (r) {
+                            if (r.isConfirmed) { btn.closest('form').submit(); }
+                        });
+                    });
+                });
 
                 if (cekSemua) {
                     cekSemua.addEventListener('change', function () {
