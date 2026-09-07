@@ -41,7 +41,7 @@
                                         <th style="width:36px;"><input type="checkbox" id="cekSemua" checked title="Pilih semua" /></th>
                                         <th>Produk</th>
                                         <th class="td-nomor">Harga Satuan</th>
-                                        <th class="text-center" style="width:130px;">Jumlah</th>
+                                        <th class="text-center" style="width:96px;">Jumlah</th>
                                         <th class="td-nomor">Subtotal</th>
                                         <th class="col-aksi"></th>
                                     </tr>
@@ -69,19 +69,18 @@
                                                 }
                                             </td>
                                             <td>
-                                                <form method="post" asp-page-handler="UpdateQty" class="d-flex gap-1 justify-content-center">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="productId" value="@item.ProductId" />
-                                                    <input type="number" name="qty" value="@item.Quantity" min="1" max="@item.Stock" class="form-control form-control-sm" style="width:80px;" data-bilangan />
-                                                    <button class="btn btn-outline-primary btn-sm" type="submit" title="Perbarui"><span class="material-icons">refresh</span></button>
-                                                </form>
+                                                <input type="number" class="form-control form-control-sm qty-auto" data-bilangan data-bilangan-max="@item.Stock"
+                                                       data-product-id="@item.ProductId" data-qty-lama="@item.Quantity"
+                                                       data-unit="@item.EffectivePrice" value="@item.Quantity" min="0" max="@item.Stock"
+                                                       aria-label="Jumlah @item.Title"
+                                                       style="width:76px;margin:0 auto;border-radius:10px;text-align:center;font-variant-numeric:tabular-nums;" />
                                             </td>
-                                            <td class="td-nomor fw-semibold subtotal-baris" data-subtotal="@item.Subtotal">Rp @item.Subtotal.ToString("N0")</td>
+                                            <td class="td-nomor fw-semibold subtotal-baris" data-id="@item.ProductId" data-unit="@item.EffectivePrice" data-subtotal="@item.Subtotal">Rp @item.Subtotal.ToString("N0")</td>
                                             <td>
                                                 <form method="post" asp-page-handler="Remove">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="productId" value="@item.ProductId" />
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><span class="material-icons">delete</span></button>
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus" style="border-radius:10px;"><span class="material-icons">delete</span></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -113,7 +112,7 @@
                                                 <form method="post" asp-page-handler="Remove">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="productId" value="@item.ProductId" />
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><span class="material-icons">delete</span></button>
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus" style="border-radius:10px;"><span class="material-icons">delete</span></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -131,13 +130,13 @@
                         {
                             <form method="post" asp-page-handler="Clear" id="formKosongkan">
                                 @Html.AntiForgeryToken()
-                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnKosongkan"><span class="material-icons">delete_sweep</span> Kosongkan</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnKosongkan" style="border-radius:10px;"><span class="material-icons">delete_sweep</span> Kosongkan</button>
                             </form>
                         }
                     </div>
                     @if (Model.Items.Count > 0)
                     {
-                        <button class="btn btn-primary" type="button" id="btnKonfirmasiPesan">
+                        <button class="btn btn-primary" type="button" id="btnKonfirmasiPesan" style="border-radius:10px;">
                             <span class="material-icons">check_circle</span> Konfirmasi Pesanan
                         </button>
                     }
@@ -394,6 +393,69 @@
                     fd.append('selected', selected ? 'true' : 'false');
                     fetch('/Keranjang?handler=SetSelected', { method: 'POST', body: fd }).catch(function () { });
                 }
+
+                function kirimQty(productId, qty) {
+                    var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                    if (!tokenInput) { return Promise.reject('Token tidak ditemukan.'); }
+                    var fd = new FormData();
+                    fd.append('__RequestVerificationToken', tokenInput.value);
+                    fd.append('productId', productId);
+                    fd.append('qty', qty);
+                    return fetch('/Keranjang?handler=SetQty', { method: 'POST', body: fd });
+                }
+
+                function muatQty(input) {
+                    input.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                    });
+                    input.addEventListener('change', function () {
+                        var id = Number(input.dataset.productId);
+                        var lama = Number(input.dataset.qtyLama || 1);
+                        var nilai = Number(input.value);
+                        var max = Number(input.max);
+                        var baris = document.querySelector('.subtotal-baris[data-id="' + id + '"]');
+
+                        function pulihkan() { input.value = lama; }
+
+                        if (!(nilai >= 1)) {
+                            Swal.fire({
+                                title: 'Hapus produk dari keranjang?',
+                                text: 'Jumlah diatur ke 0, barang akan dihapus.',
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonText: 'Ya, hapus',
+                                cancelButtonText: 'Batal'
+                            }).then(function (r) {
+                                if (!r.isConfirmed) { pulihkan(); return; }
+                                kirimQty(id, 0).then(function (res) { return res.text(); }).then(function (txt) {
+                                    if (txt !== 'ok' && txt !== 'deleted') { pulihkan(); location.reload(); return; }
+                                    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Produk dihapus dari keranjang.", showConfirmButton: false, timer: 2000 });
+                                    location.reload();
+                                }).catch(function () { pulihkan(); location.reload(); });
+                            });
+                            return;
+                        }
+
+                        if (nilai > max) { nilai = Math.max(1, max); input.value = nilai; }
+                        if (nilai === lama) { return; }
+
+                        kirimQty(id, nilai).then(function (res) { return res.text(); }).then(function (txt) {
+                            if (txt === 'deleted') { location.reload(); return; }
+                            var tersimpan = Number(txt);
+                            if (!(tersimpan >= 1)) { pulihkan(); location.reload(); return; }
+                            input.value = tersimpan;
+                            input.dataset.qtyLama = String(tersimpan);
+                            if (baris) {
+                                var sub = Math.round((Number(baris.dataset.unit) || 0) * tersimpan * 100) / 100;
+                                baris.dataset.subtotal = String(sub);
+                                baris.textContent = formatRpHalaman(sub);
+                                if (hitungTotal) { hitungTotal(); }
+                            }
+                            Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Jumlah diperbarui.", showConfirmButton: false, timer: 1200 });
+                        }).catch(function () { pulihkan(); location.reload(); });
+                    });
+                }
+                document.querySelectorAll('.qty-auto').forEach(muatQty);
 
                 if (cekSemua) {
                     cekSemua.addEventListener('change', function () {

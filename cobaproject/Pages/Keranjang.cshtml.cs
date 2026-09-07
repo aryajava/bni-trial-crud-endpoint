@@ -112,15 +112,28 @@ public class KeranjangModel : PageModel
         return Redirect("/Checkout?ids=" + productId);
     }
 
-    public async Task<IActionResult> OnPostUpdateQtyAsync(int productId, int qty)
+    /// <summary>Simpan qty tanpa reload (AJAX). qty 0 atau stok habis = hapus item; balasan = qty akhir atau "deleted".</summary>
+    public async Task<IActionResult> OnPostSetQtyAsync(int productId, int qty)
     {
         if (!IsCustomer)
         {
-            return Redirect("/Masuk?ReturnUrl=/Keranjang");
+            return Unauthorized();
+        }
+
+        if (qty <= 0)
+        {
+            await _cartService.RemoveAsync(CustomerId, productId);
+            return Content("deleted");
         }
 
         await _cartService.SetQuantityAsync(CustomerId, productId, qty);
-        return Redirect("/Keranjang");
+        var items = await _cartService.GetAsync(CustomerId);
+        var item = items.FirstOrDefault(i => i.ProductId == productId);
+        if (item is null)
+        {
+            return Content("deleted");
+        }
+        return Content(item.Quantity.ToString());
     }
 
     public async Task<IActionResult> OnPostRemoveAsync(int productId)

@@ -139,7 +139,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="productId" value="@p.Id" />
                                             <input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path@ViewContext.HttpContext.Request.QueryString" />
-                                            <button class="btn btn-primary btn-sm border-0 rounded-0" type="submit" aria-label="Tambah ke keranjang" style="width:38px;">
+                                            <button class="btn btn-outline-primary btn-sm border-0 rounded-0" type="submit" aria-label="Tambah ke keranjang" title="Tambah ke keranjang" style="width:38px;background:#fff;">
                                                 <span class="material-icons" style="font-size:18px;">add_shopping_cart</span>
                                             </button>
                                         </form>
@@ -147,7 +147,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="productId" value="@p.Id" />
                                             <input type="hidden" name="returnUrl" value="@ViewContext.HttpContext.Request.Path@ViewContext.HttpContext.Request.QueryString" />
-                                            <button class="btn btn-primary btn-sm w-100 border-0 rounded-0 fw-semibold" type="submit" style="border-left:1px solid rgba(255,255,255,.35);">
+                                            <button class="btn btn-primary btn-sm w-100 border-0 rounded-0 fw-semibold" type="submit">
                                                 Beli
                                             </button>
                                         </form>
@@ -156,10 +156,10 @@
                                 else
                                 {
                                     <div class="d-flex w-100 mt-auto" style="border:1px solid var(--gk-primary);border-radius:10px;overflow:hidden;">
-                                        <button class="btn btn-primary btn-sm border-0 rounded-0 btn-tambah-tamu" type="button" data-product-id="@p.Id" aria-label="Tambah ke keranjang" title="Tambah ke keranjang" style="width:38px;">
+                                        <button class="btn btn-outline-primary btn-sm border-0 rounded-0 btn-tambah-tamu" type="button" data-product-id="@p.Id" aria-label="Tambah ke keranjang" title="Tambah ke keranjang" style="width:38px;background:#fff;">
                                             <span class="material-icons" style="font-size:18px;">add_shopping_cart</span>
                                         </button>
-                                        <button class="btn btn-primary btn-sm border-0 rounded-0 flex-grow-1 btn-beli-tamu fw-semibold" type="button" data-product-id="@p.Id" style="border-left:1px solid rgba(255,255,255,.35);">
+                                        <button class="btn btn-primary btn-sm border-0 rounded-0 flex-grow-1 btn-beli-tamu fw-semibold" type="button" data-product-id="@p.Id">
                                             Beli
                                         </button>
                                     </div>
