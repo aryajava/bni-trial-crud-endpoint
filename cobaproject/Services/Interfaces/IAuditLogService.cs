@@ -12,4 +12,9 @@ public interface IAuditLogService
     Task<PagedResult<CustomerAuditEntryDto>> GetCustomerPagedAsync(CustomerAuditQueryParams query);
 
     Task<PagedResult<HttpLogEntryDto>> GetHttpPagedAsync(HttpLogQueryParams query);
+
+    /// <summary>Notifikasi pesanan (batal/diterima) untuk panel, sejak penanda terakhir dibaca.</summary>
+    Task<List<OrderNotificationDto>> GetOrderNotificationsAsync(DateTime? readAt, int limit = 100);
+
+    Task<int> CountOrderNotificationsAsync(DateTime? readAt);
 }

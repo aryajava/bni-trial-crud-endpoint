@@ -1,0 +1,60 @@
+@page
+@model cobaproject.Pages.Panel.NotifikasiModel
+@{
+    ViewData["Title"] = "Notifikasi";
+}
+
+<div class="page-header">
+    <h1><span class="material-icons">notifications</span> Notifikasi</h1>
+</div>
+
+<div class="card card-soft">
+    <div class="card-body p-3">
+        @if (Model.Items.Count == 0)
+        {
+            <div class="text-center text-muted py-4 row-empty">
+                <span class="material-icons" style="font-size:48px;">notifications_off</span>
+                <p class="mt-2 mb-0">Tidak ada notifikasi baru.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-data align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Jenis</th>
+                            <th>Pesanan</th>
+                            <th>Pelaku</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            var batal = item.Action == "ORDER_CANCELLED";
+                            <tr>
+                                <td class="td-nomor">@item.ActedAt.ToString("dd MMM yyyy HH:mm")</td>
+                                <td>
+                                    <span class="badge @(batal ? "bg-danger-subtle text-danger-emphasis" : "bg-success-subtle text-success-emphasis")">
+                                        @(batal ? "Dibatalkan" : "Diterima")
+                                    </span>
+                                </td>
+                                <td class="fw-semibold">@item.OrderNumber</td>
+                                <td class="text-muted">@item.Actor</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <form method="post" asp-page-handler="MarkRead">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-primary btn-sm" type="submit">
+                        <span class="material-icons">done_all</span> Tandai semua dibaca (@Model.Unread)
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</div>

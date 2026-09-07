@@ -439,6 +439,10 @@ public class OrderService : IOrderService
             WHERE  ID = @Id AND STATUS = 'DIKIRIM';
             """, new { Id = id, UpdatedBy = updatedBy });
 
+        if (affected > 0)
+        {
+            await _audit.LogAsync("ORDER", id.ToString(), "ORDER_RECEIVED", null, null, $"Diterima oleh {updatedBy}");
+        }
         return (affected > 0, null);
     }
 

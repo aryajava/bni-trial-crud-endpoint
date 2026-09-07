@@ -27,5 +27,10 @@ public interface IUserService
 
     Task<(bool Success, string? Error)> BlockAsync(int id, string updatedBy);
 
+    /// <summary>Penanda waktu notifikasi terakhir dibaca untuk staf.</summary>
+    Task<DateTime?> GetNotifReadAtAsync(int userId);
+
+    Task SetNotifReadAtAsync(int userId);
+
     Task<int> CountActiveByRoleAsync(string role);
 }

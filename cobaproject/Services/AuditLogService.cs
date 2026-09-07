@@ -330,4 +330,37 @@ public class AuditLogService : IAuditLogService
             TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
         };
     }
+
+    public async Task<List<OrderNotificationDto>> GetOrderNotificationsAsync(DateTime? readAt, int limit = 100)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var rows = await connection.QueryAsync<OrderNotificationDto>("""
+            SELECT TOP (@Limit)
+                A.ID AS AuditId,
+                CAST(A.ENTITY_ID AS BIGINT) AS OrderId,
+                ISNULL(O.ORDER_NUMBER, '#' + A.ENTITY_ID) AS OrderNumber,
+                A.ACTION AS Action,
+                A.ACTOR AS Actor,
+                A.ACTED_AT AS ActedAt
+            FROM LOSCONSUMER.TRX_AUDIT_LOG A
+            LEFT JOIN LOSCONSUMER.TRX_ORDER O ON O.ID = CAST(A.ENTITY_ID AS BIGINT)
+            WHERE A.ENTITY = 'ORDER'
+              AND A.ACTION IN ('ORDER_CANCELLED', 'ORDER_RECEIVED')
+              AND (@ReadAt IS NULL OR A.ACTED_AT > @ReadAt)
+            ORDER BY A.ACTED_AT DESC;
+            """, new { Limit = Math.Min(Math.Max(1, limit), 500), ReadAt = readAt });
+        return rows.ToList();
+    }
+
+    public async Task<int> CountOrderNotificationsAsync(DateTime? readAt)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.ExecuteScalarAsync<int>("""
+            SELECT COUNT(*)
+            FROM LOSCONSUMER.TRX_AUDIT_LOG A
+            WHERE A.ENTITY = 'ORDER'
+              AND A.ACTION IN ('ORDER_CANCELLED', 'ORDER_RECEIVED')
+              AND (@ReadAt IS NULL OR A.ACTED_AT > @ReadAt);
+            """, new { ReadAt = readAt });
+    }
 }

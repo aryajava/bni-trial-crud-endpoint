@@ -503,6 +503,24 @@ public class UserService : IUserService
             """, new { Role = role });
     }
 
+    public async Task<DateTime?> GetNotifReadAtAsync(int userId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.ExecuteScalarAsync<DateTime?>(
+            "SELECT NOTIF_READ_AT FROM LOSCONSUMER.MASTER_USER WHERE ID = @Id;",
+            new { Id = userId });
+    }
+
+    public async Task SetNotifReadAtAsync(int userId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET NOTIF_READ_AT = GETDATE()
+            WHERE ID = @Id;
+            """, new { Id = userId });
+    }
+
     private const int MaxPageSize = 100;
 
     private static async Task<bool> IsSeededSuperAdminAsync(SqlConnection connection, int id)

@@ -22,6 +22,16 @@ public class HttpLogEntryDto
     public DateTime? RespondedAt { get; set; }
 }
 
+public class OrderNotificationDto
+{
+    public long AuditId { get; set; }
+    public long OrderId { get; set; }
+    public string? OrderNumber { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string Actor { get; set; } = string.Empty;
+    public DateTime ActedAt { get; set; }
+}
+
 public class HttpLogQueryParams : PageRequest
 {
     [Description("Filter path/URL (contains).")]
