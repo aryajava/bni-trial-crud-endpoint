@@ -68,6 +68,7 @@
             var urutan = "asc";
             var opsi = Array.from(select.options);
             var ket = opsi.map(function (o, i) { return { index: i, teks: o.text, nilai: o.value }; });
+            var nilaiAwal = select.value;
             var placeholderTeks = (function () {
                 var pertama = opsi[0];
                 return pertama && pertama.value === "" ? pertama.text : "Pilih…";
@@ -112,7 +113,6 @@
                     var teksRendah = k.teks.toLowerCase();
                     var cocok = qq === "" || teksRendah.startsWith(qq);
                     if (!cocok) { return; }
-                    if (k.nilai === "" && select.value !== "") { return; }
                     ada = true;
                     var li = document.createElement("li");
                     if (qq === "") {
@@ -188,6 +188,7 @@
             opsi = Array.from(select.options);
             ket = opsi.map(function (o, i) { return { index: i, teks: o.text, nilai: o.value }; });
 
+            select.value = nilaiAwal;
             tampilkanTeksTerpilih();
         });
     });
