@@ -54,11 +54,12 @@ public static class Altcha
     }
 
     /// <summary>Verifikasi payload (base64url JSON) yang dikirim widget.</summary>
-    public static bool Verify(string hmacKey, string? payload)
+    public static bool Verify(string hmacKey, string? payload, Action<string>? onGagal = null)
     {
         if (string.IsNullOrWhiteSpace(hmacKey) || hmacKey.Length < 16 ||
             string.IsNullOrWhiteSpace(payload))
         {
+            onGagal?.Invoke("kunci tidak valid atau payload kosong");
             return false;
         }
 
@@ -69,22 +70,26 @@ public static class Altcha
                 string.IsNullOrWhiteSpace(p.Challenge) || string.IsNullOrWhiteSpace(p.Salt) ||
                 string.IsNullOrWhiteSpace(p.Signature))
             {
+                onGagal?.Invoke("payload tidak lengkap");
                 return false;
             }
 
             var parts = p.Salt.Split(new[] { '?', '/' }, 2);
             if (parts.Length != 2 || !parts[1].StartsWith("expires=", StringComparison.Ordinal))
             {
+                onGagal?.Invoke("salt tanpa expires");
                 return false;
             }
             if (!long.TryParse(parts[1]["expires=".Length..], out var expires) ||
                 DateTimeOffset.FromUnixTimeSeconds(expires) < DateTimeOffset.UtcNow)
             {
+                onGagal?.Invoke($"payload kedaluwarsa (expires={parts[1]["expires=".Length..]})");
                 return false;
             }
 
             if (!string.Equals(p.Algorithm, AlgorithmSha256, StringComparison.OrdinalIgnoreCase))
             {
+                onGagal?.Invoke("algoritma tidak dikenali");
                 return false;
             }
 
@@ -97,14 +102,21 @@ public static class Altcha
             }
             if (!cocok)
             {
+                onGagal?.Invoke("rehash tidak cocok dengan challenge");
                 return false;
             }
 
             var tandaTangan = HmacHex(hmacKey, p.Challenge);
-            return string.Equals(tandaTangan, p.Signature, StringComparison.OrdinalIgnoreCase);
+            if (!string.Equals(tandaTangan, p.Signature, StringComparison.OrdinalIgnoreCase))
+            {
+                onGagal?.Invoke("tanda tangan tidak cocok");
+                return false;
+            }
+            return true;
         }
-        catch
+        catch (Exception ex)
         {
+            onGagal?.Invoke("pengecualian: " + ex.Message);
             return false;
         }
     }

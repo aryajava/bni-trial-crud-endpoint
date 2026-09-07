@@ -132,7 +132,8 @@ public class CheckoutModel : PageModel
             return Redirect("/");
         }
 
-        if (AltchaAktif && !Altcha.Verify(KunciAltcha, AltchaPayload))
+        if (AltchaAktif && !Altcha.Verify(KunciAltcha, AltchaPayload, alasan =>
+        _logger.LogWarning("[ALTCHA] Verifikasi checkout ditolak | CustomerId={CustomerId} | Alasan={Alasan}", CustomerId, alasan)))
         {
             _logger.LogWarning("[ALTCHA] Verifikasi checkout gagal | CustomerId={CustomerId}", CustomerId);
             ModelState.AddModelError(nameof(AltchaPayload), "Verifikasi keamanan gagal. Muat ulang halaman, lalu coba lagi.");
