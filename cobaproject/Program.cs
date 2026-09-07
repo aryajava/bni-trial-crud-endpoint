@@ -240,6 +240,8 @@ if (app.Urls.Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnor
     app.UseHttpsRedirection();
 }
 
+app.UseStaticFiles();
+
 app.UseMiddleware<RequestResponseMiddleware>();
 
 app.UseAuthentication();

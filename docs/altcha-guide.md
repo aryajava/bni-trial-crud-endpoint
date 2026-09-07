@@ -31,7 +31,7 @@ hanya dengan satu perhitungan hash + satu HMAC (sangat murah). Tanpa interaksi u
 | Benda | Lokasi | Keterangan |
 |---|---|---|
 | Logika challenge + verifikasi | `cobaproject/Helpers/Altcha.cs` | ~120 baris, SHA-256 + HMACSHA256, tanpa dependensi eksternal |
-| Widget (web component) | `cobaproject/wwwroot/js/altcha.min.js` | Versi dist ruil 2.3.0, dimuat lokal |
+| Widget (web component) | `cobaproject/wwwroot/js/altcha.min.js` | Versi dist ruil 2.3.0, dimuat lokal (butuh `app.UseStaticFiles()` di `Program.cs` agar tersaji) |
 | File bahasa Indonesia | `cobaproject/wwwroot/js/altcha.lang.id.js` | Belum dipakai; lihat "i18n" di bawah |
 | Endpoin challenge | `/Checkout?handler=Altcha` | Mengembalikan JSON challenge baru per permintaan |
 | Pengaturan | `APP_SETTING.ALTCHA_HMAC_KEY` | Kosong = nonaktif; minimal 16 karakter = aktif |
