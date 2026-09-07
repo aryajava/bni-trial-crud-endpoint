@@ -24,10 +24,15 @@ public static class Altcha
 
     private sealed class Payload
     {
+        [System.Text.Json.Serialization.JsonPropertyName("algorithm")]
         public string? Algorithm { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("challenge")]
         public string? Challenge { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("salt")]
         public string? Salt { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("signature")]
         public string? Signature { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("number")]
         public long? Number { get; set; }
     }
 
