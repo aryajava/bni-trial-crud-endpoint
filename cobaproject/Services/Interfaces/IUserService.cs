@@ -27,6 +27,15 @@ public interface IUserService
 
     Task<(bool Success, string? Error)> BlockAsync(int id, string updatedBy);
 
+    /// <summary>Status sesi aktif & perangkat terakhir untuk Sesi Aktif.</summary>
+    Task<(bool IsLoged, string? LastDevice)> GetSessionStateAsync(int userId);
+
+    Task MarkLoggedInAsync(int userId, string lastDevice);
+
+    Task MarkLoggedOutAsync(int userId);
+
+    Task<(bool Success, string? Error)> ReleaseSessionAsync(int userId, string updatedBy);
+
     /// <summary>Penanda waktu notifikasi terakhir dibaca untuk staf.</summary>
     Task<DateTime?> GetNotifReadAtAsync(int userId);
 

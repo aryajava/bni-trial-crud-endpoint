@@ -117,6 +117,7 @@
                     } else {
                         aksi += ' <button class="btn btn-outline-info btn-sm btn-reactivate" data-id="' + c.id + '" title="Aktifkan kembali (SA)"><span class="material-icons">person_add</span></button>';
                     }
+                    aksi += ' <button class="btn btn-outline-dark btn-sm btn-lepas" data-id="' + c.id + '" data-nama="' + esc(c.display) + '" title="Lepas sesi (SA)"><span class="material-icons">phonelink_erase</span></button>';
                 }
                 return '<tr>' +
                     '<td class="td-nomor text-center">' + nomor + '</td>' +
@@ -243,6 +244,9 @@
                         .then((r) => { if (r.isConfirmed) aksi('POST', '/api/customers/' + t.dataset.id + '/deactivate'); });
                 } else if (t.classList.contains('btn-reactivate')) {
                     aksi('POST', '/api/customers/' + t.dataset.id + '/reactivate');
+                } else if (t.classList.contains('btn-lepas')) {
+                    Swal.fire({ title: 'Lepas sesi ' + t.dataset.nama + '?', text: 'Akun akan bisa masuk dari perangkat lain.', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, lepas', cancelButtonText: 'Batal' })
+                        .then((r) => { if (r.isConfirmed) aksi('POST', '/api/customers/' + t.dataset.id + '/release-session'); });
                 }
             });
             loadData();

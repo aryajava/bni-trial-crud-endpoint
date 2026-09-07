@@ -63,7 +63,19 @@ public class MasukModel : PageModel
             new Claim("DisplayName", customer.Display)
         ], CustomerAuth.CustomerScheme);
 
+        var labelDevice = DeviceInfo.BuatLabel(
+            Request.Headers.UserAgent.ToString(),
+            HttpContext.Connection.RemoteIpAddress?.ToString());
+        var sesi = await _customerService.GetSessionStateAsync(customer.Id);
+        if (sesi.IsLoged && !DeviceInfo.Sesuai(sesi.LastDevice, labelDevice))
+        {
+            _logger.LogWarning("[AUTH] Login ditolak - sesi aktif di perangkat lain | CustomerId={CustomerId} | Device={Device}", customer.Id, sesi.LastDevice);
+            TempData["ErrorMessage"] = $"Akun sedang aktif di perangkat lain ({sesi.LastDevice}). Keluar dari perangkat tersebut, atau mintalah bantuan pengurus toko bila perangkat hilang.";
+            return Page();
+        }
+
         await HttpContext.SignInAsync(CustomerAuth.CustomerScheme, new ClaimsPrincipal(identity));
+        await _customerService.MarkLoggedInAsync(customer.Id, labelDevice);
 
         _logger.LogInformation("[AUTH] Login pelanggan berhasil | Email={Email} | CustomerId={CustomerId}", Email, customer.Id);
 

@@ -1,5 +1,11 @@
 # Panduan OpenIddict - SSO Self-Hosted untuk .NET
 
+> **Catatan status (2026-09)**: permintaan "SSO untuk login" di proyek ini akhirnya
+> diselesaikan dengan desain **Sesi Aktif** (kolom `IS_LOGGED` + `LAST_DEVICE`, satu sesi
+> per akun) yang jauh lebih sederhana. Panduan OpenIddict di bawah TETAP berlaku sebagai
+> bahan belajar untuk kebutuhan SSO antar-aplikasi sesungguhnya di masa depan; bukan
+> implementasi yang dipakai fitur ini.
+
 Dokumen ini menjelaskan apa itu OpenIddict, bagaimana ia menjadi "SSO internal" langsung di
 dalam aplikasi ASP.NET Core (tanpa panggilan keluar ke pihak ketiga), dan bagaimana rencananya
 dipasang di proyek ini (Batch F). Ditulis sebagai bahan belajar dan titik mulai untuk pemakaian

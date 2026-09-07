@@ -19,4 +19,13 @@ public interface ICustomerService
     Task<(bool Success, string? Error)> ReactivateAsync(int id, string updatedBy);
     Task<(bool Success, string? Error)> ResetPasswordAsync(int id, string newPassword, string updatedBy);
     Task<bool> VerifyPasswordAsync(int customerId, string password);
+
+    /// <summary>Status sesi aktif & perangkat terakhir untuk Sesi Aktif.</summary>
+    Task<(bool IsLoged, string? LastDevice)> GetSessionStateAsync(int customerId);
+
+    Task MarkLoggedInAsync(int customerId, string lastDevice);
+
+    Task MarkLoggedOutAsync(int customerId);
+
+    Task<(bool Success, string? Error)> ReleaseSessionAsync(int customerId, string updatedBy);
 }

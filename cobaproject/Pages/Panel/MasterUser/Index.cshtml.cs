@@ -18,7 +18,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
-    private int CurrentUserId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+    public int CurrentUserId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
     private string CurrentRole => User.FindFirstValue(ClaimTypes.Role) ?? UserRolePolicy.Admin;
 
@@ -54,6 +54,28 @@ public class IndexModel : PageModel
 
         await _userService.SoftDeleteAsync(id, Caller);
         TempData["SuccessMessage"] = $"User \"{target.Display}\" dinonaktifkan.";
+        return RedirectToPage(new { Search });
+    }
+
+    public async Task<IActionResult> OnPostReleaseSessionAsync(int id)
+    {
+        if (id == CurrentUserId)
+        {
+            ModelState.AddModelError(string.Empty, "Tidak dapat melepas sesi akun sendiri; gunakan Keluar.");
+            await LoadAsync();
+            return Page();
+        }
+
+        var target = await _userService.GetByIdAsync(id);
+        if (target is null)
+        {
+            return NotFound();
+        }
+
+        var (ok, sesiError) = await _userService.ReleaseSessionAsync(id, Caller);
+        TempData[ok ? "InfoMessage" : "ErrorMessage"] = ok
+            ? $"Sesi user \"{target.Display}\" dilepas."
+            : (sesiError ?? "Sesi user sudah tidak aktif.");
         return RedirectToPage(new { Search });
     }
 

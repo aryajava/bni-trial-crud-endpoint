@@ -86,6 +86,15 @@
                                             </button>
                                         </form>
                                     }
+                                    @if (r.CanManage && u.Id != Model.CurrentUserId)
+                                    {
+                                        <form method="post" asp-page-handler="ReleaseSession" class="m-0">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button type="button" class="btn-icon btn-release btn-confirm-release" title="Lepas sesi" data-confirm="Lepas sesi user '@u.Display'?">
+                                                <span class="material-icons">phonelink_erase</span>
+                                            </button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -132,6 +141,23 @@
                     icon: "warning",
                     showCancelButton: true,
                     confirmButtonText: "Ya, nonaktifkan",
+                    cancelButtonText: "Batal"
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        btn.closest("form").submit();
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll(".btn-confirm-release").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                Swal.fire({
+                    title: "Lepas sesi user ini?",
+                    text: btn.getAttribute("data-confirm"),
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Ya, lepas",
                     cancelButtonText: "Batal"
                 }).then(function (result) {
                     if (result.isConfirmed) {

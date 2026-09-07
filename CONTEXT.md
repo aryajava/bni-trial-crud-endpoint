@@ -68,6 +68,10 @@ _Avoid_: delete akun, nonaktif akun
 Orang yang berbelanja di toko; boleh menjelajah katalog dan mengisi keranjang tanpa masuk, tetapi wajib memiliki akun (masuk) saat checkout. Akun pelanggan terpisah dari akun pengurus toko — tabel dan area login yang berbeda.
 _Avoid_: customer, pembeli, buyer, member
 
+**Sesi Aktif**:
+Keadaan satu akun sedang dipakai di satu perangkat. Selama sesi aktif, masuk dari perangkat lain ditolak sampai pemilik keluar dari perangkat lama atau pengurus toko melepas sesi. Bukan "SSO" (masuk sekali untuk banyak aplikasi).
+_Avoid_: SSO, terpental, single sign-on, single active session
+
 **Pengurus Toko**:
 Sebutan kolektif untuk Super Admin, Pemilik Toko, dan Admin Toko — orang-orang yang mengelola toko dari area staf.
 _Avoid_: staff, karyawan, internal, user

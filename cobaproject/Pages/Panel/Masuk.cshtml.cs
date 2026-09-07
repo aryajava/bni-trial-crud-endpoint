@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using cobaproject.Helpers;
 using cobaproject.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -65,9 +66,21 @@ public class LoginModel : PageModel
             new Claim("DisplayName", user.Display)
         ], CookieAuthenticationDefaults.AuthenticationScheme);
 
+        var labelDevice = DeviceInfo.BuatLabel(
+            Request.Headers.UserAgent.ToString(),
+            HttpContext.Connection.RemoteIpAddress?.ToString());
+        var sesi = await _userService.GetSessionStateAsync(user.Id);
+        if (sesi.IsLoged && !DeviceInfo.Sesuai(sesi.LastDevice, labelDevice))
+        {
+            _logger.LogWarning("[AUTH] Login staf ditolak - sesi aktif di perangkat lain | UserId={UserId} | Device={Device}", user.Id, sesi.LastDevice);
+            TempData["ErrorMessage"] = $"Akun sedang aktif di perangkat lain ({sesi.LastDevice}). Keluar dari perangkat tersebut, atau mintalah bantuan pengurus lain bila perangkat hilang.";
+            return Page();
+        }
+
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
+        await _userService.MarkLoggedInAsync(user.Id, labelDevice);
 
         _logger.LogInformation("[AUTH] Login staf berhasil | Username={Username} | UserId={UserId} | Role={Role}", user.Username, user.Id, user.Role);
 

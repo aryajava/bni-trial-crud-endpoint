@@ -35,6 +35,30 @@ public class CustomerController : ControllerBase
         }
     }
 
+    [HttpPost("{id:int}/release-session")]
+    [Authorize(Roles = UserRolePolicy.Sa)]
+    public async Task<IResult> ReleaseSession(int id)
+    {
+        try
+        {
+            var customer = await _customerService.GetByIdAsync(id);
+            if (customer is null) return ResponseHelper.NotFound(HttpContext, "Pelanggan tidak ditemukan.");
+
+            var (ok, error) = await _customerService.ReleaseSessionAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-PELANGGAN] Lepas sesi pelanggan | CustomerId={CustomerId} | Caller={Caller}", id, Caller);
+            else
+                _logger.LogWarning("[API-PELANGGAN] Lepas sesi pelanggan gagal | CustomerId={CustomerId} | Caller={Caller} | Error={Error}", id, Caller, error);
+            return ok
+                ? ResponseHelper.Success(HttpContext, $"Sesi pelanggan \"{customer.Display}\" dilepas.", "Berhasil")
+                : ResponseHelper.ValidationError(HttpContext, [error ?? "Sesi pelanggan sudah tidak aktif."]);
+        }
+        catch (Exception ex)
+        {
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+
     [HttpPost("{id:int}/block")]
     [Authorize(Roles = $"{UserRolePolicy.Owner},{UserRolePolicy.Sa}")]
     public async Task<IResult> Block(int id)

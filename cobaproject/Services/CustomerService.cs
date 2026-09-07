@@ -406,6 +406,62 @@ public class CustomerService : ICustomerService
         return int.TryParse(value, out var threshold) ? threshold : 5;
     }
 
+    public async Task<(bool IsLoged, string? LastDevice)> GetSessionStateAsync(int customerId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var row = await connection.QueryFirstOrDefaultAsync<dynamic>("""
+            SELECT IS_LOGGED, LAST_DEVICE
+            FROM LOSCONSUMER.MASTER_CUSTOMER
+            WHERE ID = @Id;
+            """, new { Id = customerId });
+        return row is null
+            ? (false, null)
+            : ((bool)row.IS_LOGGED, row.LAST_DEVICE as string);
+    }
+
+    public async Task MarkLoggedInAsync(int customerId, string lastDevice)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_CUSTOMER
+            SET IS_LOGGED   = 1,
+                LAST_DEVICE = @LastDevice
+            WHERE ID = @Id;
+            """, new { LastDevice = lastDevice, Id = customerId });
+    }
+
+    public async Task MarkLoggedOutAsync(int customerId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_CUSTOMER
+            SET IS_LOGGED   = 0,
+                LAST_DEVICE = NULL
+            WHERE ID = @Id;
+            """, new { Id = customerId });
+    }
+
+    public async Task<(bool Success, string? Error)> ReleaseSessionAsync(int customerId, string updatedBy)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var affected = await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_CUSTOMER
+            SET IS_LOGGED   = 0,
+                LAST_DEVICE = NULL,
+                UPDATED_AT  = GETDATE(),
+                UPDATED_BY  = @UpdatedBy,
+                VERSION     = VERSION + 1
+            WHERE ID = @Id AND IS_LOGGED = 1;
+            """, new { Id = customerId, UpdatedBy = updatedBy });
+
+        if (affected > 0)
+        {
+            await WriteAuditAsync(connection, customerId, "SESSION_RELEASED", updatedBy, null);
+        }
+        return (affected > 0, null);
+    }
+
     private static string EscapeLike(string value) =>
         value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
