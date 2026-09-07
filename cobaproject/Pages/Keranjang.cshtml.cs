@@ -36,6 +36,7 @@ public class KeranjangModel : PageModel
             var all = await _cartService.GetAsync(CustomerId);
             Items = all.Where(i => i.IsAvailable).ToList();
             UnavailableItems = all.Where(i => !i.IsAvailable).ToList();
+            await _cartService.SyncSeenStockAsync(CustomerId, all.Select(i => (i.ProductId, i.Stock)).ToList());
         }
         ViewData["Title"] = "Keranjang";
     }

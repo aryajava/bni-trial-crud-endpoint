@@ -188,4 +188,33 @@ public class CartService : ICartService
             await AddAsync(customerId, item.ProductId, item.Quantity, item.Selected);
         }
     }
+
+    public async Task SyncSeenStockAsync(int customerId, List<(int ProductId, int Stock)> items)
+    {
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        using var connection = new SqlConnection(_connectionString);
+        foreach (var item in items)
+        {
+            await connection.ExecuteAsync("""
+                UPDATE LOSCONSUMER.TRX_CART_ITEM
+                SET SEEN_STOCK = @Stock
+                WHERE CUSTOMER_ID = @CustomerId AND PRODUCT_ID = @ProductId;
+                """, new { Stock = item.Stock, CustomerId = customerId, ProductId = item.ProductId });
+        }
+    }
+
+    public async Task<Dictionary<int, int>> GetSeenStockAsync(int customerId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var rows = await connection.QueryAsync<(int ProductId, int Seen)>("""
+            SELECT PRODUCT_ID, ISNULL(SEEN_STOCK, 0)
+            FROM LOSCONSUMER.TRX_CART_ITEM
+            WHERE CUSTOMER_ID = @CustomerId;
+            """, new { CustomerId = customerId });
+        return rows.ToDictionary(r => r.ProductId, r => r.Seen);
+    }
 }

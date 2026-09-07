@@ -91,6 +91,17 @@ public class CheckoutModel : PageModel
             return Redirect("/");
         }
 
+        var terlihat = await _cartService.GetSeenStockAsync(CustomerId);
+        var stokTurun = relevan
+            .Where(i => i.IsAvailable
+                && terlihat.TryGetValue(i.ProductId, out var seen) && seen > 0 && i.Stock < seen)
+            .ToList();
+        if (stokTurun.Count > 0)
+        {
+            TempData["InfoMessage"] = $"Stok berubah: {NamaProduk(stokTurun)}. Periksa kembali keranjang Anda.";
+            return Redirect("/Keranjang");
+        }
+
         var stokBerubah = relevan.Where(i => i.IsAvailable && i.QtyAdjusted).ToList();
         if (stokBerubah.Count > 0)
         {

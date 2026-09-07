@@ -1,0 +1,12 @@
+-- Script0030: Baseline stok yang dilihat user (SEEN_STOCK) di keranjang untuk deteksi perubahan stok saat checkout
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('LOSCONSUMER.TRX_CART_ITEM') AND name = 'SEEN_STOCK')
+    ALTER TABLE LOSCONSUMER.TRX_CART_ITEM ADD SEEN_STOCK INT NULL;
+GO
+
+-- Backfill satu kali: baseline = stok saat ini
+UPDATE C
+SET C.SEEN_STOCK = ISNULL(P.STOCK, 0)
+FROM LOSCONSUMER.TRX_CART_ITEM C
+JOIN LOSCONSUMER.MASTER_PRODUCT P ON P.ID = C.PRODUCT_ID
+WHERE C.SEEN_STOCK IS NULL;
+GO

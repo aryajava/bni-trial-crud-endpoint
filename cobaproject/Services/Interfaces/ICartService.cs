@@ -12,4 +12,10 @@ public interface ICartService
     Task RemoveAsync(int customerId, int productId);
     Task ClearAsync(int customerId);
     Task MergeGuestCartAsync(int customerId, List<(int ProductId, int Quantity, bool Selected)> items);
+
+    /// <summary>Simpan stok yang baru dilihat user untuk tiap item keranjang.</summary>
+    Task SyncSeenStockAsync(int customerId, List<(int ProductId, int Stock)> items);
+
+    /// <summary>Stok baseline yang terakhir dilihat user (0 bila belum pernah disinkronkan).</summary>
+    Task<Dictionary<int, int>> GetSeenStockAsync(int customerId);
 }
