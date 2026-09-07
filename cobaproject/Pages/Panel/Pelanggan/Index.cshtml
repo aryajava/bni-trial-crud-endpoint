@@ -186,10 +186,10 @@
                 });
                 const json = await res.json().catch(() => null);
                 if (!res.ok || !json.isSuccess) throw new Error((json && json.errors && json.errors[0]) || (json && json.message) || ('HTTP ' + res.status));
-                Swal.fire({ toast: true, position: "top-end", icon: "success", title: pesanSukses || json.message, showConfirmButton: false, timer: 2500 });
+                Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: pesanSukses || json.message, showConfirmButton: false, timer: 2500 });
                 loadData();
             } catch (err) {
-                Swal.fire({ toast: true, position: "top-end", icon: "error", title: err.message, showConfirmButton: false, timer: 4000 });
+                Swal.fire({ toast: true, position: "bottom-end", icon: "error", title: err.message, showConfirmButton: false, timer: 4000 });
             }
         }
 

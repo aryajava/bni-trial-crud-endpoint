@@ -79,9 +79,14 @@ public class KeranjangModel : PageModel
             return Redirect("/Masuk?ReturnUrl=" + Uri.EscapeDataString(returnUrl ?? "/Keranjang"));
         }
 
-        await _cartService.AddAsync(CustomerId, productId, Math.Max(1, qty));
+        var (ok, pesan) = await _cartService.AddAsync(CustomerId, productId, Math.Max(1, qty));
+        if (!ok)
+        {
+            TempData["ErrorMessage"] = pesan ?? "Produk tidak dapat ditambahkan.";
+            return Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/Keranjang" : returnUrl);
+        }
         _logger.LogInformation("[CART] Tambah produk | CustomerId={CustomerId} | ProductId={ProductId} | Qty={Qty}", CustomerId, productId, qty);
-        TempData["SuccessMessage"] = "Produk ditambahkan ke keranjang.";
+        TempData[pesan is null ? "SuccessMessage" : "InfoMessage"] = pesan ?? "Produk ditambahkan ke keranjang.";
         return Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/Keranjang" : returnUrl);
     }
 

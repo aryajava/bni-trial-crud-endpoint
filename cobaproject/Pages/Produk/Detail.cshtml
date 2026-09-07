@@ -49,7 +49,7 @@
             }
             else
             {
-                <button class="btn btn-primary btn-tambah-tamu" data-product-id="@Model.Product.Id" type="button">
+                <button class="btn btn-primary btn-tambah-tamu" data-product-id="@Model.Product.Id" data-stok="@Model.Product.Stock" type="button">
                     <span class="material-icons">add_shopping_cart</span> Masukkan Keranjang
                 </button>
             }
@@ -67,13 +67,20 @@
             document.querySelectorAll('.btn-tambah-tamu').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var id = Number(btn.dataset.productId);
+                    var stok = Number(btn.dataset.stok);
                     var items = bacaKeranjangTamu();
                     var ada = items.find(function (i) { return i.productId === id; });
-                    if (ada) { ada.qty = (Number(ada.qty) || 0) + 1; }
+                    if (ada) {
+                        if ((Number(ada.qty) || 0) >= stok) {
+                            Swal.fire({ toast: true, position: "bottom-end", icon: "warning", title: "Stok tersisa " + stok + ", jumlah di keranjang sudah penuh.", showConfirmButton: false, timer: 3000 });
+                            return;
+                        }
+                        ada.qty = (Number(ada.qty) || 0) + 1;
+                    }
                     else { items.push({ productId: id, qty: 1 }); }
                     simpanKeranjangTamu(items);
                     muatBadge();
-                    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
+                    Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
                 });
             });
         });

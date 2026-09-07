@@ -151,7 +151,7 @@
                 if (hasil.isConfirmed) {
                     navigator.clipboard.writeText(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(kunciRegen))).then(function () {
                         if (Swal.isVisible()) { Swal.close(); }
-                        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Secret key disalin.", showConfirmButton: false, timer: 2000 });
+                        Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Secret key disalin.", showConfirmButton: false, timer: 2000 });
                     });
                 }
             });
@@ -174,7 +174,7 @@
                     if (hasil.isConfirmed) {
                         navigator.clipboard.writeText(data.key).then(function () {
                             if (Swal.isVisible()) { Swal.close(); }
-                            Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Secret key disalin.", showConfirmButton: false, timer: 2000 });
+                            Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Secret key disalin.", showConfirmButton: false, timer: 2000 });
                         });
                     }
                 });

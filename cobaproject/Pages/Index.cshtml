@@ -156,10 +156,10 @@
                                 else
                                 {
                                     <div class="d-flex w-100 mt-auto" style="border:1px solid var(--gk-primary);border-radius:10px;overflow:hidden;">
-                                        <button class="btn btn-outline-primary btn-sm border-0 rounded-0 btn-tambah-tamu" type="button" data-product-id="@p.Id" aria-label="Tambah ke keranjang" title="Tambah ke keranjang" style="width:38px;background:#fff;">
+                                        <button class="btn btn-outline-primary btn-sm border-0 rounded-0 btn-tambah-tamu" type="button" data-product-id="@p.Id" data-stok="@p.Stock" aria-label="Tambah ke keranjang" title="Tambah ke keranjang" style="width:38px;background:#fff;">
                                             <span class="material-icons" style="font-size:18px;">add_shopping_cart</span>
                                         </button>
-                                        <button class="btn btn-primary btn-sm border-0 rounded-0 flex-grow-1 btn-beli-tamu fw-semibold" type="button" data-product-id="@p.Id">
+                                        <button class="btn btn-primary btn-sm border-0 rounded-0 flex-grow-1 btn-beli-tamu fw-semibold" type="button" data-product-id="@p.Id" data-stok="@p.Stock">
                                             Beli
                                         </button>
                                     </div>
@@ -219,28 +219,33 @@
 
 @section Scripts {
     <script>
+        function tambahKeranjangTamu(id, stok) {
+            var items = bacaKeranjangTamu();
+            var ada = items.find(function (i) { return i.productId === id; });
+            if (ada) {
+                if ((Number(ada.qty) || 0) >= Number(stok)) {
+                    Swal.fire({ toast: true, position: "bottom-end", icon: "warning", title: "Stok tersisa " + stok + ", jumlah di keranjang sudah penuh.", showConfirmButton: false, timer: 3000 });
+                    return false;
+                }
+                ada.qty = (Number(ada.qty) || 0) + 1;
+            }
+            else { items.push({ productId: id, qty: 1 }); }
+            simpanKeranjangTamu(items);
+            return true;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.btn-tambah-tamu').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    var id = Number(btn.dataset.productId);
-                    var items = bacaKeranjangTamu();
-                    var ada = items.find(function (i) { return i.productId === id; });
-                    if (ada) { ada.qty = (Number(ada.qty) || 0) + 1; }
-                    else { items.push({ productId: id, qty: 1 }); }
-                    simpanKeranjangTamu(items);
+                    if (!tambahKeranjangTamu(Number(btn.dataset.productId), btn.dataset.stok)) { return; }
                     muatBadge();
-                    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
+                    Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
                 });
             });
 
             document.querySelectorAll('.btn-beli-tamu').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    var id = Number(btn.dataset.productId);
-                    var items = bacaKeranjangTamu();
-                    var ada = items.find(function (i) { return i.productId === id; });
-                    if (ada) { ada.qty = (Number(ada.qty) || 0) + 1; }
-                    else { items.push({ productId: id, qty: 1 }); }
-                    simpanKeranjangTamu(items);
+                    tambahKeranjangTamu(Number(btn.dataset.productId), btn.dataset.stok);
                     muatBadge();
                     window.location = '/Masuk?ReturnUrl=' + encodeURIComponent('/Keranjang');
                 });

@@ -122,7 +122,7 @@ public class CartService : ICartService
 
         if (combined != existing + target)
         {
-            return (true, $"Stok produk \"{(string)product.TITLE}\" tersisa {(int)product.STOCK} — jumlah dibatasi.");
+            return (true, $"Stok produk \"{(string)product.TITLE}\" tersisa {(int)product.STOCK}, jumlah tidak dapat ditambah lagi.");
         }
         return (true, null);
     }
