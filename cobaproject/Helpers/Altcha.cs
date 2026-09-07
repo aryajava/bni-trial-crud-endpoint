@@ -89,7 +89,13 @@ public static class Altcha
             }
 
             var ulang = HashHex(p.Salt + p.Number);
-            if (!string.Equals(ulang, p.Challenge, StringComparison.OrdinalIgnoreCase))
+            var saltNormal = p.Salt.Replace("/expires=", "?expires=", StringComparison.OrdinalIgnoreCase);
+            var cocok = string.Equals(ulang, p.Challenge, StringComparison.OrdinalIgnoreCase);
+            if (!cocok && !string.Equals(saltNormal, p.Salt, StringComparison.Ordinal))
+            {
+                cocok = string.Equals(HashHex(saltNormal + p.Number), p.Challenge, StringComparison.OrdinalIgnoreCase);
+            }
+            if (!cocok)
             {
                 return false;
             }
