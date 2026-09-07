@@ -25,7 +25,7 @@
                     <div class="border rounded p-3">
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                             <div>
-                                <a class="fw-semibold text-decoration-none" href="/PesananSaya/Detail/@o.Id">#@o.Id</a>
+                                <a class="fw-semibold text-decoration-none" href="/PesananSaya/Detail/@o.Id">@(o.OrderNumber ?? "#" + o.Id)</a>
                                 <span class="ms-2"><partial name="_StatusBadge" model="@o" /></span>
                             </div>
                             <div class="text-end">
@@ -48,7 +48,7 @@
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@o.Id" />
                                     <input type="hidden" name="reason" class="input-batal-reason" />
-                                    <button type="button" class="btn btn-outline-danger btn-sm btn-batal" data-order="@o.Id">
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-batal" data-order="@o.Id" data-nomor="@(o.OrderNumber ?? "#" + o.Id)">
                                         <span class="material-icons">close</span> Batalkan
                                     </button>
                                 </form>
@@ -76,7 +76,7 @@
         document.querySelectorAll('.btn-batal').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 Swal.fire({
-                    title: 'Batalkan Pesanan #' + btn.dataset.order + '?',
+                    title: 'Batalkan Pesanan ' + (btn.dataset.nomor || '#' + btn.dataset.order) + '?',
                     input: 'text',
                     inputLabel: 'Alasan (wajib)',
                     inputValidator: function (value) {

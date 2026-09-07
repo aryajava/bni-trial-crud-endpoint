@@ -97,32 +97,62 @@ public class OrderService : IOrderService
             }
         }
 
-        var orderId = await connection.ExecuteScalarAsync<long>("""
-            INSERT INTO LOSCONSUMER.TRX_ORDER
-                (CUSTOMER_ID, STATUS, SUBTOTAL, SHIPPING_FEE, TAX_AMOUNT, TOTAL_AMOUNT,
-                 COURIER_ID, COURIER_NAME,
-                 SHIP_NAME, SHIP_PHONE, SHIP_ADDRESS, NOTE, CREATED_BY, VERSION)
-            OUTPUT INSERTED.ID
-            VALUES
-                (@CustomerId, 'DIPROSES', @Subtotal, @Shipping, @Tax, @Total,
-                 @CourierId, @CourierName,
-                 @ShipName, @ShipPhone, @ShipAddress, @Note, @CreatedBy, 1);
-            """, new
+        long? orderId = null;
+        string? nomorPesanan = null;
+        string? errorBuat = null;
+        for (var upaya = 0; upaya < 5 && orderId is null && errorBuat is null; upaya++)
         {
-            CustomerId = customerId,
-            Subtotal = subtotal,
-            Shipping = shipping,
-            Tax = taxAmount,
-            Total = total,
-            CourierId = courier?.Id,
-            CourierName = courier?.Name,
-            ShipName = request.Name,
-            ShipPhone = request.Phone,
-            ShipAddress = request.Address,
-            Note = request.Note,
-            CreatedBy = createdBy
-        }, transaction);
+            try
+            {
+                nomorPesanan = await BangunNomorPesananAsync(connection, transaction);
+                orderId = await connection.ExecuteScalarAsync<long>("""
+                    INSERT INTO LOSCONSUMER.TRX_ORDER
+                        (CUSTOMER_ID, STATUS, ORDER_NUMBER, SUBTOTAL, SHIPPING_FEE, TAX_AMOUNT, TOTAL_AMOUNT,
+                         COURIER_ID, COURIER_NAME,
+                         SHIP_NAME, SHIP_PHONE, SHIP_ADDRESS, NOTE, CREATED_BY, VERSION)
+                    OUTPUT INSERTED.ID
+                    VALUES
+                        (@CustomerId, 'DIPROSES', @OrderNumber, @Subtotal, @Shipping, @Tax, @Total,
+                         @CourierId, @CourierName,
+                         @ShipName, @ShipPhone, @ShipAddress, @Note, @CreatedBy, 1);
+                    """, new
+                {
+                    CustomerId = customerId,
+                    OrderNumber = nomorPesanan,
+                    Subtotal = subtotal,
+                    Shipping = shipping,
+                    Tax = taxAmount,
+                    Total = total,
+                    CourierId = courier?.Id,
+                    CourierName = courier?.Name,
+                    ShipName = request.Name,
+                    ShipPhone = request.Phone,
+                    ShipAddress = request.Address,
+                    Note = request.Note,
+                    CreatedBy = createdBy
+                }, transaction);
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number is 2601 or 2627)
+            {
+                // Tabrakan nomor (dua checkout di milidetik sama): tunggu sejenak agar basis berganti.
+                Log.ForContext("SourceContext", "Audit").Warning(
+                    "Tabrakan nomor pesanan {Nomor}, mencoba ulang ({Upaya}/5)", nomorPesanan, upaya + 1);
+                await Task.Delay(1);
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1205)
+            {
+                Log.ForContext("SourceContext", "Audit").Warning(
+                    "Deadlock saat membuat pesanan | CustomerId={CustomerId} | {Pesan}", customerId, ex.Message);
+                errorBuat = "Sistem sedang sibuk; coba lagi.";
+            }
+        }
+        if (orderId is null || nomorPesanan is null)
+        {
+            return (null, errorBuat ?? "Gagal membuat nomor pesanan; coba lagi.");
+        }
+        var idPesanan = orderId.Value;
 
+        // Pesanan memakai OrderNumber di semua komunikasi ke pelanggan; ID tetap internal.
         foreach (var item in items)
         {
             var lineTotal = Math.Round(item.Subtotal, 2);
@@ -133,7 +163,7 @@ public class OrderService : IOrderService
                     (@OrderId, @ProductId, @Title, @UnitPrice, @DiscountPercent, @Quantity, @Subtotal);
                 """, new
             {
-                OrderId = orderId,
+                OrderId = idPesanan,
                 item.ProductId,
                 item.Title,
                 UnitPrice = item.EffectivePrice,
@@ -161,11 +191,23 @@ public class OrderService : IOrderService
 
         await transaction.CommitAsync();
 
-        Log.Information("PESANAN #{OrderId} dibuat | Pelanggan={Customer} | Subtotal={Subtotal} | Ongkir={Shipping} | Pajak={Tax} | Total={Total} | By={By}",
-            orderId, createdBy, subtotal, shipping, taxAmount, total, createdBy);
+        Log.Information("PESANAN {Nomor} dibuat | OrderId={OrderId} | Pelanggan={Caller} | Subtotal={Subtotal} | Ongkir={Shipping} | Pajak={Tax} | Total={Total} | By={By}",
+            nomorPesanan, idPesanan, createdBy, subtotal, shipping, taxAmount, total, createdBy);
 
-        var (order, _) = await GetByIdAsync(orderId);
+        var (order, _) = await GetByIdAsync(idPesanan);
         return (order, null);
+    }
+
+    /// <summary>Buat nomor pesanan INV{yyyyMMddHHmmssfff}{urutan 5 digit}; panggil dalam transaksi (retry tabrakan di pemanggil).</summary>
+    private static async Task<string> BangunNomorPesananAsync(
+        Microsoft.Data.SqlClient.SqlConnection connection,
+        System.Data.Common.DbTransaction transaction)
+    {
+        var basis = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+        var sudah = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM LOSCONSUMER.TRX_ORDER WHERE ORDER_NUMBER LIKE @Basis + '%';",
+            new { Basis = "INV" + basis }, transaction);
+        return "INV" + basis + (sudah + 1).ToString("D5");
     }
 
     public async Task<(OrderDetailDto? Order, string? Error)> GetByIdAsync(long id)
@@ -442,6 +484,7 @@ public class OrderService : IOrderService
         ShipPhone = row.SHIP_PHONE as string,
         ShipAddress = row.SHIP_ADDRESS as string,
         Note = row.NOTE as string,
+        OrderNumber = row.ORDER_NUMBER as string,
         CreatedAt = (DateTime)row.CREATED_AT,
         DiprosesAt = (DateTime)row.DIPROSES_AT,
         KirimAt = row.KIRIM_AT as DateTime?,
@@ -471,6 +514,7 @@ public class OrderService : IOrderService
         ShipPhone = row.SHIP_PHONE as string,
         ShipAddress = row.SHIP_ADDRESS as string,
         Note = row.NOTE as string,
+        OrderNumber = row.ORDER_NUMBER as string,
         CreatedAt = (DateTime)row.CREATED_AT,
         DiprosesAt = (DateTime)row.DIPROSES_AT,
         KirimAt = row.KIRIM_AT as DateTime?,
