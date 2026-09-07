@@ -85,6 +85,33 @@ public class KeranjangModel : PageModel
         return Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/Keranjang" : returnUrl);
     }
 
+    /// <summary>Beli langsung: pastikan produk ada di keranjang (qty lama dipertahankan), lalu lompat ke checkout hanya untuk produk ini.</summary>
+    public async Task<IActionResult> OnPostBuyAsync(int productId, string? returnUrl)
+    {
+        if (!IsCustomer)
+        {
+            return Redirect("/Masuk?ReturnUrl=" + Uri.EscapeDataString(returnUrl ?? "/Keranjang"));
+        }
+
+        var items = await _cartService.GetAsync(CustomerId);
+        var existing = items.FirstOrDefault(i => i.ProductId == productId);
+        if (existing is null)
+        {
+            var (ok, error) = await _cartService.AddAsync(CustomerId, productId, 1);
+            if (!ok)
+            {
+                TempData["ErrorMessage"] = error ?? "Produk tidak dapat dibeli.";
+                return Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
+            }
+        }
+        else
+        {
+            await _cartService.SetSelectedAsync(CustomerId, productId, true);
+        }
+
+        return Redirect("/Checkout?ids=" + productId);
+    }
+
     public async Task<IActionResult> OnPostUpdateQtyAsync(int productId, int qty)
     {
         if (!IsCustomer)
