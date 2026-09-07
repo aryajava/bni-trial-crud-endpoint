@@ -93,8 +93,8 @@ if (kunci.Length >= 16 && !Altcha.Verify(kunci, AltchaPayload))
 ```
 
 ```html
-<!-- 4) Di dalam <form> -->
-<altcha-widget challenge="/Masuk?handler=Altcha" type="checkbox" hidelogo hidefooter></altcha-widget>
+<!-- 4) Di dalam <form> (atribut version 2.3.0: challengeurl / challengejson) -->
+<altcha-widget challengeurl="/Masuk?handler=Altcha" type="checkbox" hidelogo hidefooter></altcha-widget>
 <!-- 5) Di bagian script halaman -->
 <script src="/js/altcha.min.js" type="module"></script>
 ```
