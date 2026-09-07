@@ -136,7 +136,7 @@ public class CheckoutModel : PageModel
         }
         if (stokTurun.Count > 0)
         {
-            TempData["InfoMessage"] = $"Stok berubah: {string.Join(", ", stokTurun)}. Periksa kembali keranjang Anda.";
+            TempData["InfoMessage"] = $"Stok berubah: {RingkasDaftar(stokTurun)}. Periksa kembali keranjang Anda.";
             return Redirect("/Keranjang");
         }
         if (harga.Count > 0)
@@ -262,6 +262,12 @@ public class CheckoutModel : PageModel
         return list.Count > 3 ? nama + $" dan {list.Count - 3} lainnya" : nama;
     }
 
+    private static string RingkasDaftar(List<string> items)
+    {
+        var ringkas = string.Join("; ", items.Take(3));
+        return items.Count > 3 ? ringkas + $"; dan {items.Count - 3} lainnya" : ringkas;
+    }
+
     /// <summary>Keranjang yang sedang menuju checkout: hanya item terpilih (atau semua bila ids kosong).</summary>
     private List<CartItemDto> ItemRelevan()
     {
@@ -296,7 +302,7 @@ public class CheckoutModel : PageModel
             }
             if (snap.Stock.HasValue && item.Stock < snap.Stock.Value)
             {
-                stokTurun.Add($"\"{item.Title}\"");
+                stokTurun.Add($"\"{item.Title}\": stok {snap.Stock.Value} → {item.Stock}");
             }
         }
         return (hilang, stokTurun, harga);
