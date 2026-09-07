@@ -13,7 +13,8 @@
         <label class="cluster-label text-secondary fw-semibold mb-0" for="statusSelect">Status</label>
         <select id="statusSelect" data-pencarian class="form-select form-select-sm" style="width: 170px;">
             <option value="">Semua Status</option>
-            <option value="DIPROSES">Diproses</option>
+            <option value="MENUNGGU_KONFIRMASI">Menunggu Konfirmasi</option>
+            <option value="DIKEMAS">Dikemas</option>
             <option value="DIKIRIM">Dikirim</option>
             <option value="DITERIMA">Diterima</option>
             <option value="DIBATALKAN">Dibatalkan</option>
@@ -70,7 +71,8 @@
         }
         function badgeStatus(status) {
             const map = {
-                'DIPROSES': 'bg-warning-subtle text-warning-emphasis',
+                'MENUNGGU_KONFIRMASI': 'bg-warning-subtle text-warning-emphasis',
+                'DIKEMAS': 'bg-primary-subtle text-primary-emphasis',
                 'DIKIRIM': 'bg-info-subtle text-info-emphasis',
                 'DITERIMA': 'bg-success-subtle text-success-emphasis',
                 'DIBATALKAN': 'bg-danger-subtle text-danger-emphasis'
@@ -97,10 +99,13 @@
             tbody.innerHTML = items.map((o, idx) => {
                 const nomor = ((state.page - 1) * state.pageSize) + idx + 1;
                 let aksi = '<button class="btn btn-outline-info btn-sm btn-detail" data-id="' + o.id + '" title="Detail"><span class="material-icons">visibility</span></button>';
-                if (o.status === 'DIPROSES') {
+                if (o.status === 'MENUNGGU_KONFIRMASI') {
+                    aksi += ' <button class="btn btn-primary btn-sm btn-kemas" data-id="' + o.id + '" title="Konfirmasi & kemas"><span class="material-icons">inventory_2</span></button>';
+                }
+                if (o.status === 'DIKEMAS') {
                     aksi += ' <button class="btn btn-success btn-sm btn-kirim" data-id="' + o.id + '" title="Tandai dikirim"><span class="material-icons">local_shipping</span></button>';
                 }
-                if (o.status === 'DIPROSES') {
+                if (o.status === 'MENUNGGU_KONFIRMASI' || o.status === 'DIKEMAS') {
                     aksi += ' <button class="btn btn-outline-danger btn-sm btn-batal" data-id="' + o.id + '" title="Batalkan"><span class="material-icons">close</span></button>';
                 }
                 return '<tr>' +
@@ -236,6 +241,8 @@
                 if (!t) return;
                 if (t.classList.contains('btn-detail')) {
                     tampilDetail(t.dataset.id);
+                } else if (t.classList.contains('btn-kemas')) {
+                    aksi('POST', '/api/orders/' + t.dataset.id + '/pack', null, 'Pesanan #' + t.dataset.id + ' dikemas.');
                 } else if (t.classList.contains('btn-kirim')) {
                     aksi('POST', '/api/orders/' + t.dataset.id + '/ship', null, 'Pesanan #' + t.dataset.id + ' ditandai dikirim.');
                 } else if (t.classList.contains('btn-batal')) {

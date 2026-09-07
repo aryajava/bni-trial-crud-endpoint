@@ -50,6 +50,27 @@ public class OrderController : ControllerBase
         }
     }
 
+    [HttpPost("{id:long}/pack")]
+    public async Task<IResult> Pack(long id)
+    {
+        try
+        {
+            var (ok, error) = await _orderService.PackAsync(id, Caller);
+            if (ok)
+                _logger.LogInformation("[API-ORDER] Pesanan dikemas | OrderId={OrderId} | Caller={Caller}", id, Caller);
+            else
+                _logger.LogWarning("[API-ORDER] Kemas pesanan gagal | OrderId={OrderId} | Caller={Caller} | Error={Error}", id, Caller, error);
+            return ok
+                ? ResponseHelper.Success(HttpContext, $"Pesanan #{id} dikemas.", "Berhasil")
+                : ResponseHelper.ValidationError(HttpContext, [error ?? "Pesanan tidak dapat dikemas."]);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[API-ORDER] Exception saat kemas pesanan | OrderId={OrderId} | Caller={Caller}", id, Caller);
+            return ResponseHelper.Error(HttpContext, ex);
+        }
+    }
+
     [HttpPost("{id:long}/ship")]
     public async Task<IResult> Ship(long id)
     {
@@ -76,7 +97,7 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var (ok, error) = await _orderService.CancelAsync(id, request.Reason, Caller);
+            var (ok, error) = await _orderService.CancelAsync(id, request.Reason, Caller, fromPenjual: true);
             if (ok)
                 _logger.LogInformation("[API-ORDER] Pesanan dibatalkan | OrderId={OrderId} | Caller={Caller}", id, Caller);
             else

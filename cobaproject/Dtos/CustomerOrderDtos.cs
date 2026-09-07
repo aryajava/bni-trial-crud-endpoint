@@ -117,7 +117,7 @@ public class OrderDto
     public int CustomerId { get; set; }
     public string CustomerEmail { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
-    public string Status { get; set; } = "DIPROSES";
+    public string Status { get; set; } = "MENUNGGU_KONFIRMASI";
     public decimal Subtotal { get; set; }
     public decimal ShippingFee { get; set; }
     public decimal TaxAmount { get; set; }
@@ -148,7 +148,7 @@ public class OrderDetailDto : OrderDto
 
 public class OrderQueryParams : PageRequest
 {
-    [System.ComponentModel.Description("Filter status: DIPROSES, DIKIRIM, DITERIMA, DIBATALKAN (kosong = semua).")]
+    [System.ComponentModel.Description("Filter status: MENUNGGU_KONFIRMASI, DIKEMAS, DIKIRIM, DITERIMA, DIBATALKAN (kosong = semua).")]
     public string? Status { get; set; }
 }
 

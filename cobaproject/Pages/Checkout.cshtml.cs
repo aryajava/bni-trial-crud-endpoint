@@ -190,7 +190,7 @@ public class CheckoutModel : PageModel
         }, User.Identity!.Name!);
 
         _logger.LogInformation("[ORDER] Checkout berhasil | CustomerId={CustomerId} | OrderId={OrderId} | Total={Total}", CustomerId, order.Id, Total);
-        TempData["SuccessMessage"] = $"Pesanan {order.OrderNumber ?? "#" + order.Id} berhasil dibuat (status DIPROSES).";
+        TempData["SuccessMessage"] = $"Pesanan {order.OrderNumber ?? "#" + order.Id} berhasil dibuat (status MENUNGGU_KONFIRMASI).";
         return Redirect("/PesananSaya");
     }
 

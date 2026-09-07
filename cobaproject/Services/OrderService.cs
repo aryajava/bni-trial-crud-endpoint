@@ -11,7 +11,8 @@ namespace cobaproject.Services;
 
 public class OrderService : IOrderService
 {
-    public const string Diproses = "DIPROSES";
+    public const string MenungguKonfirmasi = "MENUNGGU_KONFIRMASI";
+    public const string Dikemas = "DIKEMAS";
     public const string Dikirim = "DIKIRIM";
     public const string Diterima = "DITERIMA";
     public const string Dibatalan = "DIBATALKAN";
@@ -112,7 +113,7 @@ public class OrderService : IOrderService
                          SHIP_NAME, SHIP_PHONE, SHIP_ADDRESS, NOTE, CREATED_BY, VERSION)
                     OUTPUT INSERTED.ID
                     VALUES
-                        (@CustomerId, 'DIPROSES', @OrderNumber, @Subtotal, @Shipping, @Tax, @Total,
+                        (@CustomerId, 'MENUNGGU_KONFIRMASI', @OrderNumber, @Subtotal, @Shipping, @Tax, @Total,
                          @CourierId, @CourierName,
                          @ShipName, @ShipPhone, @ShipAddress, @Note, @CreatedBy, 1);
                     """, new
@@ -308,6 +309,25 @@ public class OrderService : IOrderService
         };
     }
 
+    public async Task<(bool Success, string? Error)> PackAsync(long id, string updatedBy)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var affected = await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.TRX_ORDER
+            SET    STATUS     = 'DIKEMAS',
+                   UPDATED_AT = GETDATE(),
+                   UPDATED_BY = @UpdatedBy,
+                   VERSION    = VERSION + 1
+            WHERE  ID = @Id AND STATUS = 'MENUNGGU_KONFIRMASI';
+            """, new { Id = id, UpdatedBy = updatedBy });
+
+        if (affected > 0)
+        {
+            await _audit.LogAsync("ORDER", id.ToString(), "ORDER_PACKED", null, null, $"Dikemas oleh {updatedBy}");
+        }
+        return (affected > 0, null);
+    }
+
     public async Task<(bool Success, string? Error)> ShipAsync(long id, string updatedBy)
     {
         using var connection = new SqlConnection(_connectionString);
@@ -319,7 +339,7 @@ public class OrderService : IOrderService
                    UPDATED_AT = GETDATE(),
                    UPDATED_BY = @UpdatedBy,
                    VERSION    = VERSION + 1
-            WHERE  ID = @Id AND STATUS = 'DIPROSES';
+            WHERE  ID = @Id AND STATUS = 'DIKEMAS';
             """, new { Id = id, UpdatedBy = updatedBy });
 
         if (affected > 0)
@@ -329,7 +349,8 @@ public class OrderService : IOrderService
         return (affected > 0, null);
     }
 
-    public async Task<(bool Success, string? Error)> CancelAsync(long id, string reason, string updatedBy)
+    public async Task<(bool Success, string? Error)> CancelAsync(
+        long id, string reason, string updatedBy, bool fromPenjual = false)
     {
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -348,7 +369,18 @@ public class OrderService : IOrderService
         {
             return (false, "Pesanan tidak ditemukan.");
         }
-        if (current != Diproses)
+        if (current == MenungguKonfirmasi)
+        {
+            // Pembeli maupun penjual dapat membatalkan sebelum konfirmasi penjual.
+        }
+        else if (current == Dikemas)
+        {
+            if (!fromPenjual)
+            {
+                return (false, "Pesanan sudah dikemas, hanya penjual yang dapat membatalkan.");
+            }
+        }
+        else
         {
             return current == Dikirim
                 ? (false, "Pesanan sudah dikirim — tidak dapat dibatalkan.")
@@ -369,7 +401,7 @@ public class OrderService : IOrderService
 
         if (affected > 0)
         {
-            // Stok kembali hanya saat DIBATALKAN dari DIPROSES (barang belum keluar).
+            // Stok kembali saat DIBATALKAN dari MENUNGGU_KONFIRMASI atau DIKEMAS (barang belum dikirim).
             var items = (await connection.QueryAsync<dynamic>("""
                 SELECT PRODUCT_ID, QUANTITY FROM LOSCONSUMER.TRX_ORDER_ITEM WHERE ORDER_ID = @OrderId;
                 """, new { OrderId = id }, transaction)).ToList();
@@ -458,7 +490,7 @@ public class OrderService : IOrderService
         using var connection = new SqlConnection(_connectionString);
         var stats = await connection.QuerySingleAsync<dynamic>("""
             SELECT
-                (SELECT COUNT(*) FROM LOSCONSUMER.TRX_ORDER WHERE STATUS = 'DIPROSES') AS Pending,
+                (SELECT COUNT(*) FROM LOSCONSUMER.TRX_ORDER WHERE STATUS IN ('MENUNGGU_KONFIRMASI', 'DIKEMAS')) AS Pending,
                 (SELECT COUNT(*) FROM LOSCONSUMER.TRX_ORDER WHERE CAST(CREATED_AT AS DATE) = CAST(GETDATE() AS DATE)) AS Today;
             """);
         return ((int)stats.Pending, (int)stats.Today);

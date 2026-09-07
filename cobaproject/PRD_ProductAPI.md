@@ -46,7 +46,7 @@ Semua keputusan bisnis ditulis permanen (audit trail dua sisi, tabel DB, bukan f
 | `/Panel/MasterUser` | OWNER+SA |
 | `/Panel/UserControl` | OWNER+SA |
 |  OWNER+SA | OWNER+SA (blokir/buka; hapus-lunak & aktifkan kembali: SA) |
-| `/Panel/Pesanan` | ADMIN+OWNER+SA (DIPROSES→DIKIRIM; batalkan) |
+| `/Panel/Pesanan` | ADMIN+OWNER+SA (MENUNGGU_KONFIRMASI→DIKEMAS; DIKEMAS→DIKIRIM; batalkan sesuai aturan) |
 | `/Panel/LaporanPenjualan` | OWNER+SA |
 | `/Panel/Settings/PengaturanAplikasi` | **SA saja** (ambang blokir login) |
 | `/Panel/Settings/PengaturanToko` | OWNER+SA (ongkir tetap + pajak %) |
@@ -70,7 +70,7 @@ Login **email + sandi** (bcrypt). Blokir (`IS_BLOCKED`): oleh sistem (gagal logi
 2. Tombol **Checkout** → wajib login (`/Masuk`/`/Daftar`)
 3. Isi data pengiriman (nama, no. HP, alamat, catatan opsional) — tersimpan ke profil sebagai default
 4. Ringkasan: `SUBTOTAL = Σ qty × Harga Setelah Diskon` · `PAJAK = SUBTOTAL × Pajak%` · `TOTAL = SUBTOTAL + ONGKIR + PAJAK` — **harga dihitung ulang saat konfirmasi**
-5. **Konfirmasi Pesanan**: stok divalidasi & dikurang atomik; pesanan `DIPROSES`; keranjang dikosongkan
+5. **Konfirmasi Pesanan**: stok divalidasi & dikurang atomik; pesanan `MENUNGGU_KONFIRMASI`; keranjang dikosongkan
 6. Riwayat di `/PesananSaya`
 
 Stok berkurang **hanya saat checkout**, bukan saat masuk keranjang; dikembalikan saat pesanan dibatalkan.
@@ -82,9 +82,9 @@ Stok berkurang **hanya saat checkout**, bukan saat masuk keranjang; dikembalikan
 ### Status & transisi
 
 ```
-DIPROSES ──(staff: "Tandai Dikirim")──▶ DIKIRIM ──(pelanggan)──▶ DITERIMA
+MENUNGGU_KONFIRMASI ──(penjual: "Konfirmasi & Kemas")──▶ DIKEMAS ──(penjual: "Tandai Dikirim")──▶ DIKIRIM ──(pelanggan)──▶ DITERIMA
     │
-    └──(DIBATALKAN — HANYA dari DIPROSES, oleh pelanggan atau staf, alasan wajib; stok dikembalikan)──▶ DIBATALKAN
+    └──(DIBATALKAN — oleh pelanggan atau penjual saat MENUNGGU_KONFIRMASI; oleh penjual saja saat DIKEMAS; alasan wajib; stok dikembalikan)──▶ DIBATALKAN
 ```
 
 Snapshot per pesanan: `SUBTOTAL`, `SHIPPING_FEE`, `TAX_AMOUNT`, `TOTAL_AMOUNT` + per baris judul/harga/qty (`TRX_ORDER_ITEM`, tanpa FK). Riwayat status who/when (`DIPROSES_AT`, `DIKIRIM_AT/BY`, `DITERIMA_AT/BY`, `DIBATALKAN_AT/BY/REASON`).

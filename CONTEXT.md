@@ -53,7 +53,7 @@ Tahap akhir belanja di mana pelanggan mengisi alamat kirim, memilih ekspedisi, d
 _Avoid_: checkout, buat pesanan, confirm order
 
 **Pesanan**:
-Catatan pembelian yang dibuat pelanggan saat menyelesaikan checkout; stok berkurang saat pesanan dibuat, dan harga dihitung ulang dari Harga Setelah Diskon pada saat itu. Berstatus DIPROSES → DIKIRIM → DITERIMA, atau DIBATALKAN — pembatalan hanya dapat dilakukan saat masih DIPROSES, dan saat dibatalkan stok dikembalikan. Qty di Keranjang pengguna lain otomatis menyesuaikan sisa stok.
+Catatan pembelian yang dibuat pelanggan saat menyelesaikan checkout; stok berkurang saat pesanan dibuat, dan harga dihitung ulang dari Harga Setelah Diskon pada saat itu. Berstatus MENUNGGU_KONFIRMASI → DIKEMAS → DIKIRIM → DITERIMA, atau DIBATALKAN. Selama MENUNGGU_KONFIRMASI pembeli ataupun penjual dapat membatalkan; setelah DIKEMAS hanya penjual yang dapat membatalkan; saat dibatalkan stok dikembalikan. Qty di Keranjang pengguna lain otomatis menyesuaikan sisa stok.
 _Avoid_: order, transaksi, nota
 
 **Blokir Akun**:
