@@ -521,6 +521,61 @@ public class UserService : IUserService
             """, new { Id = userId });
     }
 
+    public async Task<(bool IsLoged, string? LastDevice)> GetSessionStateAsync(int userId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var row = await connection.QueryFirstOrDefaultAsync<dynamic>("""
+            SELECT IS_LOGGED, LAST_DEVICE
+            FROM LOSCONSUMER.MASTER_USER
+            WHERE ID = @Id;
+            """, new { Id = userId });
+        return row is null
+            ? (false, null)
+            : ((bool)row.IS_LOGGED, row.LAST_DEVICE as string);
+    }
+
+    public async Task MarkLoggedInAsync(int userId, string lastDevice)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET IS_LOGGED   = 1,
+                LAST_DEVICE = @LastDevice
+            WHERE ID = @Id;
+            """, new { LastDevice = lastDevice, Id = userId });
+    }
+
+    public async Task MarkLoggedOutAsync(int userId)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET IS_LOGGED   = 0,
+                LAST_DEVICE = NULL
+            WHERE ID = @Id;
+            """, new { Id = userId });
+    }
+
+    public async Task<(bool Success, string? Error)> ReleaseSessionAsync(int userId, string updatedBy)
+    {
+        using var connection = new SqlConnection(_connectionString);
+        var affected = await connection.ExecuteAsync("""
+            UPDATE LOSCONSUMER.MASTER_USER
+            SET IS_LOGGED   = 0,
+                LAST_DEVICE = NULL,
+                UPDATED_AT  = GETDATE(),
+                UPDATED_BY  = @UpdatedBy,
+                VERSION     = VERSION + 1
+            WHERE ID = @Id AND IS_LOGGED = 1;
+            """, new { Id = userId, UpdatedBy = updatedBy });
+
+        if (affected > 0)
+        {
+            await _audit.LogAsync("USER", userId.ToString(), "SESSION_RELEASED", null, null, $"Sesi dilepas oleh {updatedBy}");
+        }
+        return (affected > 0, null);
+    }
+
     private const int MaxPageSize = 100;
 
     private static async Task<bool> IsSeededSuperAdminAsync(SqlConnection connection, int id)

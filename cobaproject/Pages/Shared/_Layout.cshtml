@@ -230,6 +230,8 @@
         .btn-edit:hover { background: var(--gk-primary-soft-hover); }
         .btn-delete { color: #B42318; background: #FEE2E2; }
         .btn-delete:hover { background: #FECACA; }
+        .btn-release { color: #4B5563; background: #E5E7EB; }
+        .btn-release:hover { background: #D1D5DB; }
 
         .pagination { margin-bottom: 0; gap: 4px; }
         .pagination .page-link {
@@ -491,6 +493,10 @@
                 <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
                     <span class="material-icons">receipt_long</span> Permintaan Diskon
                 </a>
+                <a class="nav-link @(currentPage.StartsWith("/Panel/Notifikasi", StringComparison.OrdinalIgnoreCase) ? "active" : "")" href="/Panel/Notifikasi">
+                    <span class="material-icons">notifications</span> Notifikasi
+                    <span class="badge bg-danger rounded-pill ms-auto d-none" id="notifBadgeMobile">0</span>
+                </a>
                 @if (isOwner || isSa)
                 {
                     <a class="nav-link @(isPersetujuanPages ? "active" : "")" href="/Panel/PersetujuanDiskon">
@@ -535,8 +541,7 @@
         <script>
             (function () {
                 var badge = document.getElementById('notifBadge');
-                if (!badge || window.gklakuNotifPolling) { return; }
-                window.gklakuNotifPolling = true;
+                if (!badge) { return; }
 
                 var unreadTerakhir = 0;
 
@@ -547,6 +552,11 @@
                             if (!d || typeof d.unread !== 'number') { return; }
                             badge.classList.toggle('d-none', d.unread === 0);
                             badge.textContent = d.unread;
+                            var badgeMobile = document.getElementById('notifBadgeMobile');
+                            if (badgeMobile) {
+                                badgeMobile.classList.toggle('d-none', d.unread === 0);
+                                badgeMobile.textContent = d.unread;
+                            }
                             if (d.unread > unreadTerakhir && unreadTerakhir > 0 && d.latest) {
                                 Swal.fire({
                                     toast: true, position: "top-end", icon: "info",

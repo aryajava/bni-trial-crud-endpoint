@@ -225,3 +225,11 @@ public class SalesRowDto
     public int TotalQuantity { get; set; }
     public decimal Revenue { get; set; }
 }
+
+public class OrderNotificationDto
+{
+    public string? OrderNumber { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string Actor { get; set; } = string.Empty;
+    public DateTime ActedAt { get; set; }
+}

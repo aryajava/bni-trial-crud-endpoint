@@ -16,7 +16,6 @@ public class NotifikasiModel : PageModel
 
     public List<OrderNotificationDto> Items { get; set; } = [];
     public int Unread { get; set; }
-    public bool TampilkanDibaca { get; set; }
 
     private int CurrentUserId => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
@@ -31,7 +30,6 @@ public class NotifikasiModel : PageModel
         var readAt = await _userService.GetNotifReadAtAsync(CurrentUserId);
         Items = await _auditLogService.GetOrderNotificationsAsync(readAt);
         Unread = Items.Count;
-        TampilkanDibaca = Unread > 0;
         ViewData["Title"] = "Notifikasi";
     }
 
@@ -41,17 +39,16 @@ public class NotifikasiModel : PageModel
         var readAt = await _userService.GetNotifReadAtAsync(CurrentUserId);
         var unread = await _auditLogService.CountOrderNotificationsAsync(readAt);
         var lates = await _auditLogService.GetOrderNotificationsAsync(readAt, 1);
-        var latest = lates.FirstOrDefault();
         return new JsonResult(new
         {
             unread,
-            latest = latest is null ? null : new
+            latest = lates.FirstOrDefault() is { } terbaru ? new
             {
-                latest.OrderNumber,
-                label = latest.Action == "ORDER_CANCELLED" ? "DIBATALKAN" : "DITERIMA",
-                latest.Actor,
-                waktu = latest.ActedAt.ToString("HH:mm")
-            }
+                terbaru.OrderNumber,
+                label = terbaru.Action == "ORDER_CANCELLED" ? "DIBATALKAN" : "DITERIMA",
+                terbaru.Actor,
+                waktu = terbaru.ActedAt.ToString("HH:mm")
+            } : null
         });
     }
 
