@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Checkout";
     Layout = "_TokoLayout";
+    var adaMasalah = !ViewData.ModelState.IsValid || !string.IsNullOrWhiteSpace(Model.StoreError);
 }
 
 <div class="row g-4">
@@ -180,6 +181,10 @@
                     altchaSlot.innerHTML = '';
                     btnKonfirmasiFinal.disabled = true;
                 });
+            }
+            var ADA_MASALAH = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(adaMasalah));
+            if (ADA_MASALAH) {
+                new bootstrap.Modal(modalKonfirmasi).show();
             }
         }
     </script>
