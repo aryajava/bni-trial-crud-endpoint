@@ -72,7 +72,7 @@
                     var ada = items.find(function (i) { return i.productId === id; });
                     if (ada) {
                         if ((Number(ada.qty) || 0) >= stok) {
-                            Swal.fire({ toast: true, position: "bottom-end", icon: "warning", title: "Stok tersisa " + stok + ", jumlah di keranjang sudah penuh.", showConfirmButton: false, timer: 3000 });
+                            Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Stok tersisa " + stok + ", jumlah di keranjang sudah penuh.", showConfirmButton: false, timer: 3000 });
                             return;
                         }
                         ada.qty = (Number(ada.qty) || 0) + 1;
@@ -80,7 +80,7 @@
                     else { items.push({ productId: id, qty: 1 }); }
                     simpanKeranjangTamu(items);
                     muatBadge();
-                    Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
+                    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Ditambahkan ke keranjang.", showConfirmButton: false, timer: 1500 });
                 });
             });
         });

@@ -37,7 +37,7 @@
         function tampilToast(ikon, judul, durasi) {
             if (window.Swal) {
                 if (Swal.isVisible()) { Swal.close(); }
-                Swal.fire({ toast: true, position: "bottom-end", icon: ikon, title: judul, showConfirmButton: false, timer: durasi, timerProgressBar: true });
+                Swal.fire({ toast: true, position: "top-end", icon: ikon, title: judul, showConfirmButton: false, timer: durasi, timerProgressBar: true });
             }
         }
 

@@ -199,11 +199,11 @@
             if (!res.ok) {
                 throw new Error((json && json.message) ? json.message : ('HTTP ' + res.status));
             }
-            Swal.fire({ toast: true, position: "bottom-end", icon: "success",
+            Swal.fire({ toast: true, position: "top-end", icon: "success",
                 title: json.message || 'Keputusan tersimpan.', showConfirmButton: false, timer: 2500 });
             loadData();
         } catch (err) {
-            Swal.fire({ toast: true, position: "bottom-end", icon: "error",
+            Swal.fire({ toast: true, position: "top-end", icon: "error",
                 title: err.message, showConfirmButton: false, timer: 4000 });
         }
     }

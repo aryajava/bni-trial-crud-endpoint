@@ -21,6 +21,21 @@
                 <div class="form-text">Default: 5. Blokir bersifat permanen sampai akun di-unblock atau ganti kata sandi.</div>
             </div>
             <input type="hidden" name="AmbangBlokirVersion" value="@Model.AmbangBlokirVersion" />
+
+            <hr class="my-4" />
+            <h6 class="fw-semibold mb-1">reCAPTCHA (Konfirmasi Pesanan)</h6>
+            <p class="text-muted small mb-3">Kosongkan keduanya untuk menonaktifkan verifikasi reCAPTCHA pada checkout. Isi keduanya dari konsol Google reCAPTCHA (v2 Checkbox) untuk mengaktifkannya.</p>
+            <div class="mb-3">
+                <label class="form-label" for="RecaptchaSiteKey">Site Key</label>
+                <input type="text" class="form-control" id="RecaptchaSiteKey" name="RecaptchaSiteKey" value="@Model.RecaptchaSiteKey" autocomplete="off" spellcheck="false" />
+            </div>
+            <input type="hidden" name="RecaptchaSiteKeyVersion" value="@Model.RecaptchaSiteKeyVersion" />
+            <div class="mb-3">
+                <label class="form-label" for="RecaptchaSecretKey">Secret Key</label>
+                <input type="password" class="form-control" id="RecaptchaSecretKey" name="RecaptchaSecretKey" value="@Model.RecaptchaSecretKey" autocomplete="off" />
+            </div>
+            <input type="hidden" name="RecaptchaSecretKeyVersion" value="@Model.RecaptchaSecretKeyVersion" />
+
             <button class="btn btn-primary btn-sm" type="submit"><span class="material-icons">save</span> Simpan</button>
         </form>
     </div>

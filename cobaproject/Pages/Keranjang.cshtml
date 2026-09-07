@@ -228,7 +228,7 @@
                             if (hilang.length > 0) {
                                 simpanGuest(items.filter(function (i) { return validIds.indexOf(i.productId) !== -1; }));
                                 items = bacaGuest();
-                                Swal.fire({ toast: true, position: "bottom-end", icon: "warning", title: hilang.length + ' produk dihapus karena tidak tersedia.', showConfirmButton: false, timer: 3000 });
+                                Swal.fire({ toast: true, position: "top-end", icon: "warning", title: hilang.length + ' produk dihapus karena tidak tersedia.', showConfirmButton: false, timer: 3000 });
                             }
 
                             var total = 0;
@@ -330,7 +330,7 @@
                         if (r.isConfirmed) {
                             simpanGuest([]);
                             render();
-                            Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Keranjang dikosongkan.", showConfirmButton: false, timer: 2000 });
+                            Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Keranjang dikosongkan.", showConfirmButton: false, timer: 2000 });
                         }
                     });
                 });
@@ -429,7 +429,7 @@
                                 if (!r.isConfirmed) { pulihkan(); return; }
                                 kirimQty(id, 0).then(function (res) { return res.text(); }).then(function (txt) {
                                     if (txt !== 'ok' && txt !== 'deleted') { pulihkan(); location.reload(); return; }
-                                    Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Produk dihapus dari keranjang.", showConfirmButton: false, timer: 2000 });
+                                    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Produk dihapus dari keranjang.", showConfirmButton: false, timer: 2000 });
                                     location.reload();
                                 }).catch(function () { pulihkan(); location.reload(); });
                             });
@@ -451,7 +451,7 @@
                                 baris.textContent = formatRpHalaman(sub);
                                 if (hitungTotal) { hitungTotal(); }
                             }
-                            Swal.fire({ toast: true, position: "bottom-end", icon: "success", title: "Jumlah diperbarui.", showConfirmButton: false, timer: 1200 });
+                            Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Jumlah diperbarui.", showConfirmButton: false, timer: 1200 });
                         }).catch(function () { pulihkan(); location.reload(); });
                     });
                 }
@@ -479,7 +479,7 @@
                         var terpilih = Array.from(document.querySelectorAll('.cek-pesan:checked'))
                             .map(function (cb) { return cb.value; });
                         if (terpilih.length === 0) {
-                            Swal.fire({ toast: true, position: "bottom-end", icon: "warning", title: "Pilih minimal satu barang.", showConfirmButton: false, timer: 2500 });
+                            Swal.fire({ toast: true, position: "top-end", icon: "warning", title: "Pilih minimal satu barang.", showConfirmButton: false, timer: 2500 });
                             return;
                         }
                         window.location = '/Checkout?ids=' + terpilih.join(',');
