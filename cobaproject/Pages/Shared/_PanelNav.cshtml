@@ -1,0 +1,111 @@
+@model string
+@{
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    var requestPath = ViewContext.HttpContext.Request.Path.Value ?? "";
+    var isDashboardPages = requestPath.Equals("/Panel", StringComparison.OrdinalIgnoreCase)
+        || requestPath.Equals("/Panel/", StringComparison.OrdinalIgnoreCase);
+    var isProductPages = currentPage.StartsWith("/Panel/Produk", StringComparison.OrdinalIgnoreCase);
+    var isMasterUserPages = currentPage.StartsWith("/Panel/MasterUser", StringComparison.OrdinalIgnoreCase);
+    var isCategoryPages = currentPage.StartsWith("/Panel/Kategori", StringComparison.OrdinalIgnoreCase);
+    var isUserControlPages = currentPage.StartsWith("/Panel/UserControl", StringComparison.OrdinalIgnoreCase);
+    var isPersetujuanPages = currentPage.StartsWith("/Panel/PersetujuanDiskon", StringComparison.OrdinalIgnoreCase);
+    var isPermintaanPages = currentPage.StartsWith("/Panel/PermintaanDiskon", StringComparison.OrdinalIgnoreCase);
+    var isPesananPages = currentPage.StartsWith("/Panel/Pesanan", StringComparison.OrdinalIgnoreCase);
+    var isPelangganPages = currentPage.StartsWith("/Panel/Pelanggan", StringComparison.OrdinalIgnoreCase);
+    var isLaporanPages = currentPage.StartsWith("/Panel/LaporanPenjualan", StringComparison.OrdinalIgnoreCase);
+    var isAuditPages = currentPage.StartsWith("/Panel/Settings/Audit", StringComparison.OrdinalIgnoreCase);
+    var isEkspedisiPages = currentPage.StartsWith("/Panel/Ekspedisi", StringComparison.OrdinalIgnoreCase);
+    var isNotifikasiPages = currentPage.StartsWith("/Panel/Notifikasi", StringComparison.OrdinalIgnoreCase);
+    var badgeId = string.IsNullOrEmpty(Model) ? "notifBadge" : Model;
+
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var isOwner = User.IsInRole(UserRolePolicy.Owner);
+    var isAdmin = User.IsInRole(UserRolePolicy.Admin);
+    var isSa = User.IsInRole(UserRolePolicy.Sa);
+}
+@if (signedIn)
+{
+    <div class="panel-nav">
+        <div class="nav-group-title">Beranda</div>
+        <a class="nav-link @(isDashboardPages ? "active" : "")" href="/Panel">
+            <span class="material-icons">dashboard</span> Dashboard
+        </a>
+        <div class="nav-group-title">Master</div>
+        <a class="nav-link @(isProductPages ? "active" : "")" href="/Panel/Produk">
+            <span class="material-icons">inventory_2</span> Master Produk
+        </a>
+        @if (isOwner || isSa)
+        {
+            <a class="nav-link @(isMasterUserPages ? "active" : "")" href="/Panel/MasterUser">
+                <span class="material-icons">group</span> Master User
+            </a>
+        }
+        @if (isAdmin || isOwner || isSa)
+        {
+            <a class="nav-link @(isCategoryPages ? "active" : "")" href="/Panel/Kategori">
+                <span class="material-icons">category</span> Master Kategori
+            </a>
+        }
+        @if (isOwner || isSa)
+        {
+            <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
+                <span class="material-icons">local_shipping</span> Master Ekspedisi
+            </a>
+            @if (isSa)
+            {
+                <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
+                    <span class="material-icons">people</span> Master Pelanggan
+                </a>
+            }
+        }
+        <div class="nav-group-title">Operasional</div>
+        <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
+            <span class="material-icons">receipt_long</span> Pesanan
+        </a>
+        @if (isOwner || isSa)
+        {
+            <div class="nav-group-title">Maintenance</div>
+            <a class="nav-link @(isUserControlPages ? "active" : "")" href="/Panel/UserControl">
+                <span class="material-icons">manage_accounts</span> User Control
+            </a>
+        }
+        <div class="nav-group-title">Monitoring</div>
+        <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
+            <span class="material-icons">receipt_long</span> Permintaan Diskon
+        </a>
+        <a class="nav-link @(isNotifikasiPages ? "active" : "")" href="/Panel/Notifikasi">
+            <span class="material-icons">notifications</span> Notifikasi
+            <span class="badge bg-danger rounded-pill ms-auto d-none" id="@badgeId">0</span>
+        </a>
+        @if (isOwner || isSa)
+        {
+            <a class="nav-link @(isPersetujuanPages ? "active" : "")" href="/Panel/PersetujuanDiskon">
+                <span class="material-icons">fact_check</span> Persetujuan Diskon
+            </a>
+            <a class="nav-link @(isLaporanPages ? "active" : "")" href="/Panel/LaporanPenjualan">
+                <span class="material-icons">trending_up</span> Laporan Penjualan
+            </a>
+            <div class="nav-group-title">Settings</div>
+            @if (isSa)
+            {
+                <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" href="/Panel/Settings/PengaturanAplikasi">
+                    <span class="material-icons">settings_applications</span> Pengaturan Aplikasi
+                </a>
+            }
+            <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
+                <span class="material-icons">store</span> Pengaturan Toko
+            </a>
+            @if (isSa)
+            {
+                <a class="nav-link @(isAuditPages ? "active" : "")" href="/Panel/Settings/Audit">
+                    <span class="material-icons">security</span> Audit Log
+                </a>
+            }
+        }
+    </div>
+    <div class="panel-nav-footer">
+        <a class="nav-link" href="/swagger" target="_blank">
+            <span class="material-icons">api</span> Dokumentasi API
+        </a>
+    </div>
+}

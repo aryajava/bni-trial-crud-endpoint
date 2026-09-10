@@ -14,6 +14,7 @@
     var isLaporanPages = currentPage.StartsWith("/Panel/LaporanPenjualan", StringComparison.OrdinalIgnoreCase);
     var isAuditPages = currentPage.StartsWith("/Panel/Settings/Audit", StringComparison.OrdinalIgnoreCase);
     var isEkspedisiPages = currentPage.StartsWith("/Panel/Ekspedisi", StringComparison.OrdinalIgnoreCase);
+    var isNotifikasiPages = currentPage.StartsWith("/Panel/Notifikasi", StringComparison.OrdinalIgnoreCase);
 
     var breadcrumbTrail = new List<(string Label, string? Url)>();
     if (!isDashboardPages)
@@ -68,6 +69,11 @@
         {
             breadcrumbTrail.Add(("Monitoring", null));
             breadcrumbTrail.Add(("Persetujuan Diskon", "/Panel/PersetujuanDiskon"));
+        }
+        else if (isNotifikasiPages)
+        {
+            breadcrumbTrail.Add(("Monitoring", null));
+            breadcrumbTrail.Add(("Notifikasi", "/Panel/Notifikasi"));
         }
         else if (currentPage.Equals("/Panel/Settings/PengaturanAplikasi", StringComparison.OrdinalIgnoreCase))
         {
@@ -149,11 +155,11 @@
         .sidebar {
             width: 240px; flex-shrink: 0; background: #fff;
             border-right: 1px solid #E5EAE8; position: sticky; top: 0; height: 100vh;
-            display: flex; flex-direction: column; padding: 20px 14px;
+            display: flex; flex-direction: column; padding: 20px 14px; overflow: hidden;
         }
         .sidebar-brand {
             display: flex; align-items: center; gap: 10px; padding: 0 10px 18px;
-            font-weight: 700; font-size: 17px; color: #1F2937; text-decoration: none;
+            font-weight: 700; font-size: 17px; color: #1F2937; text-decoration: none; flex-shrink: 0;
         }
         .sidebar-brand .brand-icon {
             display: inline-flex; align-items: center; justify-content: center;
@@ -162,17 +168,27 @@
         .sidebar-brand .brand-icon .material-icons { font-size: 20px; }
         .nav-group-title {
             font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
-            color: #9CA3AF; padding: 12px 10px 6px;
+            color: #6B7280; padding: 12px 10px 6px;
         }
-        .sidebar .nav-link {
+        .panel-nav {
+            flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+            scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent; scrollbar-gutter: stable;
+        }
+        .panel-nav::-webkit-scrollbar { width: 6px; }
+        .panel-nav::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+        .panel-nav::-webkit-scrollbar-track { background: transparent; }
+        .panel-nav .nav-link, .panel-nav-footer .nav-link {
             display: flex; align-items: center; gap: 10px; padding: 9px 10px;
             border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500;
         }
-        .sidebar .nav-link .material-icons { font-size: 20px; color: #6B7280; }
-        .sidebar .nav-link:hover { background: var(--bs-body-bg); color: #1F2937; }
-        .sidebar .nav-link.active { background: var(--gk-primary-soft); color: var(--gk-primary-text); font-weight: 600; }
-        .sidebar .nav-link.active .material-icons { color: var(--gk-primary); }
-        .sidebar-footer { margin-top: auto; border-top: 1px solid #E5EAE8; padding-top: 12px; }
+        .panel-nav .nav-link .material-icons, .panel-nav-footer .nav-link .material-icons { font-size: 20px; color: #6B7280; }
+        .panel-nav .nav-link:hover, .panel-nav-footer .nav-link:hover { background: var(--bs-body-bg); color: #1F2937; }
+        .panel-nav .nav-link.active { background: var(--gk-primary-soft); color: var(--gk-primary-text); font-weight: 600; }
+        .panel-nav .nav-link.active .material-icons { color: var(--gk-primary); }
+        .panel-nav .nav-link:focus-visible, .panel-nav-footer .nav-link:focus-visible {
+            outline: 2px solid var(--gk-primary); outline-offset: 2px;
+        }
+        .panel-nav-footer { margin-top: auto; flex-shrink: 0; border-top: 1px solid #E5EAE8; padding-top: 12px; }
 
         .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .topbar {
@@ -260,7 +276,6 @@
         .search-box .material-icons { font-size: 16px; }
         .offcanvas-nav { width: 240px; }
         .offcanvas .sidebar-brand { padding: 0; }
-        .offcanvas .nav-group-title { padding-left: 0; }
         .detail-k { width: 200px; }
         .rating-star { font-size: 15px; color: #F59E0B; }
         .col-no { width: 42px; min-width: 42px; }
@@ -278,98 +293,7 @@
                 <span class="brand-icon"><span class="material-icons">storefront</span></span>
                 Toko GKLaku
             </a>
-            <div class="sidebar-nav">
-                @if (signedIn)
-                {
-                    <div class="nav-group-title">Beranda</div>
-                    <a class="nav-link @(isDashboardPages ? "active" : "")" href="/Panel">
-                        <span class="material-icons">dashboard</span> Dashboard
-                    </a>
-                    <div class="nav-group-title">Master</div>
-                    <a class="nav-link @(isProductPages ? "active" : "")" href="/Panel/Produk">
-                        <span class="material-icons">inventory_2</span> Master Produk
-                    </a>
-                    @if (isOwner || isSa)
-                    {
-                        <a class="nav-link @(isMasterUserPages ? "active" : "")" href="/Panel/MasterUser">
-                            <span class="material-icons">group</span> Master User
-                        </a>
-                    }
-                    @if (isAdmin || isOwner || isSa)
-                    {
-                        <a class="nav-link @(isCategoryPages ? "active" : "")" href="/Panel/Kategori">
-                            <span class="material-icons">category</span> Master Kategori
-                        </a>
-                    }
-                    @if (isOwner || isSa)
-                    {
-                        <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
-                            <span class="material-icons">local_shipping</span> Master Ekspedisi
-                        </a>
-                        @if (isSa)
-                        {
-                            <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
-                                <span class="material-icons">people</span> Master Pelanggan
-                            </a>
-                        }
-                    }
-                    <div class="nav-group-title">Operasional</div>
-                    <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
-                        <span class="material-icons">receipt_long</span> Pesanan
-                    </a>
-                    @if (isOwner || isSa)
-                    {
-                        }
-                    @if (isOwner || isSa)
-                    {
-                        <div class="nav-group-title">Maintenance</div>
-                        <a class="nav-link @(isUserControlPages ? "active" : "")" href="/Panel/UserControl">
-                            <span class="material-icons">manage_accounts</span> User Control
-                        </a>
-                    }
-                    <div class="nav-group-title">Monitoring</div>
-                    <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
-                        <span class="material-icons">receipt_long</span> Permintaan Diskon
-                    </a>
-                    <a class="nav-link" href="/Panel/Notifikasi">
-                        <span class="material-icons">notifications</span> Notifikasi
-                        <span class="badge bg-danger rounded-pill ms-auto d-none" id="notifBadge">0</span>
-                    </a>
-                    @if (isOwner || isSa)
-                    {
-                        <a class="nav-link @(isPersetujuanPages ? "active" : "")" href="/Panel/PersetujuanDiskon">
-                            <span class="material-icons">fact_check</span> Persetujuan Diskon
-                        </a>
-                    }
-                    @if (isOwner || isSa)
-                    {
-                        <a class="nav-link @(isLaporanPages ? "active" : "")" href="/Panel/LaporanPenjualan">
-                            <span class="material-icons">trending_up</span> Laporan Penjualan
-                        </a>
-                    }
-                    @if (isOwner || isSa)
-                    {
-                        <div class="nav-group-title">Settings</div>
-                        @if (isSa)
-                        {
-                            <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" href="/Panel/Settings/PengaturanAplikasi">
-                                <span class="material-icons">settings_applications</span> Pengaturan Aplikasi
-                            </a>
-                        }
-                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
-                            <span class="material-icons">store</span> Pengaturan Toko
-                        </a>
-                        <a class="nav-link @(isAuditPages ? "active" : "")" href="/Panel/Settings/Audit">
-                            <span class="material-icons">security</span> Audit Log
-                        </a>
-                    }
-                }
-            </div>
-            <div class="sidebar-footer">
-                <a class="nav-link" href="/swagger" target="_blank">
-                    <span class="material-icons">api</span> Dokumentasi API
-                </a>
-            </div>
+            @await Html.PartialAsync("_PanelNav", "notifBadge")
         </aside>
 
         <div class="app-main">
@@ -427,7 +351,7 @@
 
             <footer class="app-footer">
                 <span>© 2026 Toko GKLaku</span>
-                <span class="text-muted">Razor Pages CRUD &mdash; ASP.NET Core (net10.0)</span>
+                <span class="text-muted">Razor Pages CRUD - ASP.NET Core (net10.0)</span>
             </footer>
         </div>
     </div>
@@ -441,96 +365,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column">
-            @if (signedIn)
-            {
-                <div class="nav-group-title">Beranda</div>
-                <a class="nav-link @(isDashboardPages ? "active" : "")" href="/Panel">
-                    <span class="material-icons">dashboard</span> Dashboard
-                </a>
-                <div class="nav-group-title">Master</div>
-                <a class="nav-link @(isProductPages ? "active" : "")" href="/Panel/Produk">
-                    <span class="material-icons">inventory_2</span> Master Produk
-                </a>
-                @if (isOwner || isSa)
-                {
-                    <a class="nav-link @(isMasterUserPages ? "active" : "")" href="/Panel/MasterUser">
-                        <span class="material-icons">group</span> Master User
-                    </a>
-                }
-                @if (isAdmin || isOwner || isSa)
-                {
-                    <a class="nav-link @(isCategoryPages ? "active" : "")" href="/Panel/Kategori">
-                        <span class="material-icons">category</span> Master Kategori
-                    </a>
-                }
-                @if (isOwner || isSa)
-                {
-                    <a class="nav-link @(isEkspedisiPages ? "active" : "")" href="/Panel/Ekspedisi">
-                        <span class="material-icons">local_shipping</span> Master Ekspedisi
-                    </a>
-                    @if (isSa)
-                    {
-                        <a class="nav-link @(isPelangganPages ? "active" : "")" href="/Panel/Pelanggan">
-                            <span class="material-icons">people</span> Master Pelanggan
-                        </a>
-                    }
-                }
-                <div class="nav-group-title">Operasional</div>
-                <a class="nav-link @(isPesananPages ? "active" : "")" href="/Panel/Pesanan">
-                    <span class="material-icons">receipt_long</span> Pesanan
-                </a>
-                @if (isOwner || isSa)
-                {
-                    }
-                @if (isOwner || isSa)
-                {
-                    <div class="nav-group-title">Maintenance</div>
-                    <a class="nav-link @(isUserControlPages ? "active" : "")" href="/Panel/UserControl">
-                        <span class="material-icons">manage_accounts</span> User Control
-                    </a>
-                }
-                <div class="nav-group-title">Monitoring</div>
-                <a class="nav-link @(isPermintaanPages ? "active" : "")" href="/Panel/PermintaanDiskon">
-                    <span class="material-icons">receipt_long</span> Permintaan Diskon
-                </a>
-                <a class="nav-link @(currentPage.StartsWith("/Panel/Notifikasi", StringComparison.OrdinalIgnoreCase) ? "active" : "")" href="/Panel/Notifikasi">
-                    <span class="material-icons">notifications</span> Notifikasi
-                    <span class="badge bg-danger rounded-pill ms-auto d-none" id="notifBadgeMobile">0</span>
-                </a>
-                @if (isOwner || isSa)
-                {
-                    <a class="nav-link @(isPersetujuanPages ? "active" : "")" href="/Panel/PersetujuanDiskon">
-                        <span class="material-icons">fact_check</span> Persetujuan Diskon
-                    </a>
-                    <a class="nav-link @(isLaporanPages ? "active" : "")" href="/Panel/LaporanPenjualan">
-                        <span class="material-icons">trending_up</span> Laporan Penjualan
-                    </a>
-                }
-                @if (isOwner || isSa)
-                {
-                    <div class="nav-group-title">Settings</div>
-                    @if (isSa)
-                    {
-                        <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanAplikasi" ? "active" : "")" href="/Panel/Settings/PengaturanAplikasi">
-                            <span class="material-icons">settings_applications</span> Pengaturan Aplikasi
-                        </a>
-                    }
-                    <a class="nav-link @(currentPage == "/Panel/Settings/PengaturanToko" ? "active" : "")" href="/Panel/Settings/PengaturanToko">
-                        <span class="material-icons">store</span> Pengaturan Toko
-                    </a>
-                    @if (isSa)
-                    {
-                        <a class="nav-link @(isAuditPages ? "active" : "")" href="/Panel/Settings/Audit">
-                            <span class="material-icons">security</span> Audit Log
-                        </a>
-                    }
-                }
-            }
-            <div class="mt-auto">
-                <a class="nav-link" href="/swagger" target="_blank">
-                    <span class="material-icons">api</span> Dokumentasi API
-                </a>
-            </div>
+            @await Html.PartialAsync("_PanelNav", "notifBadgeMobile")
         </div>
     </div>
 
